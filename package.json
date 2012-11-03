@@ -3,6 +3,10 @@
     "description": "R7RS compliant Scheme implementation in JavaScript",
     "homepage": "http://github.com/qiao/r7rs.js",
     "version": "0.0.1",
+    "devDependencies": {
+        "mocha": "0.6.0",
+        "should": "1.2.1"
+    },
     "engines": {
         "node": ">=0.6.0"
     },
