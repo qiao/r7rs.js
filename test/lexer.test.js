@@ -61,4 +61,44 @@ describe('Lexer', function () {
             lexer.nextToken();
         }).should.throw();
     });
+
+    it('should scan inline hex escape', function () {
+        lexer = new Lexer('\\x30;');
+        lexer.scanInlineHexEscape().should.equal('0');
+
+        lexer = new Lexer('\\x0078;');
+        lexer.scanInlineHexEscape().should.equal('x');
+    });
+
+    it('should scan identifier', function () {
+        ['lambda',
+          'list->vector',
+          '+',
+          '<=?',
+          '->string',
+          'the-word-recursion-has-many-meanings',
+          'q',
+          '+soup+',
+          'V17a',
+          'a34kTMNs',
+          '...'].forEach(function (id) {
+              lexer = new Lexer(id);
+              lexer.scanIdentifier().should.eql({
+                  type: 'identifier',
+                  value: id,
+                  lineNumber: 1
+              });
+          });
+
+          ['two\\x20;words',
+           '|two words|',
+           '|two\\x20;words|'].forEach(function (id) {
+              lexer = new Lexer(id);
+              lexer.scanIdentifier().should.eql({
+                  type: 'identifier',
+                  value: 'two words',
+                  lineNumber: 1
+              });
+          });
+    });
 });
