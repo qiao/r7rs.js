@@ -2,7 +2,7 @@ function Lexer(input) {
     this.source = input;
     this.length = input.length;
     this.index = 0;
-    this.lineNumber = 0;
+    this.lineNumber = 1;
 }
 
 // Scan and return the next token.
@@ -91,11 +91,12 @@ Lexer.prototype.skipWhiteSpaceAndComment = function () {
     //
     // <atmosphere> ::= <whitespace> | <comment>
     var source = this.source,
+        length = this.length,
         isLineComment = false,
         isBlockComment = false,
+        blockCommentDepth,
         ch,
-        next,
-        depth;
+        next;
 
     while (this.index < this.length) {
         ch = source[this.index];
@@ -112,17 +113,68 @@ Lexer.prototype.skipWhiteSpaceAndComment = function () {
                 isLineComment = false;
             }
         } else if (isBlockComment) {
-            ++this.index;
-            next = source[this.index];
-
             if (this.isLineEnding(ch)) {
-                if (ch === '\r' && next === '\n') {
+                if (ch === '\r' && source[this.index + 1] === '\n') {
                     ++this.index;
                 }
                 ++this.lineNumber;
+                ++this.index;
+                if (this.index >= length) {
+                    throw new Error();
+                }
             } else {
-
+                ++this.index;
+                if (this.index >= length) {
+                    throw new Error();
+                }
+                if (ch === '|') {
+                    ch = source[this.index];
+                    if (ch === '#') {
+                        ++this.index;
+                        if (this.index >= length) {
+                            throw new Error();
+                        }
+                        --blockCommentDepth;
+                        if (blockCommentDepth === 0) {
+                            isBlockComment = false;
+                        }
+                    }
+                } else if (ch === '#') {
+                    ch = source[this.index];
+                    if (ch === '|') {
+                        ++this.index;
+                        if (this.index >= length) {
+                            throw new Error();
+                        }
+                        ++blockCommentDepth;
+                    }
+                }
             }
+        } else if (ch === ';') {
+            ++this.index;
+            isLineComment = true;
+        } else if (ch === '#') {
+            ch = source[this.index + 1];
+            if (ch === '|') {
+                this.index += 2;
+                isBlockComment = true;
+                blockCommentDepth = 1;
+                if (this.index >= length) {
+                    throw new Error();
+                }
+            } else {
+                break;
+            }
+        } else if (this.isWhiteSpace(ch)) {
+            ++this.index;
+        } else if (this.isLineEnding(ch)) {
+            ++this.index;
+            if (ch === '\r' && source[this.index] === '\n') {
+                ++this.index;
+            }
+            ++this.lineNumber;
+        } else { // TODO: check datum comment
+            break;
         }
     }
 };
