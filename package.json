@@ -1,0 +1,21 @@
+{
+    "name": "r7rs.js",
+    "description": "R7RS compliant Scheme implementation in JavaScript",
+    "homepage": "http://github.com/qiao/r7rs.js",
+    "version": "0.0.1",
+    "engines": {
+        "node": ">=0.6.0"
+    },
+    "maintainers": [{
+        "name": "Xueqiao Xu",
+        "email": "xueqiaoxu@gmail.com"
+    }],
+    "repository": {
+        "type": "git",
+        "url": "http://github.com/qiao/r7rs.js.git"
+    },
+    "licenses": [{
+        "type": "MIT",
+        "url": "http://opensource.org/licenses/mit-license.php"
+    }]
+}
