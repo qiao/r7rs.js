@@ -165,18 +165,45 @@ Lexer.prototype.skipWhiteSpaceAndComment = function () {
             } else {
                 break;
             }
-        } else if (this.isWhiteSpace(ch)) {
-            ++this.index;
         } else if (this.isLineEnding(ch)) {
             ++this.index;
             if (ch === '\r' && source[this.index] === '\n') {
                 ++this.index;
             }
             ++this.lineNumber;
+        } else if (this.isWhiteSpace(ch)) {
+            ++this.index;
         } else { // TODO: check datum comment
             break;
         }
     }
+};
+
+Lexer.prototype.isDelimiter = function (ch) {
+    // <delimiter> ::= <whitespace>
+    //               | (
+    //               | )
+    //               | "
+    //               | ;
+    //               | |
+    return this.isWhiteSpace(ch) ||
+           ch === '('            ||
+           ch === ')'            ||
+           ch === '"'            ||
+           ch === ';'            ||
+           ch === '|';
+};
+
+Lexer.prototype.isAtmosphereStart = function (ch) {
+    // <atmosphere> ::= <whitespace>
+    //                | <comment>
+    return this.isWhiteSpace(ch) ||
+           this.isCommentStart(ch);
+};
+
+Lexer.prototype.isCommentStart = function (ch) {
+    return ch === ';' ||
+           ch === '#';
 };
 
 Lexer.prototype.isWhiteSpace = function (ch) {
@@ -185,16 +212,10 @@ Lexer.prototype.isWhiteSpace = function (ch) {
     //                | <return>
     //
     // <intraline whitespace> ::= <space or tab>
-    //
-    // In order to support line number, <newline> and <return>
-    // are moved into the <line ending> definition.
-    return ch === ' '  || ch === '\t';
+    return ch === ' '  || ch === '\t' || ch === '\n' || ch === '\r';
 };
 
 Lexer.prototype.isLineEnding = function (ch) {
-    // The following definition is not part of r7rs.
-    // It's included in order to count line number.
-    //
     // <line ending> ::= <linefeed>
     //                 | <carriage return>
     //                 | <carriage return> <linefeed>
@@ -222,8 +243,6 @@ Lexer.prototype.scanIdentifier = function () {
         buffer = this.scanSymbolElements();
     } else if (this.isPeculiarIdentifierStart(ch)) {
         buffer = this.scanPeculiarIdentifier();
-    } else {
-        throw new Error();
     }
 
     if (buffer) {
@@ -494,6 +513,61 @@ Lexer.prototype.isSpecialSubsequent = function (ch) {
 
 Lexer.prototype.isExplicitSign = function (ch) {
     return ch === '+' || ch === '-';
+};
+
+Lexer.prototype.isTokenEnd = function (ch) {
+    return this.isDelimiter(ch)       ||
+           this.isAtmosphereStart(ch) ||
+           ch === undefined; // when reached EOF
+};
+
+Lexer.prototype.scanBoolean = function () {
+    // <boolean> ::= #t
+    //             | #f
+    //             | #true
+    //             | #false
+    var source = this.source,
+        ch = source[this.index],
+        ch1, ch2,
+        value;
+
+    if (ch !== '#') {
+        return null;
+    }
+
+    ch1 = source[this.index + 1];
+    ch2 = source[this.index + 2];
+
+    if (ch1 === 't') {
+        if (this.isTokenEnd(ch2)) {
+            this.index += 2;
+            value = true;
+        } else if (source.slice(this.index, this.index + 5) === '#true' &&
+                   this.isTokenEnd(source[this.index + 5])) {
+            this.index += 5;
+            value = true;
+        }
+    } else if (ch1 === 'f') {
+        if (this.isTokenEnd(ch2)) {
+            this.index += 2;
+            value = false;
+        } else if (source.slice(this.index, this.index + 6) === '#false' &&
+                   this.isTokenEnd(source[this.index + 6])) {
+            this.index += 6;
+            value = false;
+        }
+    }
+
+    if (value !== undefined) {
+        return {
+            type: 'boolean',
+            value: value,
+            lineNumber: this.lineNumber
+        };
+    } else {
+        return null;
+    }
+
 };
 
 exports.Lexer = Lexer;
