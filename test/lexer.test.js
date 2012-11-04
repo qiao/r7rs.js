@@ -200,6 +200,29 @@ describe('Lexer', function () {
         });
     });
 
+    it('should scan string', function () {
+        lexer = new Lexer('"The word \\\"recursion\\\" has many meanings."');
+        lexer.nextToken().should.eql({
+            type: 'string',
+            value: 'The word \"recursion\" has many meanings.',
+            lineNumber: 1
+        });
+
+        lexer = new Lexer('"\\x03b1; is alpha.\n"');
+        lexer.nextToken().should.eql({
+            type: 'string',
+            value: '\u03b1 is alpha.\n',
+            lineNumber: 1
+        });
+
+        lexer = new Lexer('"Here\'s a text \\   \n containing just one line"');
+        lexer.nextToken().should.eql({
+            type: 'string',
+            value: 'Here\'s a text containing just one line',
+            lineNumber: 1
+        });
+    });
+
     it('should scan parenthesis', function () {
         lexer = new Lexer('(lambda (x) (display x))\n');
         lexer.nextToken().should.eql({
