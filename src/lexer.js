@@ -105,23 +105,15 @@ Lexer.prototype.skipWhiteSpaceAndComment = function () {
         ch = source[this.index];
         
         if (isLineComment) {
-            ++this.index;
-            next = source[this.index];
-
             if (this.isLineEnding(ch)) {
-                if (ch === '\r' && next === '\n') {
-                    ++this.index;
-                }
-                ++this.lineNumber;
+                this.skipLineEnding(ch);
                 isLineComment = false;
+            } else {
+                ++this.index;
             }
         } else if (isBlockComment) {
             if (this.isLineEnding(ch)) {
-                if (ch === '\r' && source[this.index + 1] === '\n') {
-                    ++this.index;
-                }
-                ++this.lineNumber;
-                ++this.index;
+                this.skipLineEnding(ch);
                 if (this.index >= length) {
                     throw new Error();
                 }
@@ -169,17 +161,23 @@ Lexer.prototype.skipWhiteSpaceAndComment = function () {
                 break;
             }
         } else if (this.isLineEnding(ch)) {
-            ++this.index;
-            if (ch === '\r' && source[this.index] === '\n') {
-                ++this.index;
-            }
-            ++this.lineNumber;
+            this.skipLineEnding(ch);
         } else if (this.isWhiteSpace(ch)) {
             ++this.index;
         } else { // TODO: check datum comment
             break;
         }
     }
+};
+
+Lexer.prototype.skipLineEnding = function (ch) {
+    var next = this.source[this.index + 1];
+    if (ch === '\r' && next === '\n') {
+        this.index += 2;
+    } else {
+        this.index += 1;
+    }
+    this.lineNumber += 1;
 };
 
 Lexer.prototype.isDelimiter = function (ch) {
@@ -682,12 +680,7 @@ Lexer.prototype.scanString = function () {
                     ch = source[this.index++];
                 }
                 if (this.isLineEnding(ch)) {
-                    next = source[this.index + 1];
-                    if (ch === '\r' && next === '\n') {
-                        ++this.index;
-                    }
-                    ++this.index;
-                    ++this.lineNumber;
+                    this.skipLineEnding(ch);
                     ch = source[this.index];
                     while (this.isIntralineWhitespace(ch)) {
                         ch = source[this.index++];
