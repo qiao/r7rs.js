@@ -21,7 +21,7 @@ Lexer.prototype.nextToken = function () {
     //           | ,
     //           | ,@
     //           | .
-    var ch, token;
+    var ch, next, token;
 
     this.skipWhiteSpaceAndComment();
 
@@ -46,34 +46,31 @@ Lexer.prototype.nextToken = function () {
     }
 
     // number
-    token = this.scanNumber();
-    if (token) {
-        return token;
-    }
+    //token = this.scanNumber();
+    //if (token) {
+        //return token;
+    //}
 
-    // character
+    //// character
     token = this.scanCharacter();
     if (token) {
         return token;
     }
 
     ch = this.source[this.index++];
+    next = this.source[this.index];
 
-    if (ch === '(') {
-        return {
-            type: 'L_PAREN',
-            value: '(',
-            lineNumber: this.lineNumber
-        };
+    if (ch === '('  ||
+        ch === ')'  ||
+        ch === '\'' ||
+        ch === '`'  ||
+        ch === '.') {
+            return {
+                type: ch,
+                lineNumber: this.lineNumber
+            };
     }
 
-    if (ch === ')') {
-        return {
-            type: 'R_PAREN',
-            value: ')',
-            lineNumber: this.lineNumber
-        };
-    }
 };
 
 Lexer.prototype.skipWhiteSpaceAndComment = function () {
@@ -567,7 +564,71 @@ Lexer.prototype.scanBoolean = function () {
     } else {
         return null;
     }
+};
 
+Lexer.prototype.scanCharacter = function () {
+    // <character> ::= #\<any character>
+    //               | #\<character name>
+    //               | #\x<hex scalar value>
+    //
+    // <character name> ::= alarm | backspace | delete
+    //                    | escape | newline | null | return
+    //                    | space | tab
+    var source = this.source,
+        ch, next, buffer, code, value, text, re, name, match;
+
+    ch = source[this.index];
+    next = source[this.index + 1];
+    if (!(ch === '#' && next === '\\')) {
+        return null;
+    }
+
+    this.index += 2;
+    ch = source[this.index];
+    if (ch === 'x') { // hex
+        buffer = '';
+        ch = source[++this.index];
+        while (this.isHexDigit(ch)) {
+            buffer += ch;
+            ch = source[++this.index];
+        }
+        code = parseInt(buffer, 16);
+        value = String.fromCharCode(code);
+    } else {
+        text = source.slice(this.index, this.index + 9);
+        re = /^(alarm|backspace|delete|escape|newline|null|return|space|tab)/;
+        match = re.exec(text);
+        if (match) {
+            name = match[0];
+            value = this.namedCharacters[name];
+            this.index += name.length;
+        } else { // single character
+            value = ch;
+            ++this.index;
+        }
+    }
+
+    if (value) {
+        return {
+            type: 'character',
+            value: value,
+            lineNumber: this.lineNumber
+        };
+    } else {
+        return null;
+    }
+};
+
+Lexer.prototype.namedCharacters = {
+    'alarm'     : '\u0007',
+    'backspace' : '\u0008',
+    'delete'    : '\u007f',
+    'escape'    : '\u001b',
+    'newline'   : '\n',
+    'null'      : '\0',
+    'return'    : '\r',
+    'space'     : ' ',
+    'tab'       : '\t'
 };
 
 exports.Lexer = Lexer;
