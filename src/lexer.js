@@ -51,8 +51,14 @@ Lexer.prototype.nextToken = function () {
         //return token;
     //}
 
-    //// character
+    // character
     token = this.scanCharacter();
+    if (token) {
+        return token;
+    }
+
+    // string
+    token = this.scanString();
     if (token) {
         return token;
     }
@@ -203,22 +209,19 @@ Lexer.prototype.isCommentStart = function (ch) {
            ch === '#';
 };
 
+Lexer.prototype.isIntralineWhitespace = function (ch) {
+    // <intraline whitespace> ::= <space or tab>
+    return ch === ' ' || ch === '\t';
+};
+
 Lexer.prototype.isWhiteSpace = function (ch) {
     // <whitespace> ::= <intraline whitespace>
     //                | <newline>
     //                | <return>
-    //
-    // <intraline whitespace> ::= <space or tab>
     return ch === ' '  || ch === '\t' || ch === '\n' || ch === '\r';
 };
 
 Lexer.prototype.isLineEnding = function (ch) {
-    // <line ending> ::= <linefeed>
-    //                 | <carriage return>
-    //                 | <carriage return> <linefeed>
-    //                 | <next line>
-    //                 | <carriage return> <next line>
-    //                 | <line separator>
     return ch === '\n' || ch === '\r';
 };
 
@@ -629,6 +632,86 @@ Lexer.prototype.namedCharacters = {
     'return'    : '\r',
     'space'     : ' ',
     'tab'       : '\t'
+};
+
+Lexer.prototype.scanString = function () {
+    // <string> ::= "<string element>*"
+    //
+    // <string element> ::= <any character other than " or \>
+    //                    | \a | \b | \t | \n | \r | \" | \\
+    //                    | \<intraline whitespace><lineending>
+    //                       <intraline whitespace>
+    //                    | <inline hex escape>
+    //
+    // A line ending which is preceded by \<intraline whitespace>
+    // expands to nothing (along with any trailing intraline whitespace)
+    var source = this.source,
+        length = this.length,
+        buffer,
+        ch, next,
+        lineNumber;
+
+    ch = source[this.index];
+    if (ch !== '"') {
+        return null;
+    }
+
+    ++this.index;
+    buffer = '';
+    lineNumber = this.lineNumber;
+
+    while (true) {
+        ch = source[this.index];
+        if (ch === '\\') {
+            next = source[this.index + 1];
+            if (next === 'a' ||
+                next === 'b' ||
+                next === 't' ||
+                next === 'n' ||
+                next === 'r' ||
+                next === '"' ||
+                next === '\\') {
+                    this.index += 2;
+                    buffer += next;
+            } else if (next === 'x') {
+                buffer += this.scanInlineHexEscape();
+            } else {
+                ++this.index;
+                ch = source[this.index++];
+                while (this.isIntralineWhitespace(ch)) {
+                    ch = source[this.index++];
+                }
+                if (this.isLineEnding(ch)) {
+                    next = source[this.index + 1];
+                    if (ch === '\r' && next === '\n') {
+                        ++this.index;
+                    }
+                    ++this.index;
+                    ++this.lineNumber;
+                    ch = source[this.index];
+                    while (this.isIntralineWhitespace(ch)) {
+                        ch = source[this.index++];
+                    }
+                } else {
+                    throw new Error();
+                }
+            }
+        } else if (ch === '"') {
+            break;
+        } else {
+            ++this.index;
+            if (this.index > length) {
+                throw new Error();
+            }
+            buffer += ch;
+        }
+    }
+
+    return {
+        type: 'string',
+        value: buffer,
+        lineNumber: lineNumber
+    };
 };
 
 exports.Lexer = Lexer;
