@@ -157,4 +157,99 @@ describe('Lexer', function () {
             lineNumber: 3
         });
     });
+
+    it('should scan character', function () {
+        lexer = new Lexer('#\\ ');
+        lexer.nextToken().should.eql({
+            type: 'character',
+            value: ' ',
+            lineNumber: 1
+        });
+    
+        lexer = new Lexer('#\\n#\\space#\\tab');
+        lexer.nextToken().should.eql({
+            type: 'character',
+            value: 'n',
+            lineNumber: 1
+        });
+        lexer.nextToken().should.eql({
+            type: 'character',
+            value: ' ',
+            lineNumber: 1
+        });
+        lexer.nextToken().should.eql({
+            type: 'character',
+            value: '\t',
+            lineNumber: 1
+        });
+
+        lexer = new Lexer('#\\x30#\\n;\n');
+        lexer.nextToken().should.eql({
+            type: 'character',
+            value: '0',
+            lineNumber: 1
+        });
+        lexer.nextToken().should.eql({
+            type: 'character',
+            value: 'n',
+            lineNumber: 1
+        });
+        lexer.nextToken().should.eql({
+            type: 'EOF',
+            lineNumber: 2
+        });
+    });
+
+    it('should scan parenthesis', function () {
+        lexer = new Lexer('(lambda (x) (display x))\n');
+        lexer.nextToken().should.eql({
+            type: '(',
+            lineNumber: 1
+        });
+        lexer.nextToken().should.eql({
+            type: 'identifier',
+            value: 'lambda',
+            lineNumber: 1
+        });
+        lexer.nextToken().should.eql({
+            type: '(',
+            lineNumber: 1
+        });
+        lexer.nextToken().should.eql({
+            type: 'identifier',
+            value: 'x',
+            lineNumber: 1
+        });
+        lexer.nextToken().should.eql({
+            type: ')',
+            lineNumber: 1
+        });
+        lexer.nextToken().should.eql({
+            type: '(',
+            lineNumber: 1
+        });
+        lexer.nextToken().should.eql({
+            type: 'identifier',
+            value: 'display',
+            lineNumber: 1
+        });
+        lexer.nextToken().should.eql({
+            type: 'identifier',
+            value: 'x',
+            lineNumber: 1
+        });
+        lexer.nextToken().should.eql({
+            type: ')',
+            lineNumber: 1
+        });
+        lexer.nextToken().should.eql({
+            type: ')',
+            lineNumber: 1
+        });
+        lexer.nextToken().should.eql({
+            type: 'EOF',
+            lineNumber: 2
+        });
+    });
+
 });
