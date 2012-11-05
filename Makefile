@@ -8,6 +8,7 @@ test:
 			--require should \
 			--timeout $(TEST_TIMEOUT) \
 			--reporter $(TEST_REPORTER) \
+			--bail
 
 
 .PHONY: test
