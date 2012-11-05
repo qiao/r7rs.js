@@ -470,8 +470,6 @@ Lexer.prototype.scanSubsequents = function () {
         } else if (this.isSpecialSubsequent(ch)) {
             this.consume();
             buffer += ch;
-        } else if (ch === undefined) {
-            throw new Error('Unexpected EOF');
         } else {
             return buffer;
         }
@@ -614,7 +612,10 @@ Lexer.prototype.isExplicitSign = function (ch) {
 };
 
 Lexer.prototype.scanNumber = function () {
+    // <number> ::= <num 2> | <num 8> | <num 10> | <num 16>
     // <num R> ::= <prefix R> <complex R>
+    // <prefix R> ::= <radix R> <exactness>
+    //              | <exactness> <radix R>
     // <complex R> ::= <real R>
     //               | <real R> @ <real R>
 };
