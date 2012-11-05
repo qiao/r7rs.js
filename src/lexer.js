@@ -2,6 +2,7 @@ function Lexer(input) {
     this.source = input;
     this.length = input.length;
     this.index = 0;
+    this.current = input[0];
     this.lineNumber = 1;
 }
 
@@ -21,163 +22,86 @@ Lexer.prototype.nextToken = function () {
     //           | ,
     //           | ,@
     //           | .
-    var ch, next, token;
+    var type;
 
-    this.skipWhiteSpaceAndComment();
-
-    // EOF
-    if (this.index >= this.length) {
-        return {
-            type: 'EOF',
-            lineNumber: this.lineNumber
-        };
-    }
-
-    // identifier
-    token = this.scanIdentifier();
-    if (token) {
-        return token;
-    }
-
-    // boolean
-    token = this.scanBoolean();
-    if (token) {
-        return token;
-    }
-
-    // number
-    //token = this.scanNumber();
-    //if (token) {
-        //return token;
-    //}
-
-    // character
-    token = this.scanCharacter();
-    if (token) {
-        return token;
-    }
-
-    // string
-    token = this.scanString();
-    if (token) {
-        return token;
-    }
-
-    ch = this.source[this.index++];
-    next = this.source[this.index];
-
-    if (ch === '('  ||
-        ch === ')'  ||
-        ch === '\'' ||
-        ch === '`'  ||
-        ch === '.') {
-            return {
-                type: ch,
-                lineNumber: this.lineNumber
-            };
-    }
-
-};
-
-Lexer.prototype.skipWhiteSpaceAndComment = function () {
-    // <comment> ::= ; <all subsequent characters up to a line break>
-    //             | <nested comment>
-    //             | #; <atmosphere> <datum>
-    //
-    // <nested comment> ::= #| <comment text>
-    //                         <comment cont>* |#
-    //
-    // <comment text> ::= <character sequence not containing
-    //                     #| or |#>
-    //
-    // <comment cont> ::= <nested comment> <comment text>
-    //
-    // <atmosphere> ::= <whitespace> | <comment>
-    var source = this.source,
-        length = this.length,
-        isLineComment = false,
-        isBlockComment = false,
-        blockCommentDepth,
-        ch,
-        next;
-
-    while (this.index < this.length) {
-        ch = source[this.index];
-        
-        if (isLineComment) {
-            if (this.isLineEnding(ch)) {
-                this.skipLineEnding(ch);
-                isLineComment = false;
-            } else {
-                ++this.index;
-            }
-        } else if (isBlockComment) {
-            if (this.isLineEnding(ch)) {
-                this.skipLineEnding(ch);
-                if (this.index >= length) {
-                    throw new Error();
-                }
-            } else {
-                ++this.index;
-                if (this.index >= length) {
-                    throw new Error();
-                }
-                if (ch === '|') {
-                    ch = source[this.index];
-                    if (ch === '#') {
-                        ++this.index;
-                        if (this.index >= length) {
-                            throw new Error();
-                        }
-                        --blockCommentDepth;
-                        if (blockCommentDepth === 0) {
-                            isBlockComment = false;
-                        }
-                    }
-                } else if (ch === '#') {
-                    ch = source[this.index];
-                    if (ch === '|') {
-                        ++this.index;
-                        if (this.index >= length) {
-                            throw new Error();
-                        }
-                        ++blockCommentDepth;
-                    }
-                }
-            }
-        } else if (ch === ';') {
-            ++this.index;
-            isLineComment = true;
-        } else if (ch === '#') {
-            ch = source[this.index + 1];
-            if (ch === '|') {
-                this.index += 2;
-                isBlockComment = true;
-                blockCommentDepth = 1;
-                if (this.index >= length) {
-                    throw new Error();
-                }
-            } else {
+    while (this.current) {
+        switch (this.current) {
+            case '\n': case '\r':
+                this.skipLineEnding();
                 break;
-            }
-        } else if (this.isLineEnding(ch)) {
-            this.skipLineEnding(ch);
-        } else if (this.isWhiteSpace(ch)) {
-            ++this.index;
-        } else { // TODO: check datum comment
-            break;
+            case ' ': case '\t':
+                this.consume();
+                break;
+            case ';': // inline comment
+                this.skipInlineComment();
+                break;
+            case '#':
+                this.consume();
+                switch (this.current) {
+                    case '|': // #|
+                        this.skipNestedComment();
+                        break;
+                    case 't': case 'f': // #t | #true | #f | #false
+                        return this.scanBoolean();
+                    case '\\':
+                        return this.scanCharacter();
+                    case '(': // #(
+                        return {
+                            type: '#(',
+                            lineNumber: this.lineNumber
+                        };
+                    case 'u': // #u8(
+                        return this.scanByteVector();
+                }
+                break;
+            case '(': case ')': case '\'': case '`':
+                type = this.current;
+                this.consume();
+                return {
+                    type: type,
+                    lineNumber: this.lineNumber
+                };
+            case ',':
+                this.consume();
+                if (this.current === '@') {
+                    this.consume();
+                    type = ',@';
+                } else {
+                    type = ',';
+                }
+                return {
+                    type: type,
+                    lineNumber: this.lineNumber
+                };
+            case '"':
+                return this.scanString();
+            default:
+                return this.scanIdentifier();
         }
     }
+
+    return {
+        type: 'EOF',
+        lineNumber: this.lineNumber
+    };
 };
 
-Lexer.prototype.skipLineEnding = function (ch) {
-    var next = this.source[this.index + 1];
-    if (ch === '\r' && next === '\n') {
-        this.index += 2;
-    } else {
-        this.index += 1;
-    }
-    this.lineNumber += 1;
+// Move forward by one character.
+Lexer.prototype.consume = function () {
+    this.current = this.source[++this.index];
+};
+
+Lexer.prototype.isLetter = function (ch) {
+    return (ch >= 'a' && ch <= 'z')  ||
+           (ch >= 'A' && ch <= 'Z');
+};
+
+Lexer.prototype.isDigit = function (ch) {
+    return ch >= '0' && ch <= '9';
+};
+
+Lexer.prototype.isHexDigit = function (ch) {
+    return '0123456789abcdefABCDEF'.indexOf(ch) >= 0;
 };
 
 Lexer.prototype.isDelimiter = function (ch) {
@@ -222,76 +146,212 @@ Lexer.prototype.isWhiteSpace = function (ch) {
 Lexer.prototype.isLineEnding = function (ch) {
     return ch === '\n' || ch === '\r';
 };
-
-Lexer.prototype.scanIdentifier = function () {
-    // <identifier> ::= <initial> <subsequent>*
-    //                | <vertical bar> <symbol element>* <vertical bar>
-    //                | <peculiar identifier>
-    var source = this.source,
-        buffer,
-        ch;
-
-    ch = source[this.index];
-    
-    if (this.isInitialStart(ch)) {
-        buffer = this.scanInitial();
-        buffer += this.scanSubsequents();
-    } else if (ch === '|') {
-        ++this.index;
-        buffer = this.scanSymbolElements();
-    } else if (this.isPeculiarIdentifierStart(ch)) {
-        buffer = this.scanPeculiarIdentifier();
+Lexer.prototype.skipLineEnding = function () {
+    var old = this.current;
+    this.consume();
+    if (old === '\r' && this.current === '\n') {
+        this.consume();
     }
+    this.lineNumber += 1;
+};
 
-    if (buffer) {
-        return {
-            type: 'identifier',
-            value: buffer,
-            lineNumber: this.lineNumber
-        };
-    } else {
-        return null;
+Lexer.prototype.skipInlineComment = function () {
+    while (!this.isLineEnding(this.current) && this.current) {
+        this.consume();
     }
 };
 
-Lexer.prototype.scanInitial = function () {
-    // <initial> ::= <letter>
-    //             | <special initial>
-    //             | <inline hex escape>
-    var ch = this.source[this.index];
-    if (this.isLetter(ch)) {
-        ++this.index;
-        return ch;
-    } else if (this.isSpecialInitial(ch)) {
-        ++this.index;
-        return ch;
-    } else if (ch === '\\') {
-        return this.scanInlineHexEscape();
-    }
-};
+Lexer.prototype.skipNestedComment = function () {
+    // <nested comment> ::= #| <comment text>
+    //                         <comment cont>* |#
+    //
+    // <comment text> ::= <character sequence not containing
+    //                     #| or |#>
+    //
+    // <comment cont> ::= <nested comment> <comment text>
+    var depth = 1;
 
-Lexer.prototype.scanSubsequents = function () {
-    // <subsequent> ::= <initial>
-    //                | <digit>
-    //                | <special subsequent>
-    var source = this.source,
-        buffer = '',
-        ch;
+    this.consume();
 
     while (true) {
-        ch = source[this.index];
-        if (this.isInitialStart(ch))  {
-            buffer += this.scanInitial();
-        } else if (this.isDigit(ch)) {
-            ++this.index;
-            buffer += ch;
-        } else if (this.isSpecialSubsequent(ch)) {
-            ++this.index;
-            buffer += ch;
+        if (this.current === '\r' || this.current === '\n') {
+            this.skipLineEnding();
+        } else if (this.current === '#') {
+            this.consume();
+            if (this.current === '|') {
+                this.consume();
+                depth += 1;
+            }
+        } else if (this.current === '|') {
+            this.consume();
+            if (this.current === '#') {
+                this.consume();
+                depth -= 1;
+                if (depth === 0) {
+                    break;
+                }
+            }
+        } else if (this.current === undefined) {
+            throw new Error('Unexpected EOF');
         } else {
-            return buffer;
+            this.consume();
         }
     }
+};
+
+Lexer.prototype.scanBoolean = function () {
+    // <boolean> ::= #t
+    //             | #f
+    //             | #true
+    //             | #false
+    var value, buffer = '';
+
+    while (this.current && !this.isDelimiter(this.current)) {
+        buffer += this.current;
+        this.consume();
+    }
+
+    if (buffer === 't' || buffer === 'true') {
+        value = true;
+    } else if (buffer === 'f' || buffer === 'false') {
+        value = false;
+    } else {
+        throw new Error();
+    }
+
+    return {
+        type: 'boolean',
+        value: value,
+        lineNumber: this.lineNumber
+    };
+};
+
+Lexer.prototype.scanCharacter = function () {
+    // <character> ::= #\<any character>
+    //               | #\<character name>
+    //               | #\x<hex scalar value>
+    //
+    // <character name> ::= alarm | backspace | delete
+    //                    | escape | newline | null | return
+    //                    | space | tab
+    var buffer, code, value;
+
+    this.consume();
+
+    if (this.current === 'x') {
+        this.consume();
+        if (this.isHexDigit(this.current)) {
+            buffer = '';
+            while (this.isHexDigit(this.current)) {
+                buffer += this.current;
+                this.consume();
+            }
+            code = parseInt(buffer, 16);
+            value = String.fromCharCode(code);
+        } else {
+            value = 'x';
+        }
+    } else if (this.isLetter(this.current)) {
+        buffer = '';
+        while (!this.isTokenEnd(this.current)) {
+            buffer += this.current;
+            this.consume();
+        }
+        if (buffer.length === 1) {
+            value = buffer;
+        } else if (buffer in this.namedCharacters) {
+            value = this.namedCharacters[buffer];
+        } else {
+            throw new Error('Bad character constant');
+        }
+    } else if (this.current === undefined) { // EOF
+        throw new Error('Expected a character after #\\');
+    } else { // non-letter single character
+        value = this.current;
+        this.consume();
+    }
+
+    return {
+        type: 'character',
+        value: value,
+        lineNumber: this.lineNumber
+    };
+};
+
+Lexer.prototype.namedCharacters = {
+    'alarm'     : '\u0007',
+    'backspace' : '\u0008',
+    'delete'    : '\u007f',
+    'escape'    : '\u001b',
+    'newline'   : '\n',
+    'null'      : '\0',
+    'return'    : '\r',
+    'space'     : ' ',
+    'tab'       : '\t'
+};
+
+Lexer.prototype.scanString = function () {
+    // <string> ::= "<string element>*"
+    //
+    // <string element> ::= <any character other than " or \>
+    //                    | \a | \b | \t | \n | \r | \" | \\
+    //                    | \<intraline whitespace><lineending>
+    //                       <intraline whitespace>
+    //                    | <inline hex escape>
+    //
+    var buffer = '',
+        lineNumber = this.lineNumber;
+
+    this.consume();
+
+    while (this.current !== '"') {
+        if (this.current === undefined) {
+            throw new Error('Unexpected EOF');
+        } else if (this.current === '\\') {
+            this.consume();
+            if (this.isIntralineWhitespace(this.current)) {
+                // A line ending which is preceded by \<intraline whitespace>
+                // expands to nothing.
+                // (along with any trailing intraline whitespace)
+                this.consume();
+                while (!this.isLineEnding(this.current)) {
+                    this.consume();
+                }
+                if (this.current === undefined) {
+                    throw new Error('Unexpected EOF');
+                }
+                this.skipLineEnding();
+                while (this.isIntralineWhitespace(this.current)) {
+                    this.consume();
+                }
+            } else {
+                switch (this.current) {
+                    case 'a': buffer += '\u0007'; break;
+                    case 'b': buffer += '\u0008'; break;
+                    case 't': buffer += '\t'; break;
+                    case 'r': buffer += '\r'; break;
+                    case 'n': buffer += '\n'; break;
+                    case 'r': buffer += '\r'; break;
+                    case '"': buffer += '"'; break;
+                    case '\\': buffer += '\\'; break;
+                    case 'x': buffer += this.scanInlineHexEscape(); continue;
+                }
+                this.consume();
+            }
+        } else if (this.isLineEnding(this.current)) {
+            buffer += '\n';
+            this.skipLineEnding();
+        } else {
+            buffer += this.current;
+            this.consume();
+        }
+    }
+
+    return {
+        type: 'string',
+        value: buffer,
+        lineNumber: lineNumber
+    };
 };
 
 Lexer.prototype.scanInlineHexEscape = function () {
@@ -299,32 +359,116 @@ Lexer.prototype.scanInlineHexEscape = function () {
     // <hex scalar value> ::= <hex digit>+
     //
     //     \x0078; ==> x
-    //     ^
-    //     |
-    //   index
-    var source = this.source,
-        length = this.length,
-        buffer = '',
-        code,
-        ch;
+    //      ^
+    //      |
+    //   current
+    var buffer = '';
 
-    ch = source[++this.index];
-    if (ch !== 'x') {
+    this.consume();
+
+    while (this.current && this.isHexDigit(this.current)) {
+        buffer += this.current;
+        this.consume();
+    }
+    if (this.current === ';') {
+        this.consume();
+        return String.fromCharCode(parseInt(buffer, 16));
+    } else {
         throw new Error();
     }
+};
 
-    ch = source[++this.index];
-    while (this.isHexDigit(ch)) {
-        buffer += ch;
-        ++this.index;
-        if (this.index >= length) {
+Lexer.prototype.scanIdentifier = function () {
+    // <identifier> ::= <initial> <subsequent>*
+    //                | <vertical bar> <symbol element>* <vertical bar>
+    //                | <peculiar identifier>
+    var buffer;
+
+    if (this.isInitialStart(this.current)) {
+        buffer = this.scanInitial();
+        buffer += this.scanSubsequents();
+    } else if (this.current === '|') {
+        this.consume();
+        buffer = this.scanSymbolElements();
+    } else if (this.isPeculiarIdentifierStart(this.current)) {
+        return this.scanPeculiarIdentifier();
+    }
+
+    return {
+        type: 'identifier',
+        value: buffer,
+        lineNumber: this.lineNumber
+    };
+};
+
+Lexer.prototype.isInitialStart = function (ch) {
+    // <initial> ::= <letter>
+    //             | <special initial>
+    //             | <inline hex escape>
+    return this.isLetter(ch)         ||
+           this.isSpecialInitial(ch) ||
+           ch === '\\';
+};
+
+Lexer.prototype.scanInitial = function () {
+    // <initial> ::= <letter>
+    //             | <special initial>
+    //             | <inline hex escape>
+    var ch = this.current;
+
+    if (this.isLetter(ch)) {
+        this.consume();
+        return ch;
+    } else if (this.isSpecialInitial(ch)) {
+        this.consume();
+        return ch;
+    } else if (ch === '\\') {
+        this.consume();
+        if (this.current === 'x') {
+            return this.scanInlineHexEscape();
+        } else {
             throw new Error();
         }
-        ch = source[this.index];
     }
-    if (source[this.index] === ';') {
-        ++this.index;
-        return String.fromCharCode(parseInt(buffer, 16));
+};
+
+Lexer.prototype.scanSymbolElements = function () {
+    // <symbol element> ::= <any character other than <vertical bar> or \>
+    //                    | <inline hex escape>
+    var ch, buffer = '';
+
+    while (true) {
+        ch = this.current;
+        this.consume();
+        if (ch === '\\') {
+            buffer += this.scanInlineHexEscape();
+        } else if (ch === '|') {
+            return buffer;
+        } else {
+            buffer += ch;
+        }
+    }
+};
+
+Lexer.prototype.scanSubsequents = function () {
+    // <subsequent> ::= <initial>
+    //                | <digit>
+    //                | <special subsequent>
+    var ch, buffer = '';
+
+    while (true) {
+        ch = this.current;
+        if (this.isInitialStart(ch))  {
+            buffer += this.scanInitial();
+        } else if (this.isDigit(ch)) {
+            this.consume();
+            buffer += ch;
+        } else if (this.isSpecialSubsequent(ch)) {
+            this.consume();
+            buffer += ch;
+        } else {
+            return buffer;
+        }
     }
 };
 
@@ -333,51 +477,50 @@ Lexer.prototype.scanPeculiarIdentifier = function () {
     //                         | <explicit sign> <sign subsequent> <subsequent>*
     //                         | <explicit sign> . <dot subsequent> <subsequent>*
     //                         | . <non-digit> <subsequent>*
-    var source = this.source,
-        buffer,
-        ch,
-        next;
+    var buffer;
 
-    ch = source[this.index];
-    if (this.isExplicitSign(ch)) {
-        ++this.index;
-        buffer = ch;
-        next = source[this.index + 1];
-        if (this.isSignSubsequentStart(next)) {
+    if (this.isExplicitSign(this.current)) {
+        buffer = this.current;
+        this.consume();
+        if (this.isSignSubsequentStart(this.current)) {
             buffer += this.scanSignSubsequent();
             buffer += this.scanSubsequents();
-        } else if (next === '.') {
-            ++this.index;
+        } else if (this.current === '.') {
+            this.consume();
             buffer += '.';
             buffer += this.scanDotSubsequent();
             buffer += this.scanSubsequents();
-        } else {
-            return ch;
         }
-    } else if (ch === '.') {
-        next = source[this.index + 1];
-        if (this.isNonDigitStart(next)) {
-            ++this.index;
-            buffer = '.';
+    } else if (this.current === '.') {
+        this.consume();
+        buffer = '.';
+        if (this.isNonDigitStart(this.current)) {
             buffer += this.scanNonDigit();
             buffer += this.scanSubsequents();
+        } else {
+            throw new Error();
         }
     }
-    return buffer;
+
+    return {
+        type: 'identifier',
+        value: buffer,
+        lineNumber: this.lineNumber
+    };
 };
 
 Lexer.prototype.scanSignSubsequent = function () {
     // <sign subsequent> ::= <initial>
     //                     | <explicit sign>
     //                     | @
-    var ch = this.source[this.index];
+    var ch = this.current;
     if (this.isInitialStart(ch)) {
         return this.scanInitial();
     } else if (this.isExplicitSign(ch)) {
-        ++this.index;
+        this.consume();
         return ch;
     } else if (ch === '@') {
-        ++this.index;
+        this.consume();
         return ch;
     }
 };
@@ -394,11 +537,10 @@ Lexer.prototype.isSignSubsequentStart = function (ch) {
 Lexer.prototype.scanDotSubsequent = function () {
     // <dot subsequent> ::= <sign subsequent>
     //                    | .
-    var ch = this.source[this.index];
-    if (this.isSignSubsequentStart(ch)) {
+    if (this.isSignSubsequentStart(this.current)) {
         return this.scanSignSubsequent();
-    } else if (ch === '.') {
-        ++this.index;
+    } else if (this.current === '.') {
+        this.consume();
         return '.';
     } else {
         throw new Error();
@@ -408,11 +550,10 @@ Lexer.prototype.scanDotSubsequent = function () {
 Lexer.prototype.scanNonDigit = function () {
     // <non digit> ::= <dot subsequent>
     //               | <explicit sign>
-    var ch = this.source[this.index];
-    if (this.isDotSubSequentStart(ch)) {
+    if (this.isDotSubSequentStart(this.current)) {
         return this.scanDotSubsequent();
     } else {
-        return ch;
+        return this.current;
     }
 };
 
@@ -426,53 +567,6 @@ Lexer.prototype.isDotSubSequentStart = function (ch) {
     // <dot subsequent> ::= <sign subsequent>
     //                    | .
     return this.isSignSubsequentStart(ch) || ch === '.';
-};
-
-Lexer.prototype.scanSymbolElements = function () {
-    // <symbol element> ::= <any character other than <vertical bar> or \>
-    //                    | <inline hex escape>
-    var source = this.source,
-        length = this.length,
-        buffer = '',
-        ch;
-
-    while (true) {
-        ch = source[this.index];
-        if (ch === '\\') {
-            buffer += this.scanInlineHexEscape();
-        } else if (ch === '|') {
-            ++this.index;
-            return buffer;
-        } else {
-            ++this.index;
-            if (this.index >= length) {
-                throw new Error();
-            }
-            buffer += ch;
-        }
-    }
-};
-
-Lexer.prototype.isLetter = function (ch) {
-    return (ch >= 'a' && ch <= 'z')  ||
-           (ch >= 'A' && ch <= 'Z');
-};
-
-Lexer.prototype.isDigit = function (ch) {
-    return ch >= '0' && ch <= '9';
-};
-
-Lexer.prototype.isHexDigit = function (ch) {
-    return '0123456789abcdefABCDEF'.indexOf(ch) >= 0;
-};
-
-Lexer.prototype.isInitialStart = function (ch) {
-    // <initial> ::= <letter>
-    //             | <special initial>
-    //             | <inline hex escape>
-    return this.isLetter(ch)         ||
-           this.isSpecialInitial(ch) ||
-           ch === '\\';
 };
 
 Lexer.prototype.isPeculiarIdentifierStart = function (ch) {
@@ -517,194 +611,6 @@ Lexer.prototype.isTokenEnd = function (ch) {
     return this.isDelimiter(ch)       ||
            this.isAtmosphereStart(ch) ||
            ch === undefined; // when reached EOF
-};
-
-Lexer.prototype.scanBoolean = function () {
-    // <boolean> ::= #t
-    //             | #f
-    //             | #true
-    //             | #false
-    var source = this.source,
-        ch = source[this.index],
-        ch1, ch2,
-        value;
-
-    if (ch !== '#') {
-        return null;
-    }
-
-    ch1 = source[this.index + 1];
-    ch2 = source[this.index + 2];
-
-    if (ch1 === 't') {
-        if (this.isTokenEnd(ch2)) {
-            this.index += 2;
-            value = true;
-        } else if (source.slice(this.index, this.index + 5) === '#true' &&
-                   this.isTokenEnd(source[this.index + 5])) {
-            this.index += 5;
-            value = true;
-        }
-    } else if (ch1 === 'f') {
-        if (this.isTokenEnd(ch2)) {
-            this.index += 2;
-            value = false;
-        } else if (source.slice(this.index, this.index + 6) === '#false' &&
-                   this.isTokenEnd(source[this.index + 6])) {
-            this.index += 6;
-            value = false;
-        }
-    }
-
-    if (value !== undefined) {
-        return {
-            type: 'boolean',
-            value: value,
-            lineNumber: this.lineNumber
-        };
-    } else {
-        return null;
-    }
-};
-
-Lexer.prototype.scanCharacter = function () {
-    // <character> ::= #\<any character>
-    //               | #\<character name>
-    //               | #\x<hex scalar value>
-    //
-    // <character name> ::= alarm | backspace | delete
-    //                    | escape | newline | null | return
-    //                    | space | tab
-    var source = this.source,
-        ch, next, buffer, code, value, text, re, name, match;
-
-    ch = source[this.index];
-    next = source[this.index + 1];
-    if (!(ch === '#' && next === '\\')) {
-        return null;
-    }
-
-    this.index += 2;
-    ch = source[this.index];
-    if (ch === 'x') { // hex
-        buffer = '';
-        ch = source[++this.index];
-        while (this.isHexDigit(ch)) {
-            buffer += ch;
-            ch = source[++this.index];
-        }
-        code = parseInt(buffer, 16);
-        value = String.fromCharCode(code);
-    } else {
-        text = source.slice(this.index, this.index + 9);
-        re = /^(alarm|backspace|delete|escape|newline|null|return|space|tab)/;
-        match = re.exec(text);
-        if (match) {
-            name = match[0];
-            value = this.namedCharacters[name];
-            this.index += name.length;
-        } else { // single character
-            value = ch;
-            ++this.index;
-        }
-    }
-
-    if (value) {
-        return {
-            type: 'character',
-            value: value,
-            lineNumber: this.lineNumber
-        };
-    } else {
-        return null;
-    }
-};
-
-Lexer.prototype.namedCharacters = {
-    'alarm'     : '\u0007',
-    'backspace' : '\u0008',
-    'delete'    : '\u007f',
-    'escape'    : '\u001b',
-    'newline'   : '\n',
-    'null'      : '\0',
-    'return'    : '\r',
-    'space'     : ' ',
-    'tab'       : '\t'
-};
-
-Lexer.prototype.scanString = function () {
-    // <string> ::= "<string element>*"
-    //
-    // <string element> ::= <any character other than " or \>
-    //                    | \a | \b | \t | \n | \r | \" | \\
-    //                    | \<intraline whitespace><lineending>
-    //                       <intraline whitespace>
-    //                    | <inline hex escape>
-    //
-    // A line ending which is preceded by \<intraline whitespace>
-    // expands to nothing (along with any trailing intraline whitespace)
-    var source = this.source,
-        length = this.length,
-        buffer,
-        ch, next,
-        lineNumber;
-
-    ch = source[this.index];
-    if (ch !== '"') {
-        return null;
-    }
-
-    ++this.index;
-    buffer = '';
-    lineNumber = this.lineNumber;
-
-    while (true) {
-        ch = source[this.index];
-        if (ch === '\\') {
-            next = source[this.index + 1];
-            if (next === 'a' ||
-                next === 'b' ||
-                next === 't' ||
-                next === 'n' ||
-                next === 'r' ||
-                next === '"' ||
-                next === '\\') {
-                    this.index += 2;
-                    buffer += next;
-            } else if (next === 'x') {
-                buffer += this.scanInlineHexEscape();
-            } else {
-                ++this.index;
-                ch = source[this.index++];
-                while (this.isIntralineWhitespace(ch)) {
-                    ch = source[this.index++];
-                }
-                if (this.isLineEnding(ch)) {
-                    this.skipLineEnding(ch);
-                    ch = source[this.index];
-                    while (this.isIntralineWhitespace(ch)) {
-                        ch = source[this.index++];
-                    }
-                } else {
-                    throw new Error();
-                }
-            }
-        } else if (ch === '"') {
-            break;
-        } else {
-            ++this.index;
-            if (this.index > length) {
-                throw new Error();
-            }
-            buffer += ch;
-        }
-    }
-
-    return {
-        type: 'string',
-        value: buffer,
-        lineNumber: lineNumber
-    };
 };
 
 exports.Lexer = Lexer;

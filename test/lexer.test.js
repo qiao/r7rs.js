@@ -50,6 +50,7 @@ describe('Lexer', function () {
         });
     });
 
+
     it('should throw error on unclosed block comment', function () {
         lexer = new Lexer('#|');
         (function () {
@@ -60,14 +61,6 @@ describe('Lexer', function () {
         (function () {
             lexer.nextToken();
         }).should.throw();
-    });
-
-    it('should scan inline hex escape', function () {
-        lexer = new Lexer('\\x30;');
-        lexer.scanInlineHexEscape().should.equal('0');
-
-        lexer = new Lexer('\\x0078;');
-        lexer.scanInlineHexEscape().should.equal('x');
     });
 
     it('should scan identifier', function () {
@@ -156,7 +149,13 @@ describe('Lexer', function () {
             type: 'EOF',
             lineNumber: 3
         });
+
+        lexer = new Lexer('#falsy');
+        (function () {
+            lexer.nextToken();
+        }).should.throw();
     });
+
 
     it('should scan character', function () {
         lexer = new Lexer('#\\ ');
@@ -166,7 +165,7 @@ describe('Lexer', function () {
             lineNumber: 1
         });
     
-        lexer = new Lexer('#\\n#\\space#\\tab');
+        lexer = new Lexer('#\\n #\\space #\\tab');
         lexer.nextToken().should.eql({
             type: 'character',
             value: 'n',
@@ -274,5 +273,4 @@ describe('Lexer', function () {
             lineNumber: 2
         });
     });
-
 });
