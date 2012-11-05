@@ -4,7 +4,7 @@
     "homepage": "http://github.com/qiao/r7rs.js",
     "version": "0.0.1",
     "devDependencies": {
-        "mocha": "0.6.0",
+        "mocha": "1.6.0",
         "should": "1.2.1"
     },
     "engines": {
