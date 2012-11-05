@@ -1,8 +1,11 @@
-function Lexer(input) {
-    this.source = input;
-    this.length = input.length;
+/**
+ * Lexical Analyzer
+ */
+function Lexer(source) {
+    this.source = source;
+    this.length = source.length;
     this.index = 0;
-    this.current = input[0];
+    this.current = source[0];
     this.lineNumber = 1;
 }
 
@@ -43,7 +46,7 @@ Lexer.prototype.nextToken = function () {
                         break;
                     case 't': case 'f': // #t | #true | #f | #false
                         return this.scanBoolean();
-                    case '\\':
+                    case '\\': // #\<character> | #\<character name> | #\x<hex>;
                         return this.scanCharacter();
                     case '(': // #(
                         return {
@@ -104,33 +107,6 @@ Lexer.prototype.isHexDigit = function (ch) {
     return '0123456789abcdefABCDEF'.indexOf(ch) >= 0;
 };
 
-Lexer.prototype.isDelimiter = function (ch) {
-    // <delimiter> ::= <whitespace>
-    //               | (
-    //               | )
-    //               | "
-    //               | ;
-    //               | |
-    return this.isWhiteSpace(ch) ||
-           ch === '('            ||
-           ch === ')'            ||
-           ch === '"'            ||
-           ch === ';'            ||
-           ch === '|';
-};
-
-Lexer.prototype.isAtmosphereStart = function (ch) {
-    // <atmosphere> ::= <whitespace>
-    //                | <comment>
-    return this.isWhiteSpace(ch) ||
-           this.isCommentStart(ch);
-};
-
-Lexer.prototype.isCommentStart = function (ch) {
-    return ch === ';' ||
-           ch === '#';
-};
-
 Lexer.prototype.isIntralineWhitespace = function (ch) {
     // <intraline whitespace> ::= <space or tab>
     return ch === ' ' || ch === '\t';
@@ -146,6 +122,33 @@ Lexer.prototype.isWhiteSpace = function (ch) {
 Lexer.prototype.isLineEnding = function (ch) {
     return ch === '\n' || ch === '\r';
 };
+
+Lexer.prototype.isDelimiter = function (ch) {
+    // <delimiter> ::= <whitespace>
+    //               | (
+    //               | )
+    //               | "
+    //               | ;
+    //               | |
+    return this.isWhiteSpace(ch) ||
+           ch === '('            ||
+           ch === ')'            ||
+           ch === '"'            ||
+           ch === ';'            ||
+           ch === '|';
+};
+
+Lexer.prototype.isCommentStart = function (ch) {
+    return ch === ';' || ch === '#';
+};
+
+Lexer.prototype.isAtmosphereStart = function (ch) {
+    // <atmosphere> ::= <whitespace>
+    //                | <comment>
+    return this.isWhiteSpace(ch) ||
+           this.isCommentStart(ch);
+};
+
 Lexer.prototype.skipLineEnding = function () {
     var old = this.current;
     this.consume();
@@ -156,7 +159,7 @@ Lexer.prototype.skipLineEnding = function () {
 };
 
 Lexer.prototype.skipInlineComment = function () {
-    while (!this.isLineEnding(this.current) && this.current) {
+    while (this.current && !this.isLineEnding(this.current)) {
         this.consume();
     }
 };
@@ -216,7 +219,7 @@ Lexer.prototype.scanBoolean = function () {
     } else if (buffer === 'f' || buffer === 'false') {
         value = false;
     } else {
-        throw new Error();
+        throw new Error('Ill-formed boolean: ' + buffer);
     }
 
     return {
@@ -253,13 +256,13 @@ Lexer.prototype.scanCharacter = function () {
         }
     } else if (this.isLetter(this.current)) {
         buffer = '';
-        while (!this.isTokenEnd(this.current)) {
+        while (this.current && !this.isDelimiter(this.current)) {
             buffer += this.current;
             this.consume();
         }
         if (buffer.length === 1) {
             value = buffer;
-        } else if (buffer in this.namedCharacters) {
+        } else if (this.namedCharacters.hasOwnProperty(buffer)) {
             value = this.namedCharacters[buffer];
         } else {
             throw new Error('Bad character constant');
@@ -313,12 +316,11 @@ Lexer.prototype.scanString = function () {
                 // A line ending which is preceded by \<intraline whitespace>
                 // expands to nothing.
                 // (along with any trailing intraline whitespace)
-                this.consume();
-                while (!this.isLineEnding(this.current)) {
+                while (this.isIntralineWhitespace(this.current)) {
                     this.consume();
                 }
-                if (this.current === undefined) {
-                    throw new Error('Unexpected EOF');
+                if (!this.isLineEnding(this.current)) {
+                    throw new Error();
                 }
                 this.skipLineEnding();
                 while (this.isIntralineWhitespace(this.current)) {
@@ -444,6 +446,8 @@ Lexer.prototype.scanSymbolElements = function () {
             buffer += this.scanInlineHexEscape();
         } else if (ch === '|') {
             return buffer;
+        } else if (ch === undefined) { // EOF
+            throw new Error('Unexpected EOF');
         } else {
             buffer += ch;
         }
@@ -466,6 +470,8 @@ Lexer.prototype.scanSubsequents = function () {
         } else if (this.isSpecialSubsequent(ch)) {
             this.consume();
             buffer += ch;
+        } else if (ch === undefined) {
+            throw new Error('Unexpected EOF');
         } else {
             return buffer;
         }
@@ -607,10 +613,10 @@ Lexer.prototype.isExplicitSign = function (ch) {
     return ch === '+' || ch === '-';
 };
 
-Lexer.prototype.isTokenEnd = function (ch) {
-    return this.isDelimiter(ch)       ||
-           this.isAtmosphereStart(ch) ||
-           ch === undefined; // when reached EOF
+Lexer.prototype.scanNumber = function () {
+    // <num R> ::= <prefix R> <complex R>
+    // <complex R> ::= <real R>
+    //               | <real R> @ <real R>
 };
 
 exports.Lexer = Lexer;
