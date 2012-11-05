@@ -1,3 +1,5 @@
+/*global describe: true, it: true*/
+
 var Lexer = require('../src/lexer').Lexer;
 
 describe('Lexer', function () {
@@ -201,6 +203,16 @@ describe('Lexer', function () {
         lexer.nextToken().should.eql({
             type: 'EOF',
             lineNumber: 2
+        });
+    });
+
+    it('should throw error on ill-formed character', function () {
+        ['#\\',
+         '#\\spaceeee'].forEach(function (source) {
+            lexer = new Lexer(source);
+            (function () {
+                lexer.nextToken();
+            }).should.throw();
         });
     });
 
