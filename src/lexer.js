@@ -337,6 +337,7 @@ Lexer.prototype.scanString = function () {
                     case '"': buffer += '"'; break;
                     case '\\': buffer += '\\'; break;
                     case 'x': buffer += this.scanInlineHexEscape(); continue;
+                    default: throw new Error();
                 }
                 this.consume();
             }
