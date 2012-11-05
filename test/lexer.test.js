@@ -149,13 +149,18 @@ describe('Lexer', function () {
             type: 'EOF',
             lineNumber: 3
         });
-
-        lexer = new Lexer('#falsy');
-        (function () {
-            lexer.nextToken();
-        }).should.throw();
     });
 
+    it('should throw error on ill-formed boolean', function () {
+      ['#falsy',
+       '#tr\n;',
+       '#t#f'].forEach(function (source) {
+          lexer = new Lexer(source);
+          (function () {
+              lexer.nextToken();
+          }).should.throw();
+       });
+    });
 
     it('should scan character', function () {
         lexer = new Lexer('#\\ ');
@@ -219,6 +224,17 @@ describe('Lexer', function () {
             type: 'string',
             value: 'Here\'s a text containing just one line',
             lineNumber: 1
+        });
+    });
+
+    it('should throw error on ill-formed string', function () {
+        ['"hello',
+         '"\\x50hello"',
+         '"\\z'].forEach(function (source) {
+            lexer = new Lexer(source);
+            (function () {
+                lexer.nextToken();
+            }).should.throw();
         });
     });
 
