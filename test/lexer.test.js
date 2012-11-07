@@ -52,7 +52,6 @@ describe('Lexer', function () {
         });
     });
 
-
     it('should throw error on unclosed block comment', function () {
         lexer = new Lexer('#|');
         (function () {

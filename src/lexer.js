@@ -1,3 +1,5 @@
+/* vim: set sw=4 ts=4 tw=80: */
+
 /**
  * Lexical Analyzer
  */
@@ -8,6 +10,10 @@ function Lexer(source) {
     this.current = source[0];
     this.lineNumber = 1;
 }
+
+Lexer.prototype.reset = function (source) {
+    Lexer.call(this, source);
+};
 
 // Scan and return the next token.
 Lexer.prototype.nextToken = function () {
@@ -25,26 +31,29 @@ Lexer.prototype.nextToken = function () {
     //           | ,
     //           | ,@
     //           | .
-    var type;
+    var ch;
 
     while (this.current) {
         switch (this.current) {
-            case '\n': case '\r':
+            case '\n':
+            case '\r':
                 this.skipLineEnding();
                 break;
-            case ' ': case '\t':
-                this.consume();
+            case ' ':
+            case '\t':
+                this.next();
                 break;
             case ';': // inline comment
                 this.skipInlineComment();
                 break;
             case '#':
-                this.consume();
+                this.next();
                 switch (this.current) {
                     case '|': // #|
                         this.skipNestedComment();
                         break;
-                    case 't': case 'f': // #t | #true | #f | #false
+                    case 't':
+                    case 'f': // #t | #true | #f | #false
                         return this.scanBoolean();
                     case '\\': // #\<character> | #\<character name> | #\x<hex>;
                         return this.scanCharacter();
@@ -55,29 +64,68 @@ Lexer.prototype.nextToken = function () {
                         };
                     case 'u': // #u8(
                         return this.scanByteVector();
+                    case 'i':
+                    case 'I':
+                    case 'e':
+                    case 'E':
+                    case 'b':
+                    case 'B':
+                    case 'o':
+                    case 'O':
+                    case 'd':
+                    case 'D':
+                    case 'x':
+                    case 'X':
+                        return this.scanPrefixedNumber();
+                    default:
+                        this.error('illegal token');
                 }
                 break;
-            case '(': case ')': case '\'': case '`':
-                type = this.current;
-                this.consume();
+            case '(':
+            case ')':
+            case '\'':
+            case '`':
+                ch = this.current;
+                this.next();
                 return {
-                    type: type,
+                    type: ch,
                     lineNumber: this.lineNumber
                 };
             case ',':
-                this.consume();
+                this.next();
                 if (this.current === '@') {
-                    this.consume();
-                    type = ',@';
+                    this.next();
+                    ch = ',@';
                 } else {
-                    type = ',';
+                    ch = ',';
                 }
                 return {
-                    type: type,
+                    type: ch,
                     lineNumber: this.lineNumber
                 };
             case '"':
                 return this.scanString();
+            case '.':
+                this.next();
+                if (this.isDigit(this.current)) {
+                    this.prev();
+                    return this.scanNumber();
+                } else {
+                    this.prev();
+                    return this.scanIdentifier();
+                }
+                break;
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+                return this.scanNumber();
             default:
                 return this.scanIdentifier();
         }
@@ -90,8 +138,24 @@ Lexer.prototype.nextToken = function () {
 };
 
 // Move forward by one character.
-Lexer.prototype.consume = function () {
+Lexer.prototype.next = function () {
     this.current = this.source[++this.index];
+};
+
+// Move backward by one character.
+Lexer.prototype.prev = function () {
+    this.current = this.source[--this.index];
+};
+
+Lexer.prototype.error = function (message) {
+    message = ([
+        'Line ',
+        this.lineNumber,
+        ': ',
+        message,
+    ]).join('');
+
+    throw new Error(message);
 };
 
 Lexer.prototype.isLetter = function (ch) {
@@ -99,8 +163,25 @@ Lexer.prototype.isLetter = function (ch) {
            (ch >= 'A' && ch <= 'Z');
 };
 
+Lexer.prototype.isBinaryDigit = function (ch) {
+    return ch === '0' || ch === '1';
+};
+
+Lexer.prototype.isOctalDigit = function (ch) {
+    return ch >= '0' && ch <= '7';
+};
+
 Lexer.prototype.isDigit = function (ch) {
     return ch >= '0' && ch <= '9';
+};
+
+Lexer.prototype.isDigitOfRadix = function (ch, radix) {
+    switch (radix) {
+        case 2: return this.isBinaryDigit(ch);
+        case 8: return this.isOctalDigit(ch);
+        case 16: return this.isHexDigit(ch);
+        default: return this.isDigit(ch);
+    }
 };
 
 Lexer.prototype.isHexDigit = function (ch) {
@@ -151,16 +232,16 @@ Lexer.prototype.isAtmosphereStart = function (ch) {
 
 Lexer.prototype.skipLineEnding = function () {
     var old = this.current;
-    this.consume();
+    this.next();
     if (old === '\r' && this.current === '\n') {
-        this.consume();
+        this.next();
     }
     this.lineNumber += 1;
 };
 
 Lexer.prototype.skipInlineComment = function () {
     while (this.current && !this.isLineEnding(this.current)) {
-        this.consume();
+        this.next();
     }
 };
 
@@ -174,32 +255,43 @@ Lexer.prototype.skipNestedComment = function () {
     // <comment cont> ::= <nested comment> <comment text>
     var depth = 1;
 
-    this.consume();
+    this.next();
 
     while (true) {
         if (this.current === '\r' || this.current === '\n') {
             this.skipLineEnding();
         } else if (this.current === '#') {
-            this.consume();
+            this.next();
             if (this.current === '|') {
-                this.consume();
+                this.next();
                 depth += 1;
             }
         } else if (this.current === '|') {
-            this.consume();
+            this.next();
             if (this.current === '#') {
-                this.consume();
+                this.next();
                 depth -= 1;
                 if (depth === 0) {
                     break;
                 }
             }
         } else if (this.current === undefined) {
-            throw new Error('Unexpected EOF');
+            this.error('unfinished nested comment');
         } else {
-            this.consume();
+            this.next();
         }
     }
+};
+
+Lexer.prototype.scanUntilDelimiter = function () {
+    var buffer = '';
+
+    while (this.current && !this.isDelimiter(this.current)) {
+        buffer += this.current;
+        this.next();
+    }
+
+    return buffer;
 };
 
 Lexer.prototype.scanBoolean = function () {
@@ -207,19 +299,16 @@ Lexer.prototype.scanBoolean = function () {
     //             | #f
     //             | #true
     //             | #false
-    var value, buffer = '';
+    var value, buffer;
 
-    while (this.current && !this.isDelimiter(this.current)) {
-        buffer += this.current;
-        this.consume();
-    }
+    buffer = this.scanUntilDelimiter();
 
     if (buffer === 't' || buffer === 'true') {
         value = true;
     } else if (buffer === 'f' || buffer === 'false') {
         value = false;
     } else {
-        throw new Error('Ill-formed boolean: ' + buffer);
+        this.error('ill-formed boolean');
     }
 
     return {
@@ -239,15 +328,15 @@ Lexer.prototype.scanCharacter = function () {
     //                    | space | tab
     var buffer, code, value;
 
-    this.consume();
+    this.next();
 
     if (this.current === 'x') {
-        this.consume();
+        this.next();
         if (this.isHexDigit(this.current)) {
             buffer = '';
             while (this.isHexDigit(this.current)) {
                 buffer += this.current;
-                this.consume();
+                this.next();
             }
             code = parseInt(buffer, 16);
             value = String.fromCharCode(code);
@@ -258,20 +347,20 @@ Lexer.prototype.scanCharacter = function () {
         buffer = '';
         while (this.current && !this.isDelimiter(this.current)) {
             buffer += this.current;
-            this.consume();
+            this.next();
         }
         if (buffer.length === 1) {
             value = buffer;
         } else if (this.namedCharacters.hasOwnProperty(buffer)) {
             value = this.namedCharacters[buffer];
         } else {
-            throw new Error('Bad character constant');
+            this.error('ill-formed character');
         }
     } else if (this.current === undefined) { // EOF
-        throw new Error('Expected a character after #\\');
+        this.error('ill-formed character');
     } else { // non-letter single character
         value = this.current;
-        this.consume();
+        this.next();
     }
 
     return {
@@ -305,26 +394,26 @@ Lexer.prototype.scanString = function () {
     var buffer = '',
         lineNumber = this.lineNumber;
 
-    this.consume();
+    this.next();
 
     while (this.current !== '"') {
         if (this.current === undefined) {
-            throw new Error('Unexpected EOF');
+            this.error('unfinished string');
         } else if (this.current === '\\') {
-            this.consume();
+            this.next();
             if (this.isIntralineWhitespace(this.current)) {
                 // A line ending which is preceded by \<intraline whitespace>
                 // expands to nothing.
                 // (along with any trailing intraline whitespace)
                 while (this.isIntralineWhitespace(this.current)) {
-                    this.consume();
+                    this.next();
                 }
                 if (!this.isLineEnding(this.current)) {
-                    throw new Error();
+                    this.error('unfinished string');
                 }
                 this.skipLineEnding();
                 while (this.isIntralineWhitespace(this.current)) {
-                    this.consume();
+                    this.next();
                 }
             } else {
                 switch (this.current) {
@@ -337,16 +426,16 @@ Lexer.prototype.scanString = function () {
                     case '"': buffer += '"'; break;
                     case '\\': buffer += '\\'; break;
                     case 'x': buffer += this.scanInlineHexEscape(); continue;
-                    default: throw new Error();
+                    default: this.error('invalid escape sequence');
                 }
-                this.consume();
+                this.next();
             }
         } else if (this.isLineEnding(this.current)) {
             buffer += '\n';
             this.skipLineEnding();
         } else {
             buffer += this.current;
-            this.consume();
+            this.next();
         }
     }
 
@@ -367,17 +456,17 @@ Lexer.prototype.scanInlineHexEscape = function () {
     //   current
     var buffer = '';
 
-    this.consume();
+    this.next();
 
     while (this.current && this.isHexDigit(this.current)) {
         buffer += this.current;
-        this.consume();
+        this.next();
     }
     if (this.current === ';') {
-        this.consume();
+        this.next();
         return String.fromCharCode(parseInt(buffer, 16));
     } else {
-        throw new Error();
+        this.error('invalid escape sequence');
     }
 };
 
@@ -391,7 +480,7 @@ Lexer.prototype.scanIdentifier = function () {
         buffer = this.scanInitial();
         buffer += this.scanSubsequents();
     } else if (this.current === '|') {
-        this.consume();
+        this.next();
         buffer = this.scanSymbolElements();
     } else if (this.isPeculiarIdentifierStart(this.current)) {
         return this.scanPeculiarIdentifier();
@@ -420,17 +509,17 @@ Lexer.prototype.scanInitial = function () {
     var ch = this.current;
 
     if (this.isLetter(ch)) {
-        this.consume();
+        this.next();
         return ch;
     } else if (this.isSpecialInitial(ch)) {
-        this.consume();
+        this.next();
         return ch;
     } else if (ch === '\\') {
-        this.consume();
+        this.next();
         if (this.current === 'x') {
             return this.scanInlineHexEscape();
         } else {
-            throw new Error();
+            this.error('invalid identifier');
         }
     }
 };
@@ -442,13 +531,13 @@ Lexer.prototype.scanSymbolElements = function () {
 
     while (true) {
         ch = this.current;
-        this.consume();
+        this.next();
         if (ch === '\\') {
             buffer += this.scanInlineHexEscape();
         } else if (ch === '|') {
             return buffer;
         } else if (ch === undefined) { // EOF
-            throw new Error('Unexpected EOF');
+            this.error('unfinished identifier');
         } else {
             buffer += ch;
         }
@@ -466,10 +555,10 @@ Lexer.prototype.scanSubsequents = function () {
         if (this.isInitialStart(ch))  {
             buffer += this.scanInitial();
         } else if (this.isDigit(ch)) {
-            this.consume();
+            this.next();
             buffer += ch;
         } else if (this.isSpecialSubsequent(ch)) {
-            this.consume();
+            this.next();
             buffer += ch;
         } else {
             return buffer;
@@ -486,24 +575,24 @@ Lexer.prototype.scanPeculiarIdentifier = function () {
 
     if (this.isExplicitSign(this.current)) {
         buffer = this.current;
-        this.consume();
+        this.next();
         if (this.isSignSubsequentStart(this.current)) {
             buffer += this.scanSignSubsequent();
             buffer += this.scanSubsequents();
         } else if (this.current === '.') {
-            this.consume();
+            this.next();
             buffer += '.';
             buffer += this.scanDotSubsequent();
             buffer += this.scanSubsequents();
         }
     } else if (this.current === '.') {
-        this.consume();
+        this.next();
         buffer = '.';
         if (this.isNonDigitStart(this.current)) {
             buffer += this.scanNonDigit();
             buffer += this.scanSubsequents();
         } else {
-            throw new Error();
+            this.error('invalid identifier');
         }
     }
 
@@ -522,10 +611,10 @@ Lexer.prototype.scanSignSubsequent = function () {
     if (this.isInitialStart(ch)) {
         return this.scanInitial();
     } else if (this.isExplicitSign(ch)) {
-        this.consume();
+        this.next();
         return ch;
     } else if (ch === '@') {
-        this.consume();
+        this.next();
         return ch;
     }
 };
@@ -545,7 +634,7 @@ Lexer.prototype.scanDotSubsequent = function () {
     if (this.isSignSubsequentStart(this.current)) {
         return this.scanSignSubsequent();
     } else if (this.current === '.') {
-        this.consume();
+        this.next();
         return '.';
     } else {
         throw new Error();
@@ -613,12 +702,320 @@ Lexer.prototype.isExplicitSign = function (ch) {
 };
 
 Lexer.prototype.scanNumber = function () {
-    // <number> ::= <num 2> | <num 8> | <num 10> | <num 16>
-    // <num R> ::= <prefix R> <complex R>
-    // <prefix R> ::= <radix R> <exactness>
-    //              | <exactness> <radix R>
-    // <complex R> ::= <real R>
-    //               | <real R> @ <real R>
+    // XXX: only support basic numbers so far.
+    //
+    // <decimal 10> ::= <uinteger 10> <suffix>
+    //                | . <digit 10>+ <suffix>
+    //                | <digit 10>+ . <digit 10>* <suffix>
+    var whole, fraction, exponent;
+
+    if (this.current === '.') { // decimal starting with dot
+        this.next();
+        if (!this.isDigit(this.current)) {
+            this.error('ill-formed number');
+        }
+        whole = '0';
+        fraction = this.scanDigits(10);
+    } else if (this.isDigit(this.current)) {
+        whole = this.scanDigits(10);
+        if (this.current === '.') {
+            this.next();
+            fraction = this.scanDigits(10) || '0';
+        }
+    }
+
+    whole = parseInt(whole, 10);
+    fraction = parseFloat('0.' + fraction);
+    exponent = this.scanSuffix();
+
+    return {
+        type: 'number',
+        subtype: 'real',
+        exact: false,
+        value: (whole + fraction) * Math.pow(10, exponent)
+    };
 };
+
+Lexer.prototype.scanPrefixedNumber = function () {
+    this.error('prefixed number not supported');
+};
+
+//Lexer.prototype.scanComplex = function (radix) {
+    //// <complex R> ::= <real R>
+    ////               | <real R> @ <real R>
+    ////               | <real R> + <ureal R> i
+    ////               | <real R> - <ureal R> i
+    ////               | <real R> + i
+    ////               | <real R> - i
+    ////               | <real R> <infinity> i
+    ////               | + <ureal R> i
+    ////               | - <ureal R> i
+    ////               | <infinity> i
+    ////               | + i
+    ////               | - i
+    ////
+    //// <real R> ::= <sign> <ureal R>
+    ////            | <infinity>
+    ////
+    //// <ureal R> ::= <uinteger R>
+    ////             | <uinteger R> / <uinteger R>
+    ////             | <decimal R>
+    ////
+    //// <decimal 10> ::= <uinteger 10> <suffix>
+    ////                | . <digit 10>+ <suffix>
+    ////                | <digit 10>+ . <digit 10>* <suffix>
+    ////
+    //// <uinteger R> ::= <digit R>+
+    ////
+    //// <suffix> ::= <empty>
+    ////            | <exponent marker> <sign> <digit 10>+
+    ////
+    //// <exponent marker> ::= e | s | f | d | l
+    ////
+    //// <sign> ::= <empty> | + | -
+
+    //var sign = 1; // 1 for postive and -1 for negative
+
+    //if (this.current === '+') {
+        //this.sign = 1;
+        //this.next();
+    //} else if (this.current === '-') {
+        //this.sign = -1;
+        //this.next();
+    //}
+//};
+
+//Lexer.prototype.scanUreal = function (radix) {
+    //// <ureal R> ::= <uinteger R>
+    ////             | <uinteger R> / <uinteger R>
+    ////             | <decimal R>
+    ////
+    //// <decimal 10> ::= <uinteger 10> <suffix>
+    ////                | . <digit 10>+ <suffix>
+    ////                | <digit 10>+ . <digit 10>* <suffix>
+    //var buffer, first, second, i;
+
+    //if (this.current === '.') { // decimal
+        //if (radix !== 10) {
+            //this.error('ill-formed number');
+        //}
+        //this.next();
+        //if (!this.isDigit(this.current)) {
+            //this.error('ill-formed number');
+        //}
+        //first = '0';
+        //second = this.scanDigits(10);
+    
+    //} else if (this.isDigitOfRadix(this.current, radix)) {
+        //buffer = this.scanDigits(radix);
+        //first = parseInt(buffer, radix); // nominator or whole part
+
+        //if (this.current === '/') {
+            //this.next();
+            //buffer = this.scanDigits(radix);
+            //second = parseInt(buffer, radix); // denominator
+
+            //return {
+                //type: 'number',
+                //subtype: 'rational',
+                //exact: true,
+                //value: first / second,
+                //nominator: first,
+                //denominator: second,
+                //lineNumber: this.lineNumber
+            //};
+        //} else if (this.current === '.') {
+            //this.next();
+            //buffer = this.scanDigits(radix); // fraction part
+            //// convert fraction part to float
+            //second = 0;
+            //for (i = 0; i < buffer.length; ++i) {
+                //second += Math.pow(radix, -(i + 1)) * (buffer[i] - '0');
+            //}
+
+            //return {
+                //type: 'number',
+                //subtype: 'rational',
+                //exact: false,
+                //value: first + second,
+                //lineNumber: this.lineNumber
+            //};
+        //} else { // no second part
+            //return {
+                //type: 'number',
+                //subtype: 'integer',
+                //exact: true,
+                //value: first,
+                //lineNumber: this.lineNumber
+            //};
+        //}
+    //}
+//};
+
+Lexer.prototype.scanDigits = function (radix) {
+    var buffer = '',
+        checkRadix;
+
+    switch (radix) {
+        // XXX: be careful about `this`
+        case 2: checkRadix = this.isBinaryDigit; break;
+        case 8: checkRadix = this.isOctalDigit; break;
+        case 16: checkRadix = this.isHexDigit; break;
+        default: checkRadix = this.isDigit;
+    }
+
+    while (this.isDigit(this.current)) {
+        if (!checkRadix(this.current)) {
+            this.error('ill-formed number');
+        }
+        buffer += this.current;
+        this.next();
+    }
+
+    return buffer;
+};
+
+//Lexer.prototype.scanDecimal = function () {
+    //// <decimal 10> ::= <uinteger 10> <suffix>
+    ////                | . <digit 10>+ <suffix>
+    ////                | <digit 10>+ . <digit 10>* <suffix>
+    //var whole, fraction, exponent;
+
+    //if (this.current === '.') { // decimal starting with dot
+    //} else if (this.isDigit(this.current)) {
+        //if (!this.isDigit(this.current)) {
+            //this.error('ill-formed number');
+        //}
+        //whole = this.scanDigits();
+        //if (this.current === '.') {
+            //this.next();
+            //fraction = this.scanDigits(10) || '0';
+        //}
+    //}
+
+    //whole = parseInt(whole, 10);
+    //fraction = parseFloat('0.' + fraction);
+    //exponent = this.scanSuffix();
+
+    //return {
+        //type: 'number',
+        //subtype: 'real',
+        //exact: false,
+        //value: (whole + fraction) * Math.pow(10, exponent)
+    //};
+//};
+
+Lexer.prototype.scanSuffix = function () {
+    // <suffix> ::= <empty>
+    //            | <exponent marker> <sign> <digit 10>+
+    //
+    // XXX: the precision is not implemented
+    var exponent;
+
+    if (this.current && this.isExponentMarker(this.current)) {
+        this.next();
+        if (this.current === '+' || this.current === '-') {
+            this.next();
+        }
+        if (!(this.isDigit(this.current))) {
+            this.error('ill-formed number');
+        }
+        exponent = this.scanDigits(10);
+    }
+
+    if (exponent) {
+        return parseInt(exponent, 10);
+    } else {
+        return 0;
+    }
+};
+
+Lexer.prototype.isExponentMarker = function (ch) {
+    ch = ch.toLowerCase();
+    return ch === 'e' ||
+           ch === 's' ||
+           ch === 'f' ||
+           ch === 'd' ||
+           ch === 'l';
+};
+
+
+//Lexer.prototype.isRealStart = function (ch) {
+    //return ch === '+' || ch === '-';
+//};
+
+//Lexer.prototype.scanPrefixedNumber = function () {
+    //// <number> ::= <num 2> | <num 8> | <num 10> | <num 16>
+    ////
+    //// <num R> ::= <prefix R> <complex R>
+    ////
+    //// <prefix R> ::= <radix R> <exactness>
+    ////              | <exactness> <radix R>
+    ////
+    //// 6.2.5.
+    //// If the written representation of a number has no exactness prefix,
+    //// the constant is inexact if it contains a decimal point or an exponent.
+    //// Otherwise, it is exact.
+    //var isExact, radix,
+        //preA, preB, // two prefixes
+        //complex;
+
+    //preA = this.current.toLowerCase();
+    //switch (preA) {
+        //case 'i': isExact = false; break;
+        //case 'e': isExact = true; break;
+        //case 'b': radix = 2; break;
+        //case 'o': radix = 8; break;
+        //case 'd': radix = 10; break;
+        //case 'x': radix = 16; break;
+        //default: throw new Error();
+    //}
+
+    //this.next();
+    //if (this.current === '#') {
+        //this.next();
+        //if (this.current === undefined) {
+            //throw new Error('Unexpected EOF');
+        //}
+
+        //preB = this.current.toLowerCase();
+        //switch (preB) {
+            //case 'i':
+                //if (isExact !== undefined) { throw new Error(); }
+                //isExact = false; break;
+            //case 'e':
+                //if (isExact !== undefined) { throw new Error(); }
+                //isExact = true; break;
+            //case 'b':
+                //if (radix !== undefined) { throw new Error(); }
+                //radix = 2; break;
+            //case 'o':
+                //if (radix !== undefined) { throw new Error(); }
+                //radix = 8; break;
+            //case 'd':
+                //if (radix !== undefined) { throw new Error(); }
+                //radix = 10; break;
+            //case 'x':
+                //if (radix !== undefined) { throw new Error(); }
+                //radix = 16; break;
+            //default: throw new Error();
+        //}
+        //this.next();
+
+        //complex = this.scanComplex(radix);
+    //} else {
+    
+    //}
+//};
+
+//Lexer.prototype.isRadixPrefix = function (ch) {
+    //ch = ch.toLowerCase();
+    //return ch === 'b' || ch === 'o' || ch === 'd' || ch === 'x';
+//};
+
+//Lexer.prototype.isExactnessPrefix = function (ch) {
+    //ch = ch.toLowerCase();
+    //return ch === 'e' || ch === 'i';
+//};
 
 exports.Lexer = Lexer;
