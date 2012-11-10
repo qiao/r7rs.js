@@ -146,4 +146,44 @@ describe('Parser', function () {
         eql('->-'          , new Symbol('->-'));
         eql('H\\x65;llo'   , new Symbol('Hello'));
     });
+
+    it('should parse vectors', function () {
+        eql('#(0 1 2)', new Vector([0, 1, 2]));
+        eql('#("hello" "world" #\\!)', new Vector([
+            new SchemeString('hello'),
+            new SchemeString('world'),
+            new Char('!')
+        ]));
+    });
+
+    it('should parse bytevectors', function () {
+        eql('#u8()', new ByteVector([]));
+        eql('#u8(1)', new ByteVector([1]));
+        eql('#u8(97 98 99)', new ByteVector([97, 98, 99]));
+    });
+
+    it('should parse nil', function () {
+        eql('()', Nil);
+    });
+
+    it('should parse pairs', function () {
+        eql('(1 . 2)', new Pair(1, 2));
+
+        eql('(+ 1 2)',
+            new Pair(
+                new Symbol('+'),
+                new Pair(1, new Pair(2, Nil))
+            )
+        );
+
+        eql('(define x 1) ; this is comment',
+            new Pair(
+                new Symbol('define'),
+                new Pair(
+                    new Symbol('x'),
+                    new Pair(1, Nil)
+                )
+            )
+        );
+    });
 });
