@@ -5377,8 +5377,8 @@ module.exports = (function(){
           Nil          = objects.Nil,
           Pair         = objects.Pair,
           SchemeString = objects.SchemeString,
-          Symbol       = objects.Symbol;
-          Vector       = objects.Vector
+          Symbol       = objects.Symbol,
+          Vector       = objects.Vector;
       
       
       var result = parseFunctions[startRule]();

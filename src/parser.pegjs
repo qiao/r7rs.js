@@ -11,8 +11,8 @@ var objects      = require('./objects'),
     Nil          = objects.Nil,
     Pair         = objects.Pair,
     SchemeString = objects.SchemeString,
-    Symbol       = objects.Symbol;
-    Vector       = objects.Vector
+    Symbol       = objects.Symbol,
+    Vector       = objects.Vector;
 }
 
 start
