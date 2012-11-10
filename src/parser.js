@@ -253,14 +253,7 @@ module.exports = (function(){
           pos = pos0;
         }
         if (result0 === null) {
-          pos0 = pos;
           result0 = parse_compoundDatum();
-          if (result0 !== null) {
-            result0 = (function(offset, d) { return d; })(pos0, result0);
-          }
-          if (result0 === null) {
-            pos = pos0;
-          }
           if (result0 === null) {
             pos0 = pos;
             pos1 = pos;
@@ -5377,15 +5370,15 @@ module.exports = (function(){
       
       
       
-      var Symbol       = require('./objects/symbol'),
-          Char         = require('./objects/char'),
-          SchemeString = require('./objects/string'),
-          Complex      = require('./objects/complex'),
-          Vector       = require('./objects/vector'),
-          ByteVector   = require('./objects/bytevector'),
-          Pair         = require('./objects/pair'),
-          Nil          = require('./objects/nil');
-      
+      var objects      = require('./objects'),
+          ByteVector   = objects.ByteVector,
+          Char         = objects.Char,
+          Complex      = objects.Complex,
+          Nil          = objects.Nil,
+          Pair         = objects.Pair,
+          SchemeString = objects.SchemeString,
+          Symbol       = objects.Symbol;
+          Vector       = objects.Vector
       
       
       var result = parseFunctions[startRule]();

@@ -1,14 +1,18 @@
+/**
+ * R7RS Scheme parser written using [PEG.js](https://github.com/dmajda/pegjs).
+ */
+
 {
 
-var Symbol       = require('./objects/symbol'),
-    Char         = require('./objects/char'),
-    SchemeString = require('./objects/string'),
-    Complex      = require('./objects/complex'),
-    Vector       = require('./objects/vector'),
-    ByteVector   = require('./objects/bytevector'),
-    Pair         = require('./objects/pair'),
-    Nil          = require('./objects/nil');
-
+var objects      = require('./objects'),
+    ByteVector   = objects.ByteVector,
+    Char         = objects.Char,
+    Complex      = objects.Complex,
+    Nil          = objects.Nil,
+    Pair         = objects.Pair,
+    SchemeString = objects.SchemeString,
+    Symbol       = objects.Symbol;
+    Vector       = objects.Vector
 }
 
 start
@@ -16,7 +20,7 @@ start
 
 datum 'datum'
     = __ (d:simpleDatum _) __  { return d; }
-    / d:compoundDatum     { return d; }
+    / compoundDatum
     / d:(label '=' datum) { return d; }
     / d:(label '#') { return d; }
 
