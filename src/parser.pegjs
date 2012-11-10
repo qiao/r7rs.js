@@ -5,6 +5,7 @@
 {
 
 var objects      = require('./objects'),
+    Bool         = objects.Bool,
     ByteVector   = objects.ByteVector,
     Char         = objects.Char,
     Complex      = objects.Complex,
@@ -198,8 +199,8 @@ symbolElement
     / [^|\\]
 
 boolean 'boolean'
-    = ('#true' / '#t') { return true;  }
-    / ('#false' / '#f') { return false; }
+    = ('#true' / '#t') { return new Bool(true);  }
+    / ('#false' / '#f') { return new Bool(false); }
 
 character 'character'
     = '#\\x' h:hexScalarValue  { return new Char(String.fromCharCode(h)); }

@@ -2,6 +2,7 @@
 
 var parse        = require('../src/parser').parse,
     objects      = require('../src/objects'),
+    Bool         = objects.Bool,
     ByteVector   = objects.ByteVector,
     Char         = objects.Char,
     Complex      = objects.Complex,
@@ -96,10 +97,10 @@ describe('Parser', function () {
     });
 
     it('should parse booleans', function () {
-        eql('#t'     , true);
-        eql('#f'     , false);
-        eql('#true'  , true);
-        eql('#false' , false);
+        eql('#t'     , new Bool(true));
+        eql('#f'     , new Bool(false));
+        eql('#true'  , new Bool(true));
+        eql('#false' , new Bool(false));
     });
 
     it('should parse characters', function () {
