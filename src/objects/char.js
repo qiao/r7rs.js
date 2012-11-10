@@ -2,9 +2,11 @@ function Char(value) {
     this.value = value;
 }
 
+Char.prototype.type = 'char';
+
 Char.prototype.toJSON = function () {
     return {
-        type: 'char',
+        type: this.type,
         value: this.value
     };
 };

@@ -9,7 +9,7 @@ var parse        = require('../src/parser').parse,
     Nil          = objects.Nil,
     Pair         = objects.Pair,
     Real         = objects.Real,
-    SchemeString = objects.SchemeString,
+    Str          = objects.Str,
     Symbol       = objects.Symbol,
     Vector       = objects.Vector;
 
@@ -122,18 +122,18 @@ describe('Parser', function () {
     });
 
     it('should parse strings', function () {
-        eql('"\\a"',  new SchemeString('\u0007'));
-        eql('"\\b"',  new SchemeString('\u0008'));
-        eql('"\\t"',  new SchemeString('\u0009'));
-        eql('"\\n"',  new SchemeString('\u000a'));
-        eql('"\\r"',  new SchemeString('\u000d'));
-        eql('"\\""',  new SchemeString('\u0022'));
-        eql('"\\\\"', new SchemeString('\u005c'));
+        eql('"\\a"',  new Str('\u0007'));
+        eql('"\\b"',  new Str('\u0008'));
+        eql('"\\t"',  new Str('\u0009'));
+        eql('"\\n"',  new Str('\u000a'));
+        eql('"\\r"',  new Str('\u000d'));
+        eql('"\\""',  new Str('\u0022'));
+        eql('"\\\\"', new Str('\u005c'));
 
-        eql('" \\"recursion\\" "'  , new SchemeString(' "recursion" '));
-        eql('"two\nlines"'         , new SchemeString('two\nlines'));
-        eql('"one \\ \n    line"'  , new SchemeString('one line'));
-        eql('"\\x03bb; is lambda"' , new SchemeString('λ is lambda'));
+        eql('" \\"recursion\\" "'  , new Str(' "recursion" '));
+        eql('"two\nlines"'         , new Str('two\nlines'));
+        eql('"one \\ \n    line"'  , new Str('one line'));
+        eql('"\\x03bb; is lambda"' , new Str('λ is lambda'));
     });
 
     it('should parse symbols', function () {
@@ -157,8 +157,8 @@ describe('Parser', function () {
         ]));
 
         eql('#("hello" "world" #\\!)', new Vector([
-            new SchemeString('hello'),
-            new SchemeString('world'),
+            new Str('hello'),
+            new Str('world'),
             new Char('!')
         ]));
     });

@@ -2,9 +2,11 @@ function Symbol(name) {
     this.name = name;
 }
 
+Symbol.prototype.type = 'symbol';
+
 Symbol.prototype.toJSON = function () {
     return {
-        type: 'symbol',
+        type: this.type,
         name: this.name
     };
 };

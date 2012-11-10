@@ -3,9 +3,11 @@ function Pair(car, cdr) {
     this.cdr = cdr;
 }
 
+Pair.prototype.type = 'pair';
+
 Pair.prototype.toJSON = function () {
     return {
-        type: 'pair',
+        type: this.type,
         car: this.car,
         cdr: this.cdr
     };

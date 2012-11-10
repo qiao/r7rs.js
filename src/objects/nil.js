@@ -1,8 +1,10 @@
 var Nil = {};
 
+Nil.type = 'nil';
+
 Nil.toJSON = function () {
     return {
-        type: 'nil'
+        type: Nil.type
     };
 };
 

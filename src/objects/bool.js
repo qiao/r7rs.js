@@ -2,9 +2,11 @@ function Bool(value) {
     this.value = value;
 }
 
+Bool.prototype.type = 'bool';
+
 Bool.prototype.toJSON = function () {
     return {
-        type: 'bool',
+        type: this.type,
         value: this.value
     };
 };

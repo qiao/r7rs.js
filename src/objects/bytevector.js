@@ -2,9 +2,11 @@ function ByteVector(bytes) {
     this.bytes = bytes;
 }
 
+ByteVector.prototype.type = 'bytevector';
+
 ByteVector.prototype.toJSON = function () {
     return {
-        type: 'bytevector',
+        type: this.type,
         bytes: this.bytes
     };
 };

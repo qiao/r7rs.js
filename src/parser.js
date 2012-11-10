@@ -2025,7 +2025,7 @@ module.exports = (function(){
           pos = pos1;
         }
         if (result0 !== null) {
-          result0 = (function(offset, ss) { return new SchemeString(ss.join('')); })(pos0, result0[1]);
+          result0 = (function(offset, ss) { return new Str(ss.join('')); })(pos0, result0[1]);
         }
         if (result0 === null) {
           pos = pos0;
@@ -5386,7 +5386,7 @@ module.exports = (function(){
           Nil          = objects.Nil,
           Pair         = objects.Pair,
           Real         = objects.Real,
-          SchemeString = objects.SchemeString,
+          Str          = objects.Str,
           Symbol       = objects.Symbol,
           Vector       = objects.Vector;
       

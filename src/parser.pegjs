@@ -12,7 +12,7 @@ var objects      = require('./objects'),
     Nil          = objects.Nil,
     Pair         = objects.Pair,
     Real         = objects.Real,
-    SchemeString = objects.SchemeString,
+    Str          = objects.Str,
     Symbol       = objects.Symbol,
     Vector       = objects.Vector;
 }
@@ -220,7 +220,7 @@ characterName
     / 'tab'        { return '\t';     }
 
 string 'string'
-    = '"' ss:stringElement* '"' { return new SchemeString(ss.join('')); }
+    = '"' ss:stringElement* '"' { return new Str(ss.join('')); }
 
 stringElement
     = '\\a'    { return '\u0007'; }
