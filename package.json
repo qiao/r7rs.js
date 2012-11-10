@@ -4,6 +4,7 @@
     "homepage": "http://github.com/qiao/r7rs.js",
     "version": "0.0.1",
     "devDependencies": {
+        "pegjs": "0.7.0",
         "mocha": "1.6.0",
         "should": "1.2.1"
     },
