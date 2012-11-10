@@ -4020,7 +4020,7 @@ module.exports = (function(){
                       pos = pos1;
                     }
                     if (result0 !== null) {
-                      result0 = (function(offset, r) { return new Complex(r, -i); })(pos0, result0[0]);
+                      result0 = (function(offset, r) { return new Complex(r, -1); })(pos0, result0[0]);
                     }
                     if (result0 === null) {
                       pos = pos0;

@@ -334,7 +334,7 @@ complex10
     / r:real10 '-' i:ureal10 'i'    { return new Complex(r, -i); }
     / r:real10 i:infinity 'i'       { return new Complex(r, i);  }
     / r:real10 '+i'                 { return new Complex(r, 1);  }
-    / r:real10 '-i'                 { return new Complex(r, -i); }
+    / r:real10 '-i'                 { return new Complex(r, -1); }
     / '+' i:ureal10 'i'             { return new Complex(0, i);  }
     / '-' i:ureal10 'i'             { return new Complex(0, -i); }
     / r:real10                      { return r;                  } 
