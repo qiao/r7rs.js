@@ -43,31 +43,27 @@ compoundDatum
 
 list
     = __ '(' __ ds:datum* __ ')' __ {
-          var i, pair = Nil;
-          for (i = ds.length - 1; i >= 0; --i) {
-              pair = new Pair(ds[i], pair);
-          }
-          return pair;
-      }
+        return Pair.makeList(ds);
+    }
     / __ '(' __ ds:datum+ __ ('.' _) __ d:datum __ ')' __ {
-          var i, len = ds.length, pair = new Pair(ds[len - 1], d);
-          for (i = len - 2; i >= 0; --i) {
-              pair = new Pair(ds[i], pair);
-          }
-          return pair;
+        var i, len = ds.length, pair = new Pair(ds[len - 1], d);
+        for (i = len - 2; i >= 0; --i) {
+            pair = new Pair(ds[i], pair);
+        }
+        return pair;
       }
     / __ a:abbreviation __ { return a; }
 
 abbreviation
     = a:abbrevPrefix d:datum {
-          var symbol;
-          switch (a) {
-              case ',@': symbol = new Symbol('unquote-splicing'); break;
-              case ',':  symbol = new Symbol('unquote'); break;
-              case '\'': symbol = new Symbol('quote'); break;
-              case '`':  symbol = new Symbol('quasiquote'); break; 
-          }
-          return new Pair(symbol, new Pair(d, Nil));
+        var symbol;
+        switch (a) {
+            case ',@': symbol = new Symbol('unquote-splicing'); break;
+            case ',':  symbol = new Symbol('unquote'); break;
+            case '\'': symbol = new Symbol('quote'); break;
+            case '`':  symbol = new Symbol('quasiquote'); break; 
+        }
+        return new Pair(symbol, new Pair(d, Nil));
       }
 
 abbrevPrefix

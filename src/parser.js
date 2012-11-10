@@ -449,12 +449,8 @@ module.exports = (function(){
         }
         if (result0 !== null) {
           result0 = (function(offset, ds) {
-                  var i, pair = Nil;
-                  for (i = ds.length - 1; i >= 0; --i) {
-                      pair = new Pair(ds[i], pair);
-                  }
-                  return pair;
-              })(pos0, result0[3]);
+                return Pair.makeList(ds);
+            })(pos0, result0[3]);
         }
         if (result0 === null) {
           pos = pos0;
@@ -577,11 +573,11 @@ module.exports = (function(){
           }
           if (result0 !== null) {
             result0 = (function(offset, ds, d) {
-                    var i, len = ds.length, pair = new Pair(ds[len - 1], d);
-                    for (i = len - 2; i >= 0; --i) {
-                        pair = new Pair(ds[i], pair);
-                    }
-                    return pair;
+                  var i, len = ds.length, pair = new Pair(ds[len - 1], d);
+                  for (i = len - 2; i >= 0; --i) {
+                      pair = new Pair(ds[i], pair);
+                  }
+                  return pair;
                 })(pos0, result0[3], result0[7]);
           }
           if (result0 === null) {
@@ -641,14 +637,14 @@ module.exports = (function(){
         }
         if (result0 !== null) {
           result0 = (function(offset, a, d) {
-                  var symbol;
-                  switch (a) {
-                      case ',@': symbol = new Symbol('unquote-splicing'); break;
-                      case ',':  symbol = new Symbol('unquote'); break;
-                      case '\'': symbol = new Symbol('quote'); break;
-                      case '`':  symbol = new Symbol('quasiquote'); break; 
-                  }
-                  return new Pair(symbol, new Pair(d, Nil));
+                var symbol;
+                switch (a) {
+                    case ',@': symbol = new Symbol('unquote-splicing'); break;
+                    case ',':  symbol = new Symbol('unquote'); break;
+                    case '\'': symbol = new Symbol('quote'); break;
+                    case '`':  symbol = new Symbol('quasiquote'); break; 
+                }
+                return new Pair(symbol, new Pair(d, Nil));
               })(pos0, result0[0], result0[1]);
         }
         if (result0 === null) {
