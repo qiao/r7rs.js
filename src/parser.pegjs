@@ -1,38 +1,15 @@
 {
 
-function Complex(real, imag) {
-    this.real = real; this.imag = imag;
-}
-
-function Symbol(name) {
-    this.name = name;
-}
-
-function Char(value) {
-    this.value = value;
-}
-
-function SchemeString(value) {
-    this.value = value;
-}
-
-function Vector(elements) {
-    this.elements = elements;
-}
-
-function ByteVector(bytes) {
-    this.bytes = bytes;
-}
-
-function Pair(car, cdr) {
-    this.car = car;
-    this.cdr = cdr;
-}
-
-var Nil = {};
+var Symbol       = require('./objects/symbol'),
+    Char         = require('./objects/char'),
+    SchemeString = require('./objects/string'),
+    Complex      = require('./objects/complex'),
+    Vector       = require('./objects/vector'),
+    ByteVector   = require('./objects/bytevector'),
+    Pair         = require('./objects/pair'),
+    Nil          = require('./objects/nil');
 
 }
-
 
 start
     = __ ds:datum* { return ds; }
