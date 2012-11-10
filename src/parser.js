@@ -1728,7 +1728,7 @@ module.exports = (function(){
           pos = pos1;
         }
         if (result0 !== null) {
-          result0 = (function(offset, h) { return String.fromCharCode(h); })(pos0, result0[1]);
+          result0 = (function(offset, h) { return new Char(String.fromCharCode(h)); })(pos0, result0[1]);
         }
         if (result0 === null) {
           pos = pos0;
@@ -1758,7 +1758,7 @@ module.exports = (function(){
             pos = pos1;
           }
           if (result0 !== null) {
-            result0 = (function(offset, c) { return c; })(pos0, result0[1]);
+            result0 = (function(offset, c) { return new Char(c); })(pos0, result0[1]);
           }
           if (result0 === null) {
             pos = pos0;
@@ -1796,7 +1796,7 @@ module.exports = (function(){
               pos = pos1;
             }
             if (result0 !== null) {
-              result0 = (function(offset, c) { return c; })(pos0, result0[1]);
+              result0 = (function(offset, c) { return new Char(c); })(pos0, result0[1]);
             }
             if (result0 === null) {
               pos = pos0;

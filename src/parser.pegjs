@@ -202,9 +202,9 @@ boolean 'boolean'
     / ('#false' / '#f') { return false; }
 
 character 'character'
-    = '#\\x' h:hexScalarValue  { return String.fromCharCode(h); }
-    / '#\\'  c:characterName   { return c; }
-    / '#\\'  c:.               { return c; }
+    = '#\\x' h:hexScalarValue  { return new Char(String.fromCharCode(h)); }
+    / '#\\'  c:characterName   { return new Char(c); }
+    / '#\\'  c:.               { return new Char(c); }
 
 characterName
     = 'alarm'      { return '\u0007'; }
