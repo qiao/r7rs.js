@@ -218,7 +218,7 @@ characterName
     / 'tab'        { return '\t';     }
 
 string 'string'
-    = '"' ss:stringElement* '"' { return ss.join(''); }
+    = '"' ss:stringElement* '"' { return new SchemeString(ss.join('')); }
 
 stringElement
     = '\\a'    { return '\u0007'; }
