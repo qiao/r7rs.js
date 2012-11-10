@@ -2952,7 +2952,7 @@ module.exports = (function(){
                           pos0 = pos;
                           result0 = parse_real2();
                           if (result0 !== null) {
-                            result0 = (function(offset, r) { return r;                  })(pos0, result0);
+                            result0 = (function(offset, r) { return new Real(r);        })(pos0, result0);
                           }
                           if (result0 === null) {
                             pos = pos0;
@@ -3146,6 +3146,7 @@ module.exports = (function(){
         var result0, result1;
         var pos0, pos1;
         
+        reportFailures++;
         pos0 = pos;
         pos1 = pos;
         result0 = parse_prefix8();
@@ -3166,6 +3167,10 @@ module.exports = (function(){
         }
         if (result0 === null) {
           pos = pos0;
+        }
+        reportFailures--;
+        if (reportFailures === 0 && result0 === null) {
+          matchFailed("octal number");
         }
         return result0;
       }
@@ -3531,7 +3536,7 @@ module.exports = (function(){
                           pos0 = pos;
                           result0 = parse_real8();
                           if (result0 !== null) {
-                            result0 = (function(offset, r) { return r;                  })(pos0, result0);
+                            result0 = (function(offset, r) { return new Real(r);        })(pos0, result0);
                           }
                           if (result0 === null) {
                             pos = pos0;
@@ -3725,6 +3730,7 @@ module.exports = (function(){
         var result0, result1;
         var pos0, pos1;
         
+        reportFailures++;
         pos0 = pos;
         pos1 = pos;
         result0 = parse_prefix10();
@@ -3745,6 +3751,10 @@ module.exports = (function(){
         }
         if (result0 === null) {
           pos = pos0;
+        }
+        reportFailures--;
+        if (reportFailures === 0 && result0 === null) {
+          matchFailed("decimal number");
         }
         return result0;
       }
@@ -4110,7 +4120,7 @@ module.exports = (function(){
                           pos0 = pos;
                           result0 = parse_real10();
                           if (result0 !== null) {
-                            result0 = (function(offset, r) { return r;                  })(pos0, result0);
+                            result0 = (function(offset, r) { return new Real(r);        })(pos0, result0);
                           }
                           if (result0 === null) {
                             pos = pos0;
@@ -4518,6 +4528,7 @@ module.exports = (function(){
         var result0, result1;
         var pos0, pos1;
         
+        reportFailures++;
         pos0 = pos;
         pos1 = pos;
         result0 = parse_prefix16();
@@ -4538,6 +4549,10 @@ module.exports = (function(){
         }
         if (result0 === null) {
           pos = pos0;
+        }
+        reportFailures--;
+        if (reportFailures === 0 && result0 === null) {
+          matchFailed("hexadecimal number");
         }
         return result0;
       }
@@ -4903,7 +4918,7 @@ module.exports = (function(){
                           pos0 = pos;
                           result0 = parse_real16();
                           if (result0 !== null) {
-                            result0 = (function(offset, r) { return r;                  })(pos0, result0);
+                            result0 = (function(offset, r) { return new Real(r);        })(pos0, result0);
                           }
                           if (result0 === null) {
                             pos = pos0;
@@ -5370,6 +5385,7 @@ module.exports = (function(){
           Complex      = objects.Complex,
           Nil          = objects.Nil,
           Pair         = objects.Pair,
+          Real         = objects.Real,
           SchemeString = objects.SchemeString,
           Symbol       = objects.Symbol,
           Vector       = objects.Vector;

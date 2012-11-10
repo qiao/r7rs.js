@@ -11,6 +11,7 @@ var objects      = require('./objects'),
     Complex      = objects.Complex,
     Nil          = objects.Nil,
     Pair         = objects.Pair,
+    Real         = objects.Real,
     SchemeString = objects.SchemeString,
     Symbol       = objects.Symbol,
     Vector       = objects.Vector;
@@ -265,7 +266,7 @@ complex2
     / r:real2 '-i'                { return new Complex(r, -1); }
     / '+' i:ureal2 'i'            { return new Complex(0, i);  }
     / '-' i:ureal2 'i'            { return new Complex(0, -i); }
-    / r:real2                     { return r;                  }
+    / r:real2                     { return new Real(r);        }
     / '+i'                        { return new Complex(0, 1);  }
     / '-i'                        { return new Complex(0, -1); }
     
@@ -284,7 +285,7 @@ prefix2
     = radix2 exactness
     / exactness radix2
 
-num8
+num8 'octal number'
     = prefix8 c:complex8 { return c; }
 
 complex8 
@@ -301,7 +302,7 @@ complex8
     / r:real8 '-i'                 { return new Complex(r, -1); }
     / '+' i:ureal8 'i'             { return new Complex(0, i);  }
     / '-' i:ureal8 'i'             { return new Complex(0, -i); }
-    / r:real8                      { return r;                  }
+    / r:real8                      { return new Real(r);        }
     / '+i'                         { return new Complex(0, 1);  }
     / '-i'                         { return new Complex(0, -1); }
     
@@ -321,7 +322,7 @@ prefix8
     = radix8 exactness
     / exactness radix8
 
-num10
+num10 'decimal number'
     = prefix10 c:complex10 { return c; }
 
 complex10
@@ -338,7 +339,7 @@ complex10
     / r:real10 '-i'                 { return new Complex(r, -1); }
     / '+' i:ureal10 'i'             { return new Complex(0, i);  }
     / '-' i:ureal10 'i'             { return new Complex(0, -i); }
-    / r:real10                      { return r;                  } 
+    / r:real10                      { return new Real(r);        } 
     / '+i'                          { return new Complex(0, 1);  }
     / '-i'                          { return new Complex(0, -1); }
     
@@ -391,7 +392,7 @@ prefix10
     = radix10 exactness
     / exactness radix10
 
-num16
+num16 'hexadecimal number'
     = prefix16 c:complex16 { return c; }
 
 complex16
@@ -408,7 +409,7 @@ complex16
     / r:real16 '-i'                 { return new Complex(r, -1); }
     / '+' i:ureal16 'i'             { return new Complex(0, i);  }
     / '-' i:ureal16 'i'             { return new Complex(0, -i); }
-    / r:real16                      { return r;                  }
+    / r:real16                      { return new Real(r);        }
     / '+i'                          { return new Complex(0, 1);  }
     / '-i'                          { return new Complex(0, -1); }
     
