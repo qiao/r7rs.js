@@ -18,13 +18,11 @@ describe('Parser', function () {
         parse('   ; this is inline comment').should.eql([]);
     });
 
+    function eql(exp, val) {
+        parse(exp)[0].should.eql(val);
+    }
 
     it('should parse numbers', function () {
-
-        function eql(exp, val) {
-            parse(exp)[0].should.eql(val);
-        }
-
         eql('42'         , 42);
         eql('#d42'       , 42);
         eql('#b101010'   , 42);
@@ -95,5 +93,57 @@ describe('Parser', function () {
 
         eql('+i', new Complex(0, 1));
         eql('-i', new Complex(0, -1));
+    });
+
+    it('should parse booleans', function () {
+        eql('#t'     , true);
+        eql('#f'     , false);
+        eql('#true'  , true);
+        eql('#false' , false);
+    });
+
+    it('should parse characters', function () {
+        eql('#\\a', new Char('a'));
+        eql('#\\A', new Char('A'));
+        eql('#\\(', new Char('('));
+        eql('#\\ ', new Char(' '));
+
+        eql('#\\alarm'     , new Char('\u0007'));
+        eql('#\\backspace' , new Char('\u0008'));
+        eql('#\\delete'    , new Char('\u007f'));
+        eql('#\\escape'    , new Char('\u001b'));
+        eql('#\\newline'   , new Char('\u000a'));
+        eql('#\\null'      , new Char('\u0000'));
+        eql('#\\return'    , new Char('\u000d'));
+        eql('#\\space'     , new Char(' '));
+        eql('#\\tab'       , new Char('\u0009'));
+    });
+
+    it('should parse strings', function () {
+        eql('"\\a"',  new SchemeString('\u0007'));
+        eql('"\\b"',  new SchemeString('\u0008'));
+        eql('"\\t"',  new SchemeString('\u0009'));
+        eql('"\\n"',  new SchemeString('\u000a'));
+        eql('"\\r"',  new SchemeString('\u000d'));
+        eql('"\\""',  new SchemeString('\u0022'));
+        eql('"\\\\"', new SchemeString('\u005c'));
+
+        eql('" \\"recursion\\" "'  , new SchemeString(' "recursion" '));
+        eql('"two\nlines"'         , new SchemeString('two\nlines'));
+        eql('"one \\ \n    line"'  , new SchemeString('one line'));
+        eql('"\\x03bb; is lambda"' , new SchemeString('λ is lambda'));
+    });
+
+    it('should parse symbols', function () {
+        eql('lambda'       , new Symbol('lambda'));
+        eql('q'            , new Symbol('q'));
+        eql('soup'         , new Symbol('soup'));
+        eql('list->vector' , new Symbol('list->vector'));
+        eql('+'            , new Symbol('+'));
+        eql('V17a'         , new Symbol('V17a'));
+        eql('<='           , new Symbol('<='));
+        eql('a34kTMNs'     , new Symbol('a34kTMNs'));
+        eql('->-'          , new Symbol('->-'));
+        eql('H\\x65;llo'   , new Symbol('Hello'));
     });
 });
