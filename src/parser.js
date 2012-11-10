@@ -4205,29 +4205,23 @@ module.exports = (function(){
         var result0, result1, result2;
         var pos0, pos1;
         
-        result0 = parse_decimal10();
-        if (result0 === null) {
-          pos0 = pos;
-          pos1 = pos;
-          result0 = parse_uinteger10();
-          if (result0 !== null) {
-            if (input.charCodeAt(pos) === 47) {
-              result1 = "/";
-              pos++;
-            } else {
-              result1 = null;
-              if (reportFailures === 0) {
-                matchFailed("\"/\"");
-              }
+        pos0 = pos;
+        pos1 = pos;
+        result0 = parse_uinteger10();
+        if (result0 !== null) {
+          if (input.charCodeAt(pos) === 47) {
+            result1 = "/";
+            pos++;
+          } else {
+            result1 = null;
+            if (reportFailures === 0) {
+              matchFailed("\"/\"");
             }
-            if (result1 !== null) {
-              result2 = parse_uinteger10();
-              if (result2 !== null) {
-                result0 = [result0, result1, result2];
-              } else {
-                result0 = null;
-                pos = pos1;
-              }
+          }
+          if (result1 !== null) {
+            result2 = parse_uinteger10();
+            if (result2 !== null) {
+              result0 = [result0, result1, result2];
             } else {
               result0 = null;
               pos = pos1;
@@ -4236,12 +4230,18 @@ module.exports = (function(){
             result0 = null;
             pos = pos1;
           }
-          if (result0 !== null) {
-            result0 = (function(offset, numer, denom) { return numer / denom; })(pos0, result0[0], result0[2]);
-          }
-          if (result0 === null) {
-            pos = pos0;
-          }
+        } else {
+          result0 = null;
+          pos = pos1;
+        }
+        if (result0 !== null) {
+          result0 = (function(offset, numer, denom) { return numer / denom; })(pos0, result0[0], result0[2]);
+        }
+        if (result0 === null) {
+          pos = pos0;
+        }
+        if (result0 === null) {
+          result0 = parse_decimal10();
           if (result0 === null) {
             result0 = parse_uinteger10();
           }

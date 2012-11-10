@@ -348,8 +348,8 @@ real10
     
 
 ureal10
-    = decimal10
-    / numer:uinteger10 '/' denom:uinteger10 { return numer / denom; } 
+    = numer:uinteger10 '/' denom:uinteger10 { return numer / denom; } 
+    / decimal10
     / uinteger10
 
 decimal10
