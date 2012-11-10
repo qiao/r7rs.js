@@ -236,7 +236,7 @@ bytevector
     = __ '#u8(' __ bs:byte* __ ')' __ { return new ByteVector(bs); }
 
 byte
-    = __ n:(num255 _) __  { return parseInt(n.join(''), 10); }
+    = __ n:num255 _ __  { return parseInt(n.join(''), 10); }
 
 num255 
     = '25' [0-5]

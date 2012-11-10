@@ -2315,31 +2315,24 @@ module.exports = (function(){
       }
       
       function parse_byte() {
-        var result0, result1, result2;
-        var pos0, pos1, pos2;
+        var result0, result1, result2, result3;
+        var pos0, pos1;
         
         pos0 = pos;
         pos1 = pos;
         result0 = parse_intertokenSpace();
         if (result0 !== null) {
-          pos2 = pos;
           result1 = parse_num255();
           if (result1 !== null) {
             result2 = parse__();
             if (result2 !== null) {
-              result1 = [result1, result2];
-            } else {
-              result1 = null;
-              pos = pos2;
-            }
-          } else {
-            result1 = null;
-            pos = pos2;
-          }
-          if (result1 !== null) {
-            result2 = parse_intertokenSpace();
-            if (result2 !== null) {
-              result0 = [result0, result1, result2];
+              result3 = parse_intertokenSpace();
+              if (result3 !== null) {
+                result0 = [result0, result1, result2, result3];
+              } else {
+                result0 = null;
+                pos = pos1;
+              }
             } else {
               result0 = null;
               pos = pos1;
