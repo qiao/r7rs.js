@@ -17,6 +17,24 @@ Pair.makeList = function (array) {
 
 Pair.prototype.type = 'pair';
 
+Pair.prototype.toArray = function () {
+    var array = [], pair = this;
+    while (pair !== Nil) {
+        array.push(pair.car);
+        pair = pair.cdr;
+    }
+    return array;
+};
+
+Pair.prototype.length = function () {
+    var len = 0, pair = this;
+    while (pair !== Nil) {
+        len += 1;
+        pair = pair.cdr;
+    }
+    return len;
+};
+
 Pair.prototype.toJSON = function () {
     return {
         type: this.type,
@@ -24,5 +42,6 @@ Pair.prototype.toJSON = function () {
         cdr: this.cdr
     };
 };
+
 
 module.exports = Pair;
