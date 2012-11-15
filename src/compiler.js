@@ -81,7 +81,7 @@ function compile(expr, env, assigned, next) {
 
 
 /**
- * Determine whether the next instruction is a tail call.
+ * Determine whether the next opcode is a tail call.
  *
  * @param next {Array}
  * @return bool
@@ -108,6 +108,11 @@ function collectFree(vars, env, next) {
 /**
  * The help function `compileRefer` is used by the compiler for variable
  * references and by `collectFree` to collect free variable values.
+ *
+ * @param vars {Array}
+ * @param env {Array}
+ * @param next {Array}
+ * @return opcode
  */
 function compileRefer(expr, env, next) {
     var returnLocal = function (n) {
@@ -120,6 +125,14 @@ function compileRefer(expr, env, next) {
 }
 
 /**
+ * The function `compileLookup` checks whether a variable is in the list
+ * of local variables or is in the list of free variables, and returns the
+ * correponding opcode.
+ * @param expr {Array}
+ * @param env {Array}
+ * @param returnLocal {Function}
+ * @param returnFree {Function}
+ * @return opcode
  */
 function compileLookup(expr, env, returnLocal, returnFree) {
     // A compile-time environment is an array of two elements, whose
@@ -141,6 +154,10 @@ function compileLookup(expr, env, returnLocal, returnFree) {
 /**
  * Return the union of two sets.
  * Each set is represented by an array.
+ *
+ * @param sa {Array}
+ * @param sb {Array}
+ * @return union {Array}
  */
 function setUnion(sa, sb) {
     var union, item, i, len;
@@ -163,6 +180,10 @@ function setUnion(sa, sb) {
 /**
  * Return the minus of two sets.
  * Each set is represented by an array.
+ *
+ * @param sa {Array}
+ * @param sb {Array}
+ * @return minus {Array}
  */
 function setMinus(sa, sb) {
     var minus = [],
@@ -183,6 +204,10 @@ function setMinus(sa, sb) {
 /**
  * Return the intersect of two sets.
  * Each set is represented by an array.
+ *
+ * @param sa {Array}
+ * @param sb {Array}
+ * @return intersect {Array}
  */
 function setIntersect(sa, sb) {
     var inter = [],
@@ -323,8 +348,8 @@ function findSets(expr, vars) {
  *
  * @param sets {Array} An array of the assigned variables.
  * @param vars {Pair} A List of variables.
- * @param next {Array} Next instruction.
- * @return next The new next instruction.
+ * @param next {Array} Next opcode.
+ * @return opcode
  */
 function makeBoxes(sets, vars, next) {
     var indices = [], n = 0, i;
