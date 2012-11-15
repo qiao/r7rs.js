@@ -27,7 +27,8 @@ function compile(expr, env, assigned, next) {
                                 compile(body, [vars.toArray(), free],
                                         setUnion(sets,
                                                  setIntersect(assigned, free)),
-                                        ['return', vars.length()])))]
+                                        ['return', vars.length()]))),
+                     next]
                 );
             case 'if': // (if test thenc elsec)
                 test = rest.car;
@@ -145,7 +146,7 @@ function setUnion(sa, sb) {
     var union, item, i, len;
 
     // create a shallow copy of sa
-    union = sa.splice(0);
+    union = sa.slice(0);
 
     // for each item in sb, if it's NOT in sa,
     // then push it into the new set.
