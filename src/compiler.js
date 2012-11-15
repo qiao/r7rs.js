@@ -17,17 +17,17 @@ function compile(expr, env, assigned, next) {
                 return ['constant', rest.car, next];
             case 'lambda': // (lambda vars body)
                 vars = rest.car;
-                body = rest.cdr;
+                body = rest.cdr.car;
                 free = findFree(body, vars.toArray());
                 sets = findSets(body, vars.toArray());
                 return collectFree(
                     free, env,
                     ['close', free.length,
-                     (makeBoxes(sets, vars,
-                                compile(body, [vars.toArray(), free],
-                                        setUnion(sets,
-                                                 setIntersect(assigned, free)),
-                                        ['return', vars.length()]))),
+                     makeBoxes(sets, vars,
+                               compile(body, [vars.toArray(), free],
+                                       setUnion(sets,
+                                                setIntersect(assigned, free)),
+                                       ['return', vars.length()])),
                      next]
                 );
             case 'if': // (if test thenc elsec)
