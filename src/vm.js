@@ -56,11 +56,11 @@ function execute(opcode) {
     }
 
     while (true) {
-        console.log(JSON.stringify(expr, null, 4));
-        console.log('acc:', acc);
-        console.log('stack:', stack.slice(0, sp));
-        console.log('clos:', JSON.stringify(closure, null, 4));
-        console.log('---------------------------------------');
+        //console.log(JSON.stringify(expr, null, 4));
+        //console.log('acc:', acc);
+        //console.log('stack:', stack.slice(0, sp));
+        //console.log('clos:', JSON.stringify(closure, null, 4));
+        //console.log('---------------------------------------');
         switch (expr[0]) { // instruction
             case 'halt':
                 return acc;
