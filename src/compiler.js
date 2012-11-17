@@ -2,9 +2,24 @@ var objects = require('./objects'),
     Nil     = objects.Nil;
 
 
+/**
+ * Compile the S-Expression into opcode.
+ * An opcode is an array with the first item being the instruction name and
+ * the rest being the parameters.
+ * The compilation transforms the expression into Continuation-Passing Style.
+ * So each opcode contains a `next` field, which is also an opcode.
+ *
+ * @param expr {Pair} S-Expression
+ * @param env {Array} A compile-time environment is an array of two elements,
+ *     whose first element is an array of local variables and the whose
+ *     second element is an array of the free variables.
+ * @param assigned {Array} The assigned variables in an expression.
+ * @param next {Array} Next opcode.
+ * @returns opcode
+ */
 function compile(expr, env, assigned, next) {
     var isAssigned, first, rest, obj, vars, body, free, sets,
-        test, thenc, elsec, name, exp, conti, args, func;
+        test, thenc, elsec, name, exp, conti, args, func, i;
 
     if (expr.type === 'symbol') {
         isAssigned = (assigned.indexOf(expr) >= 0);
@@ -15,6 +30,12 @@ function compile(expr, env, assigned, next) {
         switch (first.name) {
             case 'quote': // (quote obj)
                 return ['constant', rest.car, next];
+            case 'begin': // (begin body)
+                body = rest.toArray();
+                for (i = body.length - 1; i >= 0; --i) {
+                    next = compile(body[i], env, assigned, next);
+                }
+                return next;
             case 'lambda': // (lambda vars body)
                 vars = rest.car;
                 body = rest.cdr.car;
@@ -128,6 +149,7 @@ function compileRefer(expr, env, next) {
  * The function `compileLookup` checks whether a variable is in the list
  * of local variables or is in the list of free variables, and returns the
  * correponding opcode.
+ *
  * @param expr {Array}
  * @param env {Array}
  * @param returnLocal {Function}
@@ -135,9 +157,6 @@ function compileRefer(expr, env, next) {
  * @return opcode
  */
 function compileLookup(expr, env, returnLocal, returnFree) {
-    // A compile-time environment is an array of two elements, whose
-    // first element is an array of local variables and the whose
-    // second element is an array of the free variables.
     var locals = env[0],
         free = env[1],
         n;
@@ -247,6 +266,8 @@ function findFree(expr, vars) {
         switch(expr.car.name) {
             case 'quote': // (quote obj)
                 return [];
+            case 'begin': // (begin body)
+                return findFree(rest, vars);
             case 'lambda': // (lambda args body)
                 args = rest.car;
                 body = rest.cdr;
@@ -303,6 +324,8 @@ function findSets(expr, vars) {
         switch (expr.car.name) {
             case 'quote': // (quote obj)
                 return [];
+            case 'begin': // (begin body)
+                return findSets(rest, vars);
             case 'lambda': // (lambda args body)
                 args = rest.car;
                 body = rest.cdr;
