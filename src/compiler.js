@@ -1,5 +1,6 @@
 var objects = require('./objects'),
-    Nil     = objects.Nil;
+    Nil     = objects.Nil,
+    assert  = require('assert');
 
 
 /**
@@ -78,7 +79,7 @@ function compile(expr, env, assigned, next) {
                          ['argument',
                           compile(exp, env, assigned,
                                   isTail(next) ?
-                                      ['shift', 1, exp, ['apply']] :
+                                      ['shift', 1, next[1], ['apply']] :
                                       ['apply'])]];
                 return isTail(next) ? conti : ['frame', next, conti];
             default: // (func args)
@@ -270,7 +271,7 @@ function findFree(expr, vars) {
                 return findFree(rest, vars);
             case 'lambda': // (lambda args body)
                 args = rest.car;
-                body = rest.cdr;
+                body = rest.cdr.car;
                 return findFree(body, setUnion(args.toArray(), vars));
             case 'if': // (if test thenc elsec)
                 test = rest.car;
@@ -289,7 +290,7 @@ function findFree(expr, vars) {
                 }
                 break;
             case 'call/cc': // (call/cc exp)
-                exp = rest;
+                exp = rest.car;
                 return findFree(exp, vars);
             default:
                 set = [];
@@ -328,7 +329,7 @@ function findSets(expr, vars) {
                 return findSets(rest, vars);
             case 'lambda': // (lambda args body)
                 args = rest.car;
-                body = rest.cdr;
+                body = rest.cdr.car;
                 return findSets(body, setMinus(vars, args.toArray()));
             case 'if': // (if test thenc elsec)
                 test = rest.car;
@@ -347,7 +348,7 @@ function findSets(expr, vars) {
                 }
                 break;
             case 'call/cc': // (call/cc exp)
-                exp = rest;
+                exp = rest.car;
                 return findSets(exp, vars);
             default:  // apply
                 set = [];
