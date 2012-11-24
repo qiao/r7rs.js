@@ -3,7 +3,7 @@ TEST_TIMEOUT = 2000
 TEST_REPORTER = spec
 
 all:
-	pegjs src/parser.pegjs
+	./node_modules/.bin/pegjs src/parser.pegjs
 
 test:
 	@NODE_ENV=test \
@@ -11,6 +11,7 @@ test:
 			--require should \
 			--timeout $(TEST_TIMEOUT) \
 			--reporter $(TEST_REPORTER) \
+			--recursive \
 			--bail
 
 
