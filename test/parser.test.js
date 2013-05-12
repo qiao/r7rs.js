@@ -15,14 +15,14 @@ var parse        = require('../src/parser').parse,
 
 describe('Parser', function () {
 
+    function eql(exp, val) {
+        parse(exp)[0].should.eql(val);
+    }
+
     it('should ignore whitespaces', function () {
         parse('  \t\r\n').should.eql([]);
         parse('   ; this is inline comment').should.eql([]);
     });
-
-    function eql(exp, val) {
-        parse(exp)[0].should.eql(val);
-    }
 
     it('should parse numbers', function () {
         eql('42'         , new Real(42));
