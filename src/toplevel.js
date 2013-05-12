@@ -40,3 +40,15 @@ exports.get = function (sym) {
     }
     throw new Error('unbound variable: ' + name);
 };
+
+exports.set = function (sym, val) {
+    environment[sym.name] = val;
+};
+
+exports.reset = function (sym, val) {
+    var name = sym.name;
+    if (Object.hasOwnProperty.call(environment, name)) {
+        environment[name] = val;
+    }
+    throw new Error('symbol not defined: ' + name);
+};

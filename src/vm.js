@@ -65,6 +65,18 @@ function execute(opcode) {
         switch (expr[0]) { // instruction
             case 'halt':
                 return acc;
+            case 'constant': // (obj next)
+                acc = expr[1];
+                expr = expr[2];
+                break;
+            case 'box': // (n next)
+                stack[sp - expr[1] - 1] = [stack[sp - expr[1] - 1]];
+                expr = expr[2];
+                break;
+            case 'indirect': // (next)
+                acc = acc[0]; // unbox
+                expr = expr[1];
+                break;
             case 'refer-local': // (n next)
                 acc = stack[fp - expr[1] - 1];
                 expr = expr[2];
@@ -77,26 +89,6 @@ function execute(opcode) {
                 acc = TopLevel.get(expr[1]);
                 expr = expr[2];
                 break;
-            case 'indirect': // (next)
-                acc = acc[0]; // unbox
-                expr = expr[1];
-                break;
-            case 'constant': // (obj next)
-                acc = expr[1];
-                expr = expr[2];
-                break;
-            case 'close': // (n body next)
-                acc = makeClosure(expr[2], expr[1], sp);
-                sp -= expr[1];
-                expr = expr[3];
-                break;
-            case 'box': // (n next)
-                stack[sp - expr[1] - 1] = [stack[sp - expr[1] - 1]];
-                expr = expr[2];
-                break;
-            case 'test': // (then else)
-                expr = (acc === Bool.False ? expr[2] : expr[1]);
-                break;
             case 'assign-local': // (n next)
                 stack[fp - expr[1] - 1][0] = acc;
                 expr = expr[2];
@@ -104,6 +96,18 @@ function execute(opcode) {
             case 'assign-free': // (n next)
                 closure[expr[1] + 1][0] = acc;
                 expr = expr[2];
+                break;
+            case 'assign-global': // (sym next)
+                TopLevel.reset(expr[1], acc);
+                expr = expr[2];
+                break;
+            case 'test': // (then else)
+                expr = (acc === Bool.False ? expr[2] : expr[1]);
+                break;
+            case 'close': // (n body next)
+                acc = makeClosure(expr[2], expr[1], sp);
+                sp -= expr[1];
+                expr = expr[3];
                 break;
             case 'conti': // (next)
                 acc = makeContinuation(sp);

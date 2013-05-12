@@ -70,6 +70,10 @@ function compile(expr, env, assigned, next) {
                     function (n) {
                         return compile(exp, env, assigned,
                                        ['assign-free', n, next]);
+                    },
+                    function (sym) {
+                        return compile(exp, env, assigned,
+                                       ['assign-global', sym, next]);
                     }
                 );
             case 'call/cc': // (call/cc exp)

@@ -19,7 +19,8 @@ rl.on('line', function (source) {
         var object = vm.execute(opcode);
         console.log(object.display());
     } catch (e) {
-        console.error('ERROR: ' + e.message);
+        //console.error('ERROR: ' + e.message);
+        console.error(e.stack);
     }
 
     rl.prompt();
