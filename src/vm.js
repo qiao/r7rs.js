@@ -8,7 +8,8 @@ var objects      = require('./objects'),
     Real         = objects.Real,
     Str          = objects.Str,
     Symbol       = objects.Symbol,
-    Vector       = objects.Vector;
+    Vector       = objects.Vector,
+    TopLevel     = require('./toplevel');
 
 function execute(opcode) {
     var acc     = null,             // accumulator
@@ -40,11 +41,11 @@ function execute(opcode) {
     }
 
     function restoreStack(savedStack) {
-        var i;
-        for (i = 0; i < savedStack.length; ++i) {
+        var i, len;
+        for (i = 0, len = savedStack.length; i < len; ++i) {
             stack[i] = savedStack[i];
         }
-        return savedStack.length;
+        return len;
     }
 
     function shiftArgs(n, m, sp) {
@@ -70,6 +71,10 @@ function execute(opcode) {
                 break;
             case 'refer-free': // (n next)
                 acc = closure[expr[1] + 1];
+                expr = expr[2];
+                break;
+            case 'refer-global': // (sym next)
+                acc = TopLevel.get(expr[1]);
                 expr = expr[2];
                 break;
             case 'indirect': // (next)
@@ -123,9 +128,24 @@ function execute(opcode) {
                 expr = expr[3];
                 break;
             case 'apply': // ()
-                expr = acc[0];
-                fp = sp;
-                closure = acc;
+                (function () {
+                    var args = [], i;
+                    if ((typeof acc) === 'function') {
+                        for (i = 0; i < acc.numArgs; ++i) {
+                            args.push(stack[sp - i - 1]);
+                        }
+                        sp -= acc.numArgs;
+                        expr    = stack[sp - 1];
+                        fp      = stack[sp - 2];
+                        closure = stack[sp - 3];
+                        sp -= 3;
+                        acc = acc(args);
+                    } else {
+                        expr = acc[0];
+                        fp = sp;
+                        closure = acc;
+                    }
+                })();
                 break;
             case 'return': // (n)
                 sp -= expr[1];
@@ -134,6 +154,8 @@ function execute(opcode) {
                 closure = stack[sp - 3];
                 sp -= 3;
                 break;
+            default: // this should be an exception
+                return acc;
         }
     }
 }
