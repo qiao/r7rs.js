@@ -36,7 +36,16 @@ Real.prototype.eql = function (other) {
 };
 
 Real.prototype.display = function () {
-  return String(this.value);
+    if (this.value === Infinity) {
+        return '+inf.0';
+    }
+    if (this.value === -Infinity) {
+        return '-inf.0';
+    }
+    if (isNaN(this.value)) {
+        return '+nan.0';
+    }
+    return String(this.value);
 };
 
 module.exports = Real;
