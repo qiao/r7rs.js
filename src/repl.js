@@ -13,10 +13,14 @@ rl.setPrompt('> ');
 rl.prompt();
 
 rl.on('line', function (source) {
-    var expr = parser.parse(source)[0];
-    var opcode = compiler.compile(expr);
-    var object = vm.execute(opcode);
-    console.log(object.display());
+    try {
+        var expr = parser.parse(source)[0];
+        var opcode = compiler.compile(expr);
+        var object = vm.execute(opcode);
+        console.log(object.display());
+    } catch (e) {
+        console.error('ERROR: ' + e.message);
+    }
 
     rl.prompt();
 });

@@ -34,5 +34,9 @@ defineFunction('=', 2, function (x, y) {
 });
 
 exports.get = function (sym) {
-    return environment[sym.name];
+    var name = sym.name;
+    if (Object.hasOwnProperty.call(environment, name)) {
+        return environment[sym.name];
+    }
+    throw new Error('unbound variable: ' + name);
 };
