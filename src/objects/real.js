@@ -35,6 +35,14 @@ Real.prototype.eql = function (other) {
     return new Bool(this.value === other.value);
 };
 
+Real.prototype.lt = function (other) {
+    return new Bool(this.value < other.value);
+};
+
+Real.prototype.gt = function (other) {
+    return new Bool(this.value > other.value);
+};
+
 Real.prototype.display = function () {
     if (this.value === Infinity) {
         return '+inf.0';

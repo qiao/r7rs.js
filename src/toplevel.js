@@ -32,6 +32,15 @@ defineFunction('/', 2, function (x, y) {
 defineFunction('=', 2, function (x, y) {
     return x.eql(y);
 });
+defineFunction('<', 2, function (x, y) {
+    return x.lt(y);
+});
+defineFunction('>', 2, function (x, y) {
+    return x.gt(y);
+});
+defineFunction('display', 1, function (x) {
+    console.log(x.display());
+});
 
 exports.get = function (sym) {
     var name = sym.name;
