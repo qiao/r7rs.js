@@ -3,8 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <title></title>
+  <link rel="stylesheet" href="./css/lib/codemirror.css" />
+  <link rel="stylesheet" href="./css/main.css" />
 </head>
 <body>
+  <div id="wrapper">
+    <textarea id="code" name="code" cols="30" rows="10"></textarea>
+    <div id="parse">Parse</div>
+    <textarea id="ast" name="ast" cols="30" rows="10"></textarea>
+    <div id="compile">Compile</div>
+    <textarea id="opcode" name="opcode" cols="30" rows="10"></textarea>
+    <div id="execute">Execute</div>
+    <textarea id="output" name="output" cols="30" rows="10"></textarea>
+  </div>
+  <script type="text/javascript" src="./js/lib/jquery-1.9.1.js"></script>
+  <script type="text/javascript" src="./js/lib/underscore.js"></script>
+  <script type="text/javascript" src="./js/lib/codemirror.js"></script>
+  <script type="text/javascript" src="./js/lib/codemirror.mode.scheme.js"></script>
+  <script type="text/javascript" src="./js/lib/codemirror.mode.javascript.js"></script>
+  <script type="text/javascript" src="./js/lib/codemirror.addon.edit.matchbrackets.js"></script>
+  <script type="text/javascript" src="./js/lib/codemirror.addon.edit.closebrackets.js"></script>
   <script type="text/javascript" src="./js/r7rs.js"></script>  
   <script type="text/javascript" src="./js/main.js"></script>
 </body>

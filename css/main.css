@@ -1,0 +1,24 @@
+html {
+  background-color: #ddd;
+}
+
+#wrapper {
+  width: 800px;
+  margin: 100px auto;
+}
+
+#parse, #compile, #execute {
+  width: 100px;
+  height: 28px;
+  line-height: 28px;
+  margin: 20px auto;
+  background-color: white;
+  text-align: center;
+  cursor: pointer;
+}
+
+/*.CodeMirror-scroll {*/
+  /*height: auto;*/
+  /*overflow-x: auto;*/
+  /*overflow-y: hidden;*/
+/*}*/
