@@ -12,4 +12,8 @@ Str.prototype.toJSON = function () {
     };
 };
 
+Str.prototype.display = function () {
+    return '"' + this.value + '"';
+};
+
 module.exports = Str;
