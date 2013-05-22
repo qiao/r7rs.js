@@ -6,7 +6,7 @@ Vector.prototype.type = 'vector';
 
 Vector.prototype.toJSON = function () {
     return {
-        type: this.vector,
+        type: this.type,
         elements: this.elements
     };
 };
