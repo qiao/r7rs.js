@@ -54,6 +54,8 @@ module.exports = (function(){
         "whitespace": parse_whitespace,
         "linebreak": parse_linebreak,
         "comment": parse_comment,
+        "nestedComment": parse_nestedComment,
+        "commentText": parse_commentText,
         "atmosphere": parse_atmosphere,
         "intertokenSpace": parse_intertokenSpace,
         "identifier": parse_identifier,
@@ -1077,25 +1079,152 @@ module.exports = (function(){
           pos = pos0;
         }
         if (result0 === null) {
+          result0 = parse_nestedComment();
+          if (result0 === null) {
+            pos0 = pos;
+            if (input.substr(pos, 2) === "#;") {
+              result0 = "#;";
+              pos += 2;
+            } else {
+              result0 = null;
+              if (reportFailures === 0) {
+                matchFailed("\"#;\"");
+              }
+            }
+            if (result0 !== null) {
+              result1 = [];
+              result2 = parse_whitespace();
+              while (result2 !== null) {
+                result1.push(result2);
+                result2 = parse_whitespace();
+              }
+              if (result1 !== null) {
+                result2 = parse_datum();
+                if (result2 !== null) {
+                  result0 = [result0, result1, result2];
+                } else {
+                  result0 = null;
+                  pos = pos0;
+                }
+              } else {
+                result0 = null;
+                pos = pos0;
+              }
+            } else {
+              result0 = null;
+              pos = pos0;
+            }
+          }
+        }
+        reportFailures--;
+        if (reportFailures === 0 && result0 === null) {
+          matchFailed("comment");
+        }
+        return result0;
+      }
+      
+      function parse_nestedComment() {
+        var result0, result1, result2;
+        var pos0;
+        
+        pos0 = pos;
+        if (input.substr(pos, 2) === "#|") {
+          result0 = "#|";
+          pos += 2;
+        } else {
+          result0 = null;
+          if (reportFailures === 0) {
+            matchFailed("\"#|\"");
+          }
+        }
+        if (result0 !== null) {
+          result1 = [];
+          result2 = parse_commentText();
+          while (result2 !== null) {
+            result1.push(result2);
+            result2 = parse_commentText();
+          }
+          if (result1 !== null) {
+            if (input.substr(pos, 2) === "|#") {
+              result2 = "|#";
+              pos += 2;
+            } else {
+              result2 = null;
+              if (reportFailures === 0) {
+                matchFailed("\"|#\"");
+              }
+            }
+            if (result2 !== null) {
+              result0 = [result0, result1, result2];
+            } else {
+              result0 = null;
+              pos = pos0;
+            }
+          } else {
+            result0 = null;
+            pos = pos0;
+          }
+        } else {
+          result0 = null;
+          pos = pos0;
+        }
+        return result0;
+      }
+      
+      function parse_commentText() {
+        var result0, result1, result2;
+        var pos0, pos1;
+        
+        result0 = parse_nestedComment();
+        if (result0 === null) {
           pos0 = pos;
-          if (input.substr(pos, 2) === "#;") {
-            result0 = "#;";
+          pos1 = pos;
+          reportFailures++;
+          if (input.substr(pos, 2) === "#|") {
+            result0 = "#|";
             pos += 2;
           } else {
             result0 = null;
             if (reportFailures === 0) {
-              matchFailed("\"#;\"");
+              matchFailed("\"#|\"");
             }
           }
+          reportFailures--;
+          if (result0 === null) {
+            result0 = "";
+          } else {
+            result0 = null;
+            pos = pos1;
+          }
           if (result0 !== null) {
-            result1 = [];
-            result2 = parse_whitespace();
-            while (result2 !== null) {
-              result1.push(result2);
-              result2 = parse_whitespace();
+            pos1 = pos;
+            reportFailures++;
+            if (input.substr(pos, 2) === "|#") {
+              result1 = "|#";
+              pos += 2;
+            } else {
+              result1 = null;
+              if (reportFailures === 0) {
+                matchFailed("\"|#\"");
+              }
+            }
+            reportFailures--;
+            if (result1 === null) {
+              result1 = "";
+            } else {
+              result1 = null;
+              pos = pos1;
             }
             if (result1 !== null) {
-              result2 = parse_datum();
+              if (input.length > pos) {
+                result2 = input.charAt(pos);
+                pos++;
+              } else {
+                result2 = null;
+                if (reportFailures === 0) {
+                  matchFailed("any character");
+                }
+              }
               if (result2 !== null) {
                 result0 = [result0, result1, result2];
               } else {
@@ -1110,10 +1239,6 @@ module.exports = (function(){
             result0 = null;
             pos = pos0;
           }
-        }
-        reportFailures--;
-        if (reportFailures === 0 && result0 === null) {
-          matchFailed("comment");
         }
         return result0;
       }

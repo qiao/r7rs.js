@@ -105,18 +105,15 @@ linebreak 'linebreak'
 
 comment 'comment'
     = ';' (!linebreak .)*
+    / nestedComment
     / '#;' whitespace* datum
 
-/*
 nestedComment
-    = '#|' commentText commentCont* '|#'
+    = '#|' commentText* '|#'
 
 commentText
-    = <character sequence not containing #| or |#>
-
-commentCont
-    = nestedComment commentText
-*/
+    = nestedComment
+    / !'#|' !'|#' .
 
 atmosphere
     = whitespace
