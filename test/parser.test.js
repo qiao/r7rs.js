@@ -22,6 +22,8 @@ describe('Parser', function () {
     it('should ignore whitespaces', function () {
         parse('  \t\r\n').should.eql([]);
         parse('   ; this is inline comment').should.eql([]);
+        parse('#| this is a comment |#').should.eql([]);
+        parse('#| this is a #|nested|# comment |#').should.eql([]);
     });
 
     it('should parse numbers', function () {
