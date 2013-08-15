@@ -4,7 +4,592 @@ exports.parse = require('./src/parser').parse,
 exports.compile = require('./src/compiler').compile,
 exports.execute = require('./src/vm').execute;
 
-},{"./src/parser":2,"./src/compiler":3,"./src/vm":4}],2:[function(require,module,exports){
+},{"./src/parser":2,"./src/compiler":3,"./src/vm":4}],3:[function(require,module,exports){
+(function(){var objects = require('./objects'),
+    Nil     = objects.Nil;
+
+
+/**
+ * Compile the S-Expression into opcode.
+ * An opcode is an array with the first item being the instruction name and
+ * the rest being the parameters.
+ * The compilation transforms the expression into Continuation-Passing Style.
+ * So each opcode contains a `next` field, which is also an opcode.
+ *
+ * @param {Pair} expr S-Expression
+ * @param {Array} env A compile-time environment is an array of two elements,
+ *     with the first element being an array of local variables and the 
+ *     second element being an array of free variables.
+ * @param {Array} assigned The assigned variables in an expression.
+ * @param {Array} next Next opcode.
+ * @returns {Array} Next opcode
+ */
+function compile(expr, env, assigned, next) {
+    var isAssigned, first, rest, obj, vars, body, free, sets,
+        test, thenc, elsec, name, exp, conti, args, func, i;
+
+    if (expr.type === 'symbol') {
+        isAssigned = (assigned.indexOf(expr) >= 0);
+        return compileRefer(expr, env, isAssigned ? ['indirect', next] : next);
+    } else if (expr.type === 'pair') {
+        first = expr.car;
+        rest = expr.cdr;
+        switch (first.name) {
+            case 'quote': // (quote obj)
+                return ['constant', rest.car, next];
+            case 'begin': // (begin body)
+                body = rest.toArray();
+                for (i = body.length - 1; i >= 0; --i) {
+                    next = compile(body[i], env, assigned, next);
+                }
+                return next;
+            case 'lambda': // (lambda vars body)
+                vars = rest.car;
+                body = rest.cdr.car;
+                free = findFree(body, vars.toArray());
+                sets = findSets(body, vars.toArray());
+                return collectFree(
+                    free, env,
+                    ['close', free.length,
+                     makeBoxes(sets, vars,
+                               compile(body, [vars.toArray(), free],
+                                       setUnion(sets,
+                                                setIntersect(assigned, free)),
+                                       ['return', vars.getLength()])),
+                     next]
+                );
+            case 'if': // (if test thenc elsec)
+                test = rest.car;
+                thenc = rest.cdr.car;
+                elsec = rest.cdr.cdr.car;
+                thenc = compile(thenc, env, assigned, next);
+                elsec = compile(elsec, env, assigned, next);
+                return compile(test, env, assigned, ['test', thenc, elsec]);
+            case 'set!': // (set! name exp)
+                name = rest.car;
+                exp = rest.cdr.car;
+                return compileLookup(
+                    name, env,
+                    function (n) {
+                        return compile(exp, env, assigned,
+                                       ['assign-local', n, next]);
+                    },
+                    function (n) {
+                        return compile(exp, env, assigned,
+                                       ['assign-free', n, next]);
+                    },
+                    function (sym) {
+                        return compile(exp, env, assigned,
+                                       ['assign-global', sym, next]);
+                    }
+                );
+            case 'call/cc': // (call/cc exp)
+                exp = rest.car;
+                conti = ['conti',
+                         ['argument',
+                          compile(exp, env, assigned,
+                                  isTail(next) ?
+                                      ['shift', 1, next[1], ['apply']] :
+                                      ['apply'])]];
+                return isTail(next) ? conti : ['frame', next, conti];
+            default: // (func args)
+                args = rest;
+                func = compile(
+                    first, env, assigned,
+                    isTail(next) ?
+                        ['shift', args.getLength(), next[1], ['apply']] :
+                        ['apply']
+                );
+                while (args !== Nil) {
+                    func = compile(args.car, env, assigned, ['argument', func]);
+                    args = args.cdr;
+                }
+                return isTail(next) ? func : ['frame', next, func];
+        }
+    } else { // constant
+        return ['constant', expr, next];
+    }
+}
+
+
+/**
+ * Determine whether the next opcode is a tail call.
+ *
+ * @param {Array} Next
+ * @return {Boolean}
+ */
+function isTail(next) {
+    return next[0] === 'return';
+}
+
+/**
+ * Collect the free variables for inclusion in the closure.
+ *
+ * @param {Array} vars
+ * @param {Array} env
+ * @param {Array} next
+ * @return {Array} Compiled opcode
+ */
+function collectFree(vars, env, next) {
+    var i, len;
+    for (i = 0, len = vars.length; i < len; ++i) {
+        next = compileRefer(vars[i], env, ['argument', next]);
+    }
+    return next;
+}
+
+/**
+ * The help function `compileRefer` is used by the compiler for variable
+ * references and by `collectFree` to collect free variable values.
+ *
+ * @param {Array} expr
+ * @param {Array} env
+ * @param {Array} next
+ * @return {Array} Compiled opcode
+ */
+function compileRefer(expr, env, next) {
+    var returnLocal = function (n) {
+            return ['refer-local', n, next];
+        },
+        returnFree = function (n) {
+            return ['refer-free', n, next];
+        },
+        returnGlobal = function (sym) {
+            return ['refer-global', sym, next];
+        };
+    return compileLookup(expr, env, returnLocal, returnFree, returnGlobal);
+}
+
+/**
+ * The function `compileLookup` checks whether a variable is in the list
+ * of local variables or is in the list of free variables, and returns the
+ * correponding opcode.
+ *
+ * @param {Array} expr
+ * @param {Array} env
+ * @param {Function} returnLocal
+ * @param {Function} returnFree
+ * @param {Function} returnGlobal
+ * @return {Array} compiled opcode
+ */
+function compileLookup(expr, env, returnLocal, returnFree, returnGlobal) {
+    var locals = env[0],
+        free = env[1],
+        n;
+
+    n = locals.indexOf(expr);
+    if (n >= 0) {
+        return returnLocal(n);
+    }
+
+    n = free.indexOf(expr);
+    if (n >= 0) {
+        return returnFree(n);
+    }
+
+    return returnGlobal(expr);
+}
+
+/**
+ * Return the union of two sets.
+ * Each set is represented by an array.
+ *
+ * @param {Array} sa
+ * @param {Array} sb
+ * @return {Array} union
+ */
+function setUnion(sa, sb) {
+    var union, item, i, len;
+
+    // create a shallow copy of sa
+    union = sa.slice(0);
+
+    // for each item in sb, if it's NOT in sa,
+    // then push it into the new set.
+    for (i = 0, len = sb.length; i < len; ++i) {
+        item = sb[i];
+        if (sa.indexOf(item) === -1) {
+            union.push(item);
+        }
+    }
+
+    return union;
+}
+
+/**
+ * Return the minus of two sets.
+ * Each set is represented by an array.
+ *
+ * @param {Array} sa
+ * @param {Array} sb
+ * @return {Array} minus
+ */
+function setMinus(sa, sb) {
+    var minus = [],
+        item, i, len;
+
+    // for each item in sa, if it's NOT in sb,
+    // then push it into the new set.
+    for (i = 0, len = sa.length; i < len; ++i) {
+        if (sb.indexOf(item) === -1) {
+            minus.push(item);
+        }
+    }
+
+    return minus;
+}
+
+
+/**
+ * Return the intersect of two sets.
+ * Each set is represented by an array.
+ *
+ * @param {Array} sa
+ * @param {Array} sb
+ * @return {Array} intersect
+ */
+function setIntersect(sa, sb) {
+    var inter = [],
+        item, i, len;
+
+    // for each item in sa, if it is ALSO in sb,
+    // then push it into the new set.
+    for (i = 0, len = sa.length; i < len; ++i) {
+        if (sb.indexOf(item) >= 0) {
+            inter.push(item);
+        }
+    }
+
+    return inter;
+}
+
+
+/**
+ * Find the set of free variables of an expression `expr`, given
+ * an initial set of bound variables `vars`.
+ *
+ * @param {Pair} expr An expression in which free variables are being searched.
+ * @param {Array} vars An array of variables to search.
+ * @return {Array} An array of the free variables.
+ */
+function findFree(expr, vars) {
+    var rest, args, body, test, thenc, elsec, name, exp, set;
+
+    if (expr.type === 'symbol') {
+        if (vars.indexOf(expr) >= 0) {
+            return [];
+        } else {
+            return [expr];
+        }
+    } else if (expr.type === 'pair') {
+        rest = expr.cdr;
+        switch(expr.car.name) {
+            case 'quote': // (quote obj)
+                return [];
+            case 'begin': // (begin body)
+                return findFree(rest, vars);
+            case 'lambda': // (lambda args body)
+                args = rest.car;
+                body = rest.cdr.car;
+                return findFree(body, setUnion(args.toArray(), vars));
+            case 'if': // (if test thenc elsec)
+                test = rest.car;
+                thenc = rest.cdr.car;
+                elsec = rest.cdr.cdr.car;
+                return setUnion(findFree(test, vars),
+                                setUnion(findFree(thenc, vars),
+                                         findFree(elsec, vars)));
+            case 'set!': // (set! name exp)
+                name = rest.car;
+                exp = rest.cdr.car;
+                if (vars.indexOf(name) >= 0) {
+                    return findFree(exp, vars);
+                } else {
+                    return setUnion([name], findFree(exp, vars));
+                }
+                break;
+            case 'call/cc': // (call/cc exp)
+                exp = rest.car;
+                return findFree(exp, vars);
+            default:
+                set = [];
+                while (expr !== Nil) {
+                    set = setUnion(findFree(expr.car, vars), set);
+                    expr = expr.cdr;
+                }
+                return set;
+        }
+    } else { // constant
+        return [];
+    }
+}
+
+/**
+ * Find the assigned variables in a lambda expression.
+ * This routine will look for assignments to any of the set of
+ * variables `vars` and return the set of variables in `vars` that
+ * are assigned.
+ *
+ * @param {Pair} expr An expression in which assigned variables are being searched.
+ * @param {Array} vars An array of variables to search.
+ * @return {Array} An array of the assigned variables.
+ */
+function findSets(expr, vars) {
+    var rest, args, body, test, thenc, elsec, name, exp, set, pair;
+
+    if (expr.type === 'symbol') {
+        return [];
+    } else if (expr.type === 'pair') {
+        rest = expr.cdr;
+        switch (expr.car.name) {
+            case 'quote': // (quote obj)
+                return [];
+            case 'begin': // (begin body)
+                return findSets(rest, vars);
+            case 'lambda': // (lambda args body)
+                args = rest.car;
+                body = rest.cdr.car;
+                return findSets(body, setMinus(vars, args.toArray()));
+            case 'if': // (if test thenc elsec)
+                test = rest.car;
+                thenc = rest.cdr.car;
+                elsec = rest.cdr.cdr.car;
+                return setUnion(findSets(test, vars),
+                                setUnion(findSets(thenc, vars),
+                                         findSets(elsec, vars)));
+            case 'set!': // (set! name exp)
+                name = rest.car;
+                exp = rest.cdr.car;
+                if (vars.indexOf(name) >= 0) {
+                    return setUnion([name], findSets(exp, vars));
+                } else {
+                    return findSets(exp, name);
+                }
+                break;
+            case 'call/cc': // (call/cc exp)
+                exp = rest.car;
+                return findSets(exp, vars);
+            default:  // apply
+                set = [];
+                pair = expr;
+                while (pair !== Nil) {
+                    set = setUnion(findSets(pair.car, vars), set);
+                    pair = pair.cdr;
+                }
+                return set;
+        }
+    } else { // constant
+        return [];
+    }
+}
+
+/**
+ * Once the compiler determines what subset of the arguments to a lambda
+ * expression are assigned, it must generate code to create boxes for
+ * these arguments. The following function generates this code from a list
+ * of assigned variables (sets) and a list of arguments (vars).
+ *
+ * @param {Array} sets An array of the assigned variables.
+ * @param {Pair} vars A List of variables.
+ * @param {Array} next Next opcode.
+ * @return {Array} Compiled opcode
+ */
+function makeBoxes(sets, vars, next) {
+    var indices = [], n = 0, i;
+
+    while (vars !== Nil) {
+        if (sets.indexOf(vars.car) >= 0) {
+            indices.push(n);
+        }
+        n += 1;
+        vars = vars.cdr;
+    }
+    for (i = indices.length - 1; i >= 0; --i) {
+        next = ['box', indices[i], next];
+    }
+    return next;
+}
+
+
+exports.compile = function (expr) {
+  var env = [[], []];
+  var assigned = [];
+  var next = ['halt'];
+  return compile(expr, env, assigned, next);
+};
+
+})()
+},{"./objects":5}],4:[function(require,module,exports){
+(function(){var objects      = require('./objects'),
+    Bool         = objects.Bool,
+    ByteVector   = objects.ByteVector,
+    Char         = objects.Char,
+    Complex      = objects.Complex,
+    Nil          = objects.Nil,
+    Pair         = objects.Pair,
+    Real         = objects.Real,
+    Str          = objects.Str,
+    Symbol       = objects.Symbol,
+    Vector       = objects.Vector,
+    TopLevel     = require('./toplevel');
+
+function execute(opcode) {
+    var acc     = null,             // accumulator
+        expr    = opcode,           // next expression to execute
+        fp      = 0,                // frame pointer
+        closure = [],               // closure
+        stack   = new Array(1000),  // call stack
+        sp      = 0;                // stack pointer
+
+    function makeClosure(body, n, sp) {
+        var i, closure = new Array(n + 1);
+        closure[0] = body;
+        for (i = 0; i < n; ++i) {
+            closure[i + 1] = stack[sp - i - 1];
+        }
+        return closure;
+    }
+
+    function makeContinuation(sp) {
+        return makeClosure(
+            ['refer-local', 0, ['nuate', saveStack(sp), ['return', 0]]],
+            sp,
+            sp
+        );
+    }
+
+    function saveStack(sp) {
+        return stack.slice(0, sp);
+    }
+
+    function restoreStack(savedStack) {
+        var i, len;
+        for (i = 0, len = savedStack.length; i < len; ++i) {
+            stack[i] = savedStack[i];
+        }
+        return len;
+    }
+
+    function shiftArgs(n, m, sp) {
+        var i;
+        for (i = n - 1; i >= 0; --i) {
+            stack[sp - i - m - 1] = stack[sp - i - 1];
+        }
+        return sp - m;
+    }
+
+    while (true) {
+        //console.log(JSON.stringify(expr, null, 4));
+        //console.log('acc:', acc);
+        //console.log('stack:', stack.slice(0, sp));
+        //console.log('clos:', JSON.stringify(closure, null, 4));
+        //console.log('---------------------------------------');
+        switch (expr[0]) { // instruction
+            case 'halt':
+                return acc;
+            case 'constant': // (obj next)
+                acc = expr[1];
+                expr = expr[2];
+                break;
+            case 'box': // (n next)
+                stack[sp - expr[1] - 1] = [stack[sp - expr[1] - 1]];
+                expr = expr[2];
+                break;
+            case 'indirect': // (next)
+                acc = acc[0]; // unbox
+                expr = expr[1];
+                break;
+            case 'refer-local': // (n next)
+                acc = stack[fp - expr[1] - 1];
+                expr = expr[2];
+                break;
+            case 'refer-free': // (n next)
+                acc = closure[expr[1] + 1];
+                expr = expr[2];
+                break;
+            case 'refer-global': // (sym next)
+                acc = TopLevel.get(expr[1]);
+                expr = expr[2];
+                break;
+            case 'assign-local': // (n next)
+                stack[fp - expr[1] - 1][0] = acc;
+                expr = expr[2];
+                break;
+            case 'assign-free': // (n next)
+                closure[expr[1] + 1][0] = acc;
+                expr = expr[2];
+                break;
+            case 'assign-global': // (sym next)
+                TopLevel.reset(expr[1], acc);
+                expr = expr[2];
+                break;
+            case 'test': // (then else)
+                expr = (acc === Bool.False ? expr[2] : expr[1]);
+                break;
+            case 'close': // (n body next)
+                acc = makeClosure(expr[2], expr[1], sp);
+                sp -= expr[1];
+                expr = expr[3];
+                break;
+            case 'conti': // (next)
+                acc = makeContinuation(sp);
+                expr = expr[1];
+                break;
+            case 'nuate': // (stack next)
+                sp = restoreStack(expr[1]);
+                expr = expr[2];
+                break;
+            case 'frame': // (ret next)
+                stack[sp++] = closure;
+                stack[sp++] = fp;
+                stack[sp++] = expr[1];
+                expr = expr[2];
+                break;
+            case 'argument': // (next)
+                stack[sp++] = acc;
+                expr = expr[1];
+                break;
+            case 'shift': // (n m next)
+                sp = shiftArgs(expr[1], expr[2], sp);
+                expr = expr[3];
+                break;
+            case 'apply': // ()
+                (function () {
+                    var args = [], i;
+                    if ((typeof acc) === 'function') {
+                        for (i = 0; i < acc.numArgs; ++i) {
+                            args.push(stack[sp - i - 1]);
+                        }
+                        sp -= acc.numArgs;
+                        expr    = stack[sp - 1];
+                        fp      = stack[sp - 2];
+                        closure = stack[sp - 3];
+                        sp -= 3;
+                        acc = acc(args);
+                    } else {
+                        expr = acc[0];
+                        fp = sp;
+                        closure = acc;
+                    }
+                })();
+                break;
+            case 'return': // (n)
+                sp -= expr[1];
+                expr    = stack[sp - 1];
+                fp      = stack[sp - 2];
+                closure = stack[sp - 3];
+                sp -= 3;
+                break;
+            default: // this should be an exception
+                return acc;
+        }
+    }
+}
+
+exports.execute = execute;
+
+})()
+},{"./toplevel":6,"./objects":5}],2:[function(require,module,exports){
 module.exports = (function(){
   /*
    * Generated by PEG.js 0.7.0.
@@ -61,6 +646,8 @@ module.exports = (function(){
         "whitespace": parse_whitespace,
         "linebreak": parse_linebreak,
         "comment": parse_comment,
+        "nestedComment": parse_nestedComment,
+        "commentText": parse_commentText,
         "atmosphere": parse_atmosphere,
         "intertokenSpace": parse_intertokenSpace,
         "identifier": parse_identifier,
@@ -1084,25 +1671,152 @@ module.exports = (function(){
           pos = pos0;
         }
         if (result0 === null) {
+          result0 = parse_nestedComment();
+          if (result0 === null) {
+            pos0 = pos;
+            if (input.substr(pos, 2) === "#;") {
+              result0 = "#;";
+              pos += 2;
+            } else {
+              result0 = null;
+              if (reportFailures === 0) {
+                matchFailed("\"#;\"");
+              }
+            }
+            if (result0 !== null) {
+              result1 = [];
+              result2 = parse_whitespace();
+              while (result2 !== null) {
+                result1.push(result2);
+                result2 = parse_whitespace();
+              }
+              if (result1 !== null) {
+                result2 = parse_datum();
+                if (result2 !== null) {
+                  result0 = [result0, result1, result2];
+                } else {
+                  result0 = null;
+                  pos = pos0;
+                }
+              } else {
+                result0 = null;
+                pos = pos0;
+              }
+            } else {
+              result0 = null;
+              pos = pos0;
+            }
+          }
+        }
+        reportFailures--;
+        if (reportFailures === 0 && result0 === null) {
+          matchFailed("comment");
+        }
+        return result0;
+      }
+      
+      function parse_nestedComment() {
+        var result0, result1, result2;
+        var pos0;
+        
+        pos0 = pos;
+        if (input.substr(pos, 2) === "#|") {
+          result0 = "#|";
+          pos += 2;
+        } else {
+          result0 = null;
+          if (reportFailures === 0) {
+            matchFailed("\"#|\"");
+          }
+        }
+        if (result0 !== null) {
+          result1 = [];
+          result2 = parse_commentText();
+          while (result2 !== null) {
+            result1.push(result2);
+            result2 = parse_commentText();
+          }
+          if (result1 !== null) {
+            if (input.substr(pos, 2) === "|#") {
+              result2 = "|#";
+              pos += 2;
+            } else {
+              result2 = null;
+              if (reportFailures === 0) {
+                matchFailed("\"|#\"");
+              }
+            }
+            if (result2 !== null) {
+              result0 = [result0, result1, result2];
+            } else {
+              result0 = null;
+              pos = pos0;
+            }
+          } else {
+            result0 = null;
+            pos = pos0;
+          }
+        } else {
+          result0 = null;
+          pos = pos0;
+        }
+        return result0;
+      }
+      
+      function parse_commentText() {
+        var result0, result1, result2;
+        var pos0, pos1;
+        
+        result0 = parse_nestedComment();
+        if (result0 === null) {
           pos0 = pos;
-          if (input.substr(pos, 2) === "#;") {
-            result0 = "#;";
+          pos1 = pos;
+          reportFailures++;
+          if (input.substr(pos, 2) === "#|") {
+            result0 = "#|";
             pos += 2;
           } else {
             result0 = null;
             if (reportFailures === 0) {
-              matchFailed("\"#;\"");
+              matchFailed("\"#|\"");
             }
           }
+          reportFailures--;
+          if (result0 === null) {
+            result0 = "";
+          } else {
+            result0 = null;
+            pos = pos1;
+          }
           if (result0 !== null) {
-            result1 = [];
-            result2 = parse_whitespace();
-            while (result2 !== null) {
-              result1.push(result2);
-              result2 = parse_whitespace();
+            pos1 = pos;
+            reportFailures++;
+            if (input.substr(pos, 2) === "|#") {
+              result1 = "|#";
+              pos += 2;
+            } else {
+              result1 = null;
+              if (reportFailures === 0) {
+                matchFailed("\"|#\"");
+              }
+            }
+            reportFailures--;
+            if (result1 === null) {
+              result1 = "";
+            } else {
+              result1 = null;
+              pos = pos1;
             }
             if (result1 !== null) {
-              result2 = parse_datum();
+              if (input.length > pos) {
+                result2 = input.charAt(pos);
+                pos++;
+              } else {
+                result2 = null;
+                if (reportFailures === 0) {
+                  matchFailed("any character");
+                }
+              }
               if (result2 !== null) {
                 result0 = [result0, result1, result2];
               } else {
@@ -1117,10 +1831,6 @@ module.exports = (function(){
             result0 = null;
             pos = pos0;
           }
-        }
-        reportFailures--;
-        if (reportFailures === 0 && result0 === null) {
-          matchFailed("comment");
         }
         return result0;
       }
@@ -5479,592 +6189,7 @@ module.exports = (function(){
   return result;
 })();
 
-},{"./objects":5}],3:[function(require,module,exports){
-(function(){var objects = require('./objects'),
-    Nil     = objects.Nil;
-
-
-/**
- * Compile the S-Expression into opcode.
- * An opcode is an array with the first item being the instruction name and
- * the rest being the parameters.
- * The compilation transforms the expression into Continuation-Passing Style.
- * So each opcode contains a `next` field, which is also an opcode.
- *
- * @param {Pair} expr S-Expression
- * @param {Array} env A compile-time environment is an array of two elements,
- *     with the first element being an array of local variables and the 
- *     second element being an array of free variables.
- * @param {Array} assigned The assigned variables in an expression.
- * @param {Array} next Next opcode.
- * @returns {Array} Next opcode
- */
-function compile(expr, env, assigned, next) {
-    var isAssigned, first, rest, obj, vars, body, free, sets,
-        test, thenc, elsec, name, exp, conti, args, func, i;
-
-    if (expr.type === 'symbol') {
-        isAssigned = (assigned.indexOf(expr) >= 0);
-        return compileRefer(expr, env, isAssigned ? ['indirect', next] : next);
-    } else if (expr.type === 'pair') {
-        first = expr.car;
-        rest = expr.cdr;
-        switch (first.name) {
-            case 'quote': // (quote obj)
-                return ['constant', rest.car, next];
-            case 'begin': // (begin body)
-                body = rest.toArray();
-                for (i = body.length - 1; i >= 0; --i) {
-                    next = compile(body[i], env, assigned, next);
-                }
-                return next;
-            case 'lambda': // (lambda vars body)
-                vars = rest.car;
-                body = rest.cdr.car;
-                free = findFree(body, vars.toArray());
-                sets = findSets(body, vars.toArray());
-                return collectFree(
-                    free, env,
-                    ['close', free.length,
-                     makeBoxes(sets, vars,
-                               compile(body, [vars.toArray(), free],
-                                       setUnion(sets,
-                                                setIntersect(assigned, free)),
-                                       ['return', vars.getLength()])),
-                     next]
-                );
-            case 'if': // (if test thenc elsec)
-                test = rest.car;
-                thenc = rest.cdr.car;
-                elsec = rest.cdr.cdr.car;
-                thenc = compile(thenc, env, assigned, next);
-                elsec = compile(elsec, env, assigned, next);
-                return compile(test, env, assigned, ['test', thenc, elsec]);
-            case 'set!': // (set! name exp)
-                name = rest.car;
-                exp = rest.cdr.car;
-                return compileLookup(
-                    name, env,
-                    function (n) {
-                        return compile(exp, env, assigned,
-                                       ['assign-local', n, next]);
-                    },
-                    function (n) {
-                        return compile(exp, env, assigned,
-                                       ['assign-free', n, next]);
-                    },
-                    function (sym) {
-                        return compile(exp, env, assigned,
-                                       ['assign-global', sym, next]);
-                    }
-                );
-            case 'call/cc': // (call/cc exp)
-                exp = rest.car;
-                conti = ['conti',
-                         ['argument',
-                          compile(exp, env, assigned,
-                                  isTail(next) ?
-                                      ['shift', 1, next[1], ['apply']] :
-                                      ['apply'])]];
-                return isTail(next) ? conti : ['frame', next, conti];
-            default: // (func args)
-                args = rest;
-                func = compile(
-                    first, env, assigned,
-                    isTail(next) ?
-                        ['shift', args.getLength(), next[1], ['apply']] :
-                        ['apply']
-                );
-                while (args !== Nil) {
-                    func = compile(args.car, env, assigned, ['argument', func]);
-                    args = args.cdr;
-                }
-                return isTail(next) ? func : ['frame', next, func];
-        }
-    } else { // constant
-        return ['constant', expr, next];
-    }
-}
-
-
-/**
- * Determine whether the next opcode is a tail call.
- *
- * @param {Array} Next
- * @return {Boolean}
- */
-function isTail(next) {
-    return next[0] === 'return';
-}
-
-/**
- * Collect the free variables for inclusion in the closure.
- *
- * @param {Array} vars
- * @param {Array} env
- * @param {Array} next
- * @return {Array} Compiled opcode
- */
-function collectFree(vars, env, next) {
-    var i, len;
-    for (i = 0, len = vars.length; i < len; ++i) {
-        next = compileRefer(vars[i], env, ['argument', next]);
-    }
-    return next;
-}
-
-/**
- * The help function `compileRefer` is used by the compiler for variable
- * references and by `collectFree` to collect free variable values.
- *
- * @param {Array} expr
- * @param {Array} env
- * @param {Array} next
- * @return {Array} Compiled opcode
- */
-function compileRefer(expr, env, next) {
-    var returnLocal = function (n) {
-            return ['refer-local', n, next];
-        },
-        returnFree = function (n) {
-            return ['refer-free', n, next];
-        },
-        returnGlobal = function (sym) {
-            return ['refer-global', sym, next];
-        };
-    return compileLookup(expr, env, returnLocal, returnFree, returnGlobal);
-}
-
-/**
- * The function `compileLookup` checks whether a variable is in the list
- * of local variables or is in the list of free variables, and returns the
- * correponding opcode.
- *
- * @param {Array} expr
- * @param {Array} env
- * @param {Function} returnLocal
- * @param {Function} returnFree
- * @param {Function} returnGlobal
- * @return {Array} compiled opcode
- */
-function compileLookup(expr, env, returnLocal, returnFree, returnGlobal) {
-    var locals = env[0],
-        free = env[1],
-        n;
-
-    n = locals.indexOf(expr);
-    if (n >= 0) {
-        return returnLocal(n);
-    }
-
-    n = free.indexOf(expr);
-    if (n >= 0) {
-        return returnFree(n);
-    }
-
-    return returnGlobal(expr);
-}
-
-/**
- * Return the union of two sets.
- * Each set is represented by an array.
- *
- * @param {Array} sa
- * @param {Array} sb
- * @return {Array} union
- */
-function setUnion(sa, sb) {
-    var union, item, i, len;
-
-    // create a shallow copy of sa
-    union = sa.slice(0);
-
-    // for each item in sb, if it's NOT in sa,
-    // then push it into the new set.
-    for (i = 0, len = sb.length; i < len; ++i) {
-        item = sb[i];
-        if (sa.indexOf(item) === -1) {
-            union.push(item);
-        }
-    }
-
-    return union;
-}
-
-/**
- * Return the minus of two sets.
- * Each set is represented by an array.
- *
- * @param {Array} sa
- * @param {Array} sb
- * @return {Array} minus
- */
-function setMinus(sa, sb) {
-    var minus = [],
-        item, i, len;
-
-    // for each item in sa, if it's NOT in sb,
-    // then push it into the new set.
-    for (i = 0, len = sa.length; i < len; ++i) {
-        if (sb.indexOf(item) === -1) {
-            minus.push(item);
-        }
-    }
-
-    return minus;
-}
-
-
-/**
- * Return the intersect of two sets.
- * Each set is represented by an array.
- *
- * @param {Array} sa
- * @param {Array} sb
- * @return {Array} intersect
- */
-function setIntersect(sa, sb) {
-    var inter = [],
-        item, i, len;
-
-    // for each item in sa, if it is ALSO in sb,
-    // then push it into the new set.
-    for (i = 0, len = sa.length; i < len; ++i) {
-        if (sb.indexOf(item) >= 0) {
-            inter.push(item);
-        }
-    }
-
-    return inter;
-}
-
-
-/**
- * Find the set of free variables of an expression `expr`, given
- * an initial set of bound variables `vars`.
- *
- * @param {Pair} expr An expression in which free variables are being searched.
- * @param {Array} vars An array of variables to search.
- * @return {Array} An array of the free variables.
- */
-function findFree(expr, vars) {
-    var rest, args, body, test, thenc, elsec, name, exp, set;
-
-    if (expr.type === 'symbol') {
-        if (vars.indexOf(expr) >= 0) {
-            return [];
-        } else {
-            return [expr];
-        }
-    } else if (expr.type === 'pair') {
-        rest = expr.cdr;
-        switch(expr.car.name) {
-            case 'quote': // (quote obj)
-                return [];
-            case 'begin': // (begin body)
-                return findFree(rest, vars);
-            case 'lambda': // (lambda args body)
-                args = rest.car;
-                body = rest.cdr.car;
-                return findFree(body, setUnion(args.toArray(), vars));
-            case 'if': // (if test thenc elsec)
-                test = rest.car;
-                thenc = rest.cdr.car;
-                elsec = rest.cdr.cdr.car;
-                return setUnion(findFree(test, vars),
-                                setUnion(findFree(thenc, vars),
-                                         findFree(elsec, vars)));
-            case 'set!': // (set! name exp)
-                name = rest.car;
-                exp = rest.cdr.car;
-                if (vars.indexOf(name) >= 0) {
-                    return findFree(exp, vars);
-                } else {
-                    return setUnion([name], findFree(exp, vars));
-                }
-                break;
-            case 'call/cc': // (call/cc exp)
-                exp = rest.car;
-                return findFree(exp, vars);
-            default:
-                set = [];
-                while (expr !== Nil) {
-                    set = setUnion(findFree(expr.car, vars), set);
-                    expr = expr.cdr;
-                }
-                return set;
-        }
-    } else { // constant
-        return [];
-    }
-}
-
-/**
- * Find the assigned variables in a lambda expression.
- * This routine will look for assignments to any of the set of
- * variables `vars` and return the set of variables in `vars` that
- * are assigned.
- *
- * @param {Pair} expr An expression in which assigned variables are being searched.
- * @param {Array} vars An array of variables to search.
- * @return {Array} An array of the assigned variables.
- */
-function findSets(expr, vars) {
-    var rest, args, body, test, thenc, elsec, name, exp, set, pair;
-
-    if (expr.type === 'symbol') {
-        return [];
-    } else if (expr.type === 'pair') {
-        rest = expr.cdr;
-        switch (expr.car.name) {
-            case 'quote': // (quote obj)
-                return [];
-            case 'begin': // (begin body)
-                return findSets(rest, vars);
-            case 'lambda': // (lambda args body)
-                args = rest.car;
-                body = rest.cdr.car;
-                return findSets(body, setMinus(vars, args.toArray()));
-            case 'if': // (if test thenc elsec)
-                test = rest.car;
-                thenc = rest.cdr.car;
-                elsec = rest.cdr.cdr.car;
-                return setUnion(findSets(test, vars),
-                                setUnion(findSets(thenc, vars),
-                                         findSets(elsec, vars)));
-            case 'set!': // (set! name exp)
-                name = rest.car;
-                exp = rest.cdr.car;
-                if (vars.indexOf(name) >= 0) {
-                    return setUnion([name], findSets(exp, vars));
-                } else {
-                    return findSets(exp, name);
-                }
-                break;
-            case 'call/cc': // (call/cc exp)
-                exp = rest.car;
-                return findSets(exp, vars);
-            default:  // apply
-                set = [];
-                pair = expr;
-                while (pair !== Nil) {
-                    set = setUnion(findSets(pair.car, vars), set);
-                    pair = pair.cdr;
-                }
-                return set;
-        }
-    } else { // constant
-        return [];
-    }
-}
-
-/**
- * Once the compiler determines what subset of the arguments to a lambda
- * expression are assigned, it must generate code to create boxes for
- * these arguments. The following function generates this code from a list
- * of assigned variables (sets) and a list of arguments (vars).
- *
- * @param {Array} sets An array of the assigned variables.
- * @param {Pair} vars A List of variables.
- * @param {Array} next Next opcode.
- * @return {Array} Compiled opcode
- */
-function makeBoxes(sets, vars, next) {
-    var indices = [], n = 0, i;
-
-    while (vars !== Nil) {
-        if (sets.indexOf(vars.car) >= 0) {
-            indices.push(n);
-        }
-        n += 1;
-        vars = vars.cdr;
-    }
-    for (i = indices.length - 1; i >= 0; --i) {
-        next = ['box', indices[i], next];
-    }
-    return next;
-}
-
-
-exports.compile = function (expr) {
-  var env = [[], []];
-  var assigned = [];
-  var next = ['halt'];
-  return compile(expr, env, assigned, next);
-};
-
-})()
-},{"./objects":5}],4:[function(require,module,exports){
-(function(){var objects      = require('./objects'),
-    Bool         = objects.Bool,
-    ByteVector   = objects.ByteVector,
-    Char         = objects.Char,
-    Complex      = objects.Complex,
-    Nil          = objects.Nil,
-    Pair         = objects.Pair,
-    Real         = objects.Real,
-    Str          = objects.Str,
-    Symbol       = objects.Symbol,
-    Vector       = objects.Vector,
-    TopLevel     = require('./toplevel');
-
-function execute(opcode) {
-    var acc     = null,             // accumulator
-        expr    = opcode,           // next expression to execute
-        fp      = 0,                // frame pointer
-        closure = [],               // closure
-        stack   = new Array(1000),  // call stack
-        sp      = 0;                // stack pointer
-
-    function makeClosure(body, n, sp) {
-        var i, closure = new Array(n + 1);
-        closure[0] = body;
-        for (i = 0; i < n; ++i) {
-            closure[i + 1] = stack[sp - i - 1];
-        }
-        return closure;
-    }
-
-    function makeContinuation(sp) {
-        return makeClosure(
-            ['refer-local', 0, ['nuate', saveStack(sp), ['return', 0]]],
-            sp,
-            sp
-        );
-    }
-
-    function saveStack(sp) {
-        return stack.slice(0, sp);
-    }
-
-    function restoreStack(savedStack) {
-        var i, len;
-        for (i = 0, len = savedStack.length; i < len; ++i) {
-            stack[i] = savedStack[i];
-        }
-        return len;
-    }
-
-    function shiftArgs(n, m, sp) {
-        var i;
-        for (i = n - 1; i >= 0; --i) {
-            stack[sp - i - m - 1] = stack[sp - i - 1];
-        }
-        return sp - m;
-    }
-
-    while (true) {
-        //console.log(JSON.stringify(expr, null, 4));
-        //console.log('acc:', acc);
-        //console.log('stack:', stack.slice(0, sp));
-        //console.log('clos:', JSON.stringify(closure, null, 4));
-        //console.log('---------------------------------------');
-        switch (expr[0]) { // instruction
-            case 'halt':
-                return acc;
-            case 'constant': // (obj next)
-                acc = expr[1];
-                expr = expr[2];
-                break;
-            case 'box': // (n next)
-                stack[sp - expr[1] - 1] = [stack[sp - expr[1] - 1]];
-                expr = expr[2];
-                break;
-            case 'indirect': // (next)
-                acc = acc[0]; // unbox
-                expr = expr[1];
-                break;
-            case 'refer-local': // (n next)
-                acc = stack[fp - expr[1] - 1];
-                expr = expr[2];
-                break;
-            case 'refer-free': // (n next)
-                acc = closure[expr[1] + 1];
-                expr = expr[2];
-                break;
-            case 'refer-global': // (sym next)
-                acc = TopLevel.get(expr[1]);
-                expr = expr[2];
-                break;
-            case 'assign-local': // (n next)
-                stack[fp - expr[1] - 1][0] = acc;
-                expr = expr[2];
-                break;
-            case 'assign-free': // (n next)
-                closure[expr[1] + 1][0] = acc;
-                expr = expr[2];
-                break;
-            case 'assign-global': // (sym next)
-                TopLevel.reset(expr[1], acc);
-                expr = expr[2];
-                break;
-            case 'test': // (then else)
-                expr = (acc === Bool.False ? expr[2] : expr[1]);
-                break;
-            case 'close': // (n body next)
-                acc = makeClosure(expr[2], expr[1], sp);
-                sp -= expr[1];
-                expr = expr[3];
-                break;
-            case 'conti': // (next)
-                acc = makeContinuation(sp);
-                expr = expr[1];
-                break;
-            case 'nuate': // (stack next)
-                sp = restoreStack(expr[1]);
-                expr = expr[2];
-                break;
-            case 'frame': // (ret next)
-                stack[sp++] = closure;
-                stack[sp++] = fp;
-                stack[sp++] = expr[1];
-                expr = expr[2];
-                break;
-            case 'argument': // (next)
-                stack[sp++] = acc;
-                expr = expr[1];
-                break;
-            case 'shift': // (n m next)
-                sp = shiftArgs(expr[1], expr[2], sp);
-                expr = expr[3];
-                break;
-            case 'apply': // ()
-                (function () {
-                    var args = [], i;
-                    if ((typeof acc) === 'function') {
-                        for (i = 0; i < acc.numArgs; ++i) {
-                            args.push(stack[sp - i - 1]);
-                        }
-                        sp -= acc.numArgs;
-                        expr    = stack[sp - 1];
-                        fp      = stack[sp - 2];
-                        closure = stack[sp - 3];
-                        sp -= 3;
-                        acc = acc(args);
-                    } else {
-                        expr = acc[0];
-                        fp = sp;
-                        closure = acc;
-                    }
-                })();
-                break;
-            case 'return': // (n)
-                sp -= expr[1];
-                expr    = stack[sp - 1];
-                fp      = stack[sp - 2];
-                closure = stack[sp - 3];
-                sp -= 3;
-                break;
-            default: // this should be an exception
-                return acc;
-        }
-    }
-}
-
-exports.execute = execute;
-
-})()
-},{"./toplevel":6,"./objects":5}],6:[function(require,module,exports){
+},{"./objects":5}],6:[function(require,module,exports){
 var objects = require('./objects'),
     Pair = objects.Pair;
 
@@ -6255,6 +6380,10 @@ Str.prototype.toJSON = function () {
     };
 };
 
+Str.prototype.display = function () {
+    return '"' + this.value + '"';
+};
+
 module.exports = Str;
 
 },{}],15:[function(require,module,exports){
@@ -6290,75 +6419,14 @@ Vector.prototype.type = 'vector';
 
 Vector.prototype.toJSON = function () {
     return {
-        type: this.vector,
+        type: this.type,
         elements: this.elements
     };
 };
 
 module.exports = Vector;
 
-},{}],13:[function(require,module,exports){
-var Bool = require('./bool');
-
-function Real(value) {
-    this.value = value;
-}
-
-Real.prototype.toJSON = function () {
-    return {
-        type: 'real',
-        value: this.value
-    };
-};
-
-Real.prototype.add = function (other) {
-    return new Real(this.value + other.value);
-};
-
-Real.prototype.sub = function (other) {
-    return new Real(this.value - other.value);
-};
-
-Real.prototype.mul = function (other) {
-    return new Real(this.value * other.value);
-};
-
-Real.prototype.div = function (other) {
-    return new Real(this.value / other.value);
-};
-
-Real.prototype.neg = function () {
-    return new Real(-this.value);
-};
-
-Real.prototype.eql = function (other) {
-    return new Bool(this.value === other.value);
-};
-
-Real.prototype.lt = function (other) {
-    return new Bool(this.value < other.value);
-};
-
-Real.prototype.gt = function (other) {
-    return new Bool(this.value > other.value);
-};
-
-Real.prototype.display = function () {
-    if (this.value === Infinity) {
-        return '+inf.0';
-    }
-    if (this.value === -Infinity) {
-        return '-inf.0';
-    }
-    if (isNaN(this.value)) {
-        return '+nan.0';
-    }
-    return String(this.value);
-};
-
-module.exports = Real;
-
-},{"./bool":7}],12:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 var Nil = require('./nil');
 
 
@@ -6511,6 +6579,67 @@ Pair.prototype.toJSON = function () {
 
 module.exports = Pair;
 
-},{"./nil":11}]},{},[1])(1)
+},{"./nil":11}],13:[function(require,module,exports){
+var Bool = require('./bool');
+
+function Real(value) {
+    this.value = value;
+}
+
+Real.prototype.toJSON = function () {
+    return {
+        type: 'real',
+        value: this.value
+    };
+};
+
+Real.prototype.add = function (other) {
+    return new Real(this.value + other.value);
+};
+
+Real.prototype.sub = function (other) {
+    return new Real(this.value - other.value);
+};
+
+Real.prototype.mul = function (other) {
+    return new Real(this.value * other.value);
+};
+
+Real.prototype.div = function (other) {
+    return new Real(this.value / other.value);
+};
+
+Real.prototype.neg = function () {
+    return new Real(-this.value);
+};
+
+Real.prototype.eql = function (other) {
+    return new Bool(this.value === other.value);
+};
+
+Real.prototype.lt = function (other) {
+    return new Bool(this.value < other.value);
+};
+
+Real.prototype.gt = function (other) {
+    return new Bool(this.value > other.value);
+};
+
+Real.prototype.display = function () {
+    if (this.value === Infinity) {
+        return '+inf.0';
+    }
+    if (this.value === -Infinity) {
+        return '-inf.0';
+    }
+    if (isNaN(this.value)) {
+        return '+nan.0';
+    }
+    return String(this.value);
+};
+
+module.exports = Real;
+
+},{"./bool":7}]},{},[1])(1)
 });
 ;
