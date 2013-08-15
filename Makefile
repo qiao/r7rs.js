@@ -1,17 +1,16 @@
-#SRC = $(shell find src -name "*.js" -type f)
 TEST_TIMEOUT = 2000
 TEST_REPORTER = spec
 
-src/parser.js:
+parser:
 	./node_modules/.bin/pegjs src/parser.pegjs
 
-dist/r7rs.js:
+dist:
 	./node_modules/.bin/browserify \
 		--standalone r7rs \
 		--entry index.js \
 		> dist/r7rs.js
 
-all: src/parser.js dist/r7rs.js
+all: parser dist
 
 test:
 	@NODE_ENV=test \
@@ -23,4 +22,4 @@ test:
 			--bail
 
 
-.PHONY: all test
+.PHONY: parser dist all test
