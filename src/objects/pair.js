@@ -38,9 +38,8 @@ Pair.prototype.type = 'pair';
  */
 Pair.prototype.toArray = function () {
     var array = [], pair = this;
-    while (pair.type === 'pair') {
+    for (; pair.type === 'pair'; pair = pair.cdr) {
         array.push(pair.car);
-        pair = pair.cdr;
     }
     if (pair !== Nil) {
         array.push(pair);
@@ -56,9 +55,8 @@ Pair.prototype.toArray = function () {
  */
 Pair.prototype.getLength = function () {
     var len = 0, pair = this;
-    while (pair !== Nil) {
+    for (; pair !== Nil; pair = pair.cdr) {
         len += 1;
-        pair = pair.cdr;
     }
     return len;
 };
@@ -73,12 +71,11 @@ Pair.prototype.getLength = function () {
 Pair.prototype.toProperList = function () {
     var pair = this,
         list = Nil;
-    while (pair.type === 'pair') {
+    for (; pair.type === 'pair'; pair = pair.cdr) {
         list = new Pair(pair.car, list);
-        pair = pair.cdr;
     }
     if (pair === Nil) {
-        return list;
+        return list.reverse();
     } else {
         list = new Pair(pair, list);
         return list.reverse();
@@ -127,9 +124,8 @@ Pair.prototype.isProperList = function () {
 Pair.prototype.reverse = function () {
     var ret = Nil,
         pair = this;
-    while (pair.type === 'pair') {
+    for (; pair.type === 'pair'; pair = pair.cdr) {
         ret = new Pair(pair.car, ret);
-        pair = pair.cdr;
     }
     return ret;
 };
