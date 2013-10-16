@@ -30,7 +30,18 @@ function execute(opcode) {
 
     function makeContinuation(sp) {
         return makeClosure(
-            ['refer-local', 0, ['nuate', saveStack(sp), ['return', 0]]],
+            {
+                type:'refer-local',
+                n: 0,
+                next: {
+                    type: 'nuate',
+                    stack: saveStack(sp),
+                    next: {
+                        type: 'return',
+                        n: 0
+                    }
+                }
+            },
             sp,
             sp
         );
@@ -62,74 +73,74 @@ function execute(opcode) {
         //console.log('stack:', stack.slice(0, sp));
         //console.log('clos:', JSON.stringify(closure, null, 4));
         //console.log('---------------------------------------');
-        switch (expr[0]) { // instruction
+        switch (expr.type) { // instruction
             case 'halt':
                 return acc;
             case 'constant': // (obj next)
-                acc = expr[1];
-                expr = expr[2];
+                acc = expr.obj;
+                expr = expr.next;
                 break;
             case 'box': // (n next)
-                stack[sp - expr[1] - 1] = [stack[sp - expr[1] - 1]];
-                expr = expr[2];
+                stack[sp - expr.n - 1] = [stack[sp - expr.n - 1]];
+                expr = expr.next;
                 break;
             case 'indirect': // (next)
                 acc = acc[0]; // unbox
-                expr = expr[1];
+                expr = expr.next;
                 break;
             case 'refer-local': // (n next)
-                acc = stack[fp - expr[1] - 1];
-                expr = expr[2];
+                acc = stack[fp - expr.n - 1];
+                expr = expr.next;
                 break;
             case 'refer-free': // (n next)
-                acc = closure[expr[1] + 1];
-                expr = expr[2];
+                acc = closure[expr.n + 1];
+                expr = expr.next;
                 break;
             case 'refer-global': // (sym next)
-                acc = TopLevel.get(expr[1]);
-                expr = expr[2];
+                acc = TopLevel.get(expr.sym);
+                expr = expr.next;
                 break;
             case 'assign-local': // (n next)
-                stack[fp - expr[1] - 1][0] = acc;
-                expr = expr[2];
+                stack[fp - expr.n - 1][0] = acc;
+                expr = expr.next;
                 break;
             case 'assign-free': // (n next)
-                closure[expr[1] + 1][0] = acc;
-                expr = expr[2];
+                closure[expr.n + 1][0] = acc;
+                expr = expr.next;
                 break;
             case 'assign-global': // (sym next)
-                TopLevel.reset(expr[1], acc);
-                expr = expr[2];
+                TopLevel.reset(expr.sym, acc);
+                expr = expr.next;
                 break;
             case 'test': // (then else)
-                expr = (acc === Bool.False ? expr[2] : expr[1]);
+                expr = (acc === Bool.False ? expr.elsec : expr.thenc);
                 break;
             case 'close': // (n body next)
-                acc = makeClosure(expr[2], expr[1], sp);
-                sp -= expr[1];
-                expr = expr[3];
+                acc = makeClosure(expr.body, expr.n, sp);
+                sp -= expr.n;
+                expr = expr.next;
                 break;
             case 'conti': // (next)
                 acc = makeContinuation(sp);
-                expr = expr[1];
+                expr = expr.next;
                 break;
             case 'nuate': // (stack next)
-                sp = restoreStack(expr[1]);
-                expr = expr[2];
+                sp = restoreStack(expr.stack);
+                expr = expr.next;
                 break;
             case 'frame': // (ret next)
                 stack[sp++] = closure;
                 stack[sp++] = fp;
-                stack[sp++] = expr[1];
-                expr = expr[2];
+                stack[sp++] = expr.ret;
+                expr = expr.next;
                 break;
             case 'argument': // (next)
                 stack[sp++] = acc;
-                expr = expr[1];
+                expr = expr.next;
                 break;
             case 'shift': // (n m next)
-                sp = shiftArgs(expr[1], expr[2], sp);
-                expr = expr[3];
+                sp = shiftArgs(expr.n, expr.m, sp);
+                expr = expr.next;
                 break;
             case 'apply': // ()
                 (function () {
@@ -152,7 +163,7 @@ function execute(opcode) {
                 })();
                 break;
             case 'return': // (n)
-                sp -= expr[1];
+                sp -= expr.n;
                 expr    = stack[sp - 1];
                 fp      = stack[sp - 2];
                 closure = stack[sp - 3];

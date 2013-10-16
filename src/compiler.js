@@ -23,13 +23,20 @@ function compile(expr, env, assigned, next) {
 
     if (expr.type === 'symbol') {
         isAssigned = (assigned.indexOf(expr) >= 0);
-        return compileRefer(expr, env, isAssigned ? ['indirect', next] : next);
+        return compileRefer(expr, env, isAssigned ?  {
+                                type: 'indirect',
+                                next: next
+                            } : next);
     } else if (expr.type === 'pair') {
         first = expr.car;
         rest = expr.cdr;
         switch (first.name) {
             case 'quote': // (quote obj)
-                return ['constant', rest.car, next];
+                return {
+                    type: 'constant',
+                    obj: rest.car,
+                    next: next
+                };
             case 'begin': // (begin body)
                 body = rest.toArray();
                 for (i = body.length - 1; i >= 0; --i) {
@@ -43,13 +50,16 @@ function compile(expr, env, assigned, next) {
                 sets = findSets(body, vars.toArray());
                 return collectFree(
                     free, env,
-                    ['close', free.length,
-                     makeBoxes(sets, vars,
-                               compile(body, [vars.toArray(), free],
-                                       setUnion(sets,
-                                                setIntersect(assigned, free)),
-                                       ['return', vars.getLength()])),
-                     next]
+                    {
+                        type: 'close',
+                        n: free.length,
+                        body: makeBoxes(sets, vars,
+                                   compile(body, [vars.toArray(), free],
+                                           setUnion(sets,
+                                                    setIntersect(assigned, free)),
+                                           {type: 'return', n: vars.getLength()})),
+                        next: next
+                    }
                 );
             case 'if': // (if test thenc elsec)
                 test = rest.car;
@@ -57,7 +67,7 @@ function compile(expr, env, assigned, next) {
                 elsec = rest.cdr.cdr.car;
                 thenc = compile(thenc, env, assigned, next);
                 elsec = compile(elsec, env, assigned, next);
-                return compile(test, env, assigned, ['test', thenc, elsec]);
+                return compile(test, env, assigned, {type: 'test', thenc: thenc, elsec: elsec});
             case 'set!': // (set! name exp)
                 name = rest.car;
                 exp = rest.cdr.car;
@@ -65,42 +75,50 @@ function compile(expr, env, assigned, next) {
                     name, env,
                     function (n) {
                         return compile(exp, env, assigned,
-                                       ['assign-local', n, next]);
+                                       {type: 'assign-local', n: n, next: next});
                     },
                     function (n) {
                         return compile(exp, env, assigned,
-                                       ['assign-free', n, next]);
+                                       {type: 'assign-free', n: n, next: next});
                     },
                     function (sym) {
                         return compile(exp, env, assigned,
-                                       ['assign-global', sym, next]);
+                                       {type: 'assign-global', sym: sym, next: next});
                     }
                 );
             case 'call/cc': // (call/cc exp)
                 exp = rest.car;
-                conti = ['conti',
-                         ['argument',
-                          compile(exp, env, assigned,
-                                  isTail(next) ?
-                                      ['shift', 1, next[1], ['apply']] :
-                                      ['apply'])]];
-                return isTail(next) ? conti : ['frame', next, conti];
+                conti = {
+                    type: 'conti',
+                    next: {
+                        type: 'argument',
+                        next: compile(exp, env, assigned,
+                                      isTail(next) ?
+                                        {type: 'shift', n: 1, m: next.n, next: {type: 'apply'}} :
+                                        {type: 'apply'})
+                    }
+                };
+                return isTail(next) ? conti : {type: 'frame', ret: next, next: conti};
             default: // (func args)
                 args = rest;
                 func = compile(
                     first, env, assigned,
                     isTail(next) ?
-                        ['shift', args.getLength(), next[1], ['apply']] :
-                        ['apply']
+                        {type: 'shift', n: args.getLength(), m: next.n, next: {type: 'apply'}}:
+                        {type: 'apply'}
                 );
                 while (args !== Nil) {
-                    func = compile(args.car, env, assigned, ['argument', func]);
+                    func = compile(args.car, env, assigned, {type: 'argument', next: func});
                     args = args.cdr;
                 }
-                return isTail(next) ? func : ['frame', next, func];
+                return isTail(next) ? func : {type: 'frame', ret: next, next: func};
         }
     } else { // constant
-        return ['constant', expr, next];
+        return {
+            type: 'constant',
+            obj: expr,
+            next: next
+        };
     }
 }
 
@@ -112,7 +130,7 @@ function compile(expr, env, assigned, next) {
  * @return {Boolean}
  */
 function isTail(next) {
-    return next[0] === 'return';
+    return next.type === 'return';
 }
 
 /**
@@ -126,7 +144,7 @@ function isTail(next) {
 function collectFree(vars, env, next) {
     var i, len;
     for (i = 0, len = vars.length; i < len; ++i) {
-        next = compileRefer(vars[i], env, ['argument', next]);
+        next = compileRefer(vars[i], env, {type: 'argument', next: next});
     }
     return next;
 }
@@ -142,13 +160,25 @@ function collectFree(vars, env, next) {
  */
 function compileRefer(expr, env, next) {
     var returnLocal = function (n) {
-            return ['refer-local', n, next];
+            return {
+                type: 'refer-local',
+                n: n,
+                next: next
+            };
         },
         returnFree = function (n) {
-            return ['refer-free', n, next];
+            return {
+                type: 'refer-free',
+                n: n,
+                next: next
+            };
         },
         returnGlobal = function (sym) {
-            return ['refer-global', sym, next];
+            return {
+                type: 'refer-global',
+                sym: sym,
+                next: next
+            };
         };
     return compileLookup(expr, env, returnLocal, returnFree, returnGlobal);
 }
@@ -398,7 +428,11 @@ function makeBoxes(sets, vars, next) {
         vars = vars.cdr;
     }
     for (i = indices.length - 1; i >= 0; --i) {
-        next = ['box', indices[i], next];
+        next = {
+            type: 'box',
+            n: indices[i],
+            next: next
+        };
     }
     return next;
 }
@@ -407,6 +441,6 @@ function makeBoxes(sets, vars, next) {
 exports.compile = function (expr) {
   var env = [[], []];
   var assigned = [];
-  var next = ['halt'];
+  var next = {type: 'halt'};
   return compile(expr, env, assigned, next);
 };
