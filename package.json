@@ -7,7 +7,8 @@
         "pegjs": "0.7.0",
         "mocha": "1.6.0",
         "should": "1.2.1",
-        "browserify": "2.14.1"
+        "browserify": "2.14.1",
+        "colors": "0.6.2"
     },
     "engines": {
         "node": ">=0.6.0"

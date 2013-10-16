@@ -21,5 +21,9 @@ test:
 			--recursive \
 			--bail
 
+benchmark:
+	@node benchmark/benchmark.js
 
-.PHONY: parser dist all test
+
+
+.PHONY: parser dist all test benchmark
