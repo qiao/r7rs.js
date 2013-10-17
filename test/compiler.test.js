@@ -21,124 +21,104 @@ describe('Compiler', function () {
             parse(source)[0],
             [[], []],
             [],
-            ['halt']
+            { type: 'halt' }
         ).should.eql(opcode);
     }
 
     it('should compile constants', function () {
 
-        eql('1',     ['constant', new Real(1), ['halt']]);
-        eql('#t',    ['constant', new Bool(true), ['halt']]);
-        eql('#f',    ['constant', new Bool(false), ['halt']]);
-        eql('"str"', ['constant', new Str('str'), ['halt']]);
+        eql('1', {
+            type: 'constant',
+            object: new Real(1),
+            next: { type: 'halt' }
+        });
+        eql('#t', {
+            type: 'constant',
+            object: new Bool(true),
+            next: { type: 'halt' }
+        });
+        eql('#f', {
+            type: 'constant',
+            object: new Bool(false),
+            next: { type: 'halt' }
+        });
+        eql('"str"', {
+            type: 'constant',
+            object: new Str('str'),
+            next: { type: 'halt' }
+        });
 
     });
 
     it('should compile quotes', function () {
 
-        eql('\'hello', ['constant', new Symbol('hello'), ['halt']]);
-        eql('\'(1 2)', [
-            'constant',
-            new Pair(
+        eql('\'hello', {
+            type: 'constant',
+            object: new Symbol('hello'),
+            next: { type: 'halt' }
+        });
+        eql('\'(1 2)', {
+            type: 'constant',
+            object: new Pair(
                 new Real(1),
                 new Pair(new Real(2), Nil)
             ),
-            ['halt']
-        ]);
+            next: { type: 'halt' }
+        });
 
     });
 
     it('should compile lambdas', function () {
 
-        eql('(lambda (x) 1)', [
-            'close',
-            0,
-            [
-                'constant',
-                new Real(1),
-                ['return', 1]
-            ],
-            ['halt']
-        ]);
+        eql('(lambda (x) 1)', {
+            type: 'close',
+            n: 0,
+            body: {
+                type: 'constant',
+                object: new Real(1),
+                next: { type: 'return', n: 1 }
+            },
+            next: { type: 'halt' }
+        });
 
-        eql('(lambda (x y) x)', [
-            'close',
-            0,
-            [
-                'refer-local',
-                0,
-                ['return', 2]
-            ],
-            ['halt']
-        ]);
+        eql('(lambda (x y) x)', {
+            type: 'close',
+            n: 0,
+            body: {
+                type: 'refer-local',
+                n: 0,
+                next: { type: 'return', n: 2 }
+            },
+            next: { type: 'halt' }
+        });
 
-        eql('(lambda (x) (lambda (y) x))', [
-            'close',
-            0,
-            [
-                'refer-local',
-                0,
-                [
-                    'argument',
-                    [
-                        'close',
-                        1,
-                        [
-                            'refer-free',
-                            0,
-                            [
-                                'return',
-                                1
-                            ]
-                        ],
-                        [
-                            'return',
-                            1
-                        ]
-                    ]
-                ]
-            ],
-            ['halt']
-        ]);
-    });
-
-    it('should compile continuations', function () {
-
-        eql('(call/cc (lambda (k) (k 1)))', [
-            "frame",
-            ["halt"],
-            [
-                "conti",
-                [
-                    "argument",
-                    [
-                        "close",
-                        0,
-                        [
-                            "constant",
-                            new Real(1),
-                            [
-                                "argument",
-                                [
-                                    "refer-local",
-                                    0,
-                                    [
-                                        "shift",
-                                        1,
-                                        1,
-                                        [
-                                            "apply"
-                                        ]
-                                    ]
-                                ]
-                            ]
-                        ],
-                        [
-                            "apply"
-                        ]
-                    ]
-                ]
-            ]
-        ]);
+        eql('(lambda (x) (lambda (y) x))', {
+            type: 'close',
+            n: 0,
+            body: {
+                type: 'refer-local',
+                n: 0,
+                next: {
+                    type: 'argument',
+                    next: {
+                        type: 'close',
+                        n: 1,
+                        body: {
+                            type: 'refer-free',
+                            n: 0,
+                            next: {
+                                type: 'return',
+                                n: 1
+                            }
+                        },
+                        next: {
+                            type: 'return',
+                            n: 1
+                        }
+                    }
+                }
+            },
+            next: { type: 'halt' }
+        });
     });
 });

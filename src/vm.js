@@ -76,8 +76,8 @@ function execute(opcode) {
         switch (expr.type) { // instruction
             case 'halt':
                 return acc;
-            case 'constant': // (obj next)
-                acc = expr.obj;
+            case 'constant': // (object next)
+                acc = expr.object;
                 expr = expr.next;
                 break;
             case 'box': // (n next)
@@ -96,8 +96,8 @@ function execute(opcode) {
                 acc = closure[expr.n + 1];
                 expr = expr.next;
                 break;
-            case 'refer-global': // (sym next)
-                acc = TopLevel.get(expr.sym);
+            case 'refer-global': // (symbol next)
+                acc = TopLevel.get(expr.symbol);
                 expr = expr.next;
                 break;
             case 'assign-local': // (n next)
@@ -108,8 +108,8 @@ function execute(opcode) {
                 closure[expr.n + 1][0] = acc;
                 expr = expr.next;
                 break;
-            case 'assign-global': // (sym next)
-                TopLevel.reset(expr.sym, acc);
+            case 'assign-global': // (symbol next)
+                TopLevel.reset(expr.symbol, acc);
                 expr = expr.next;
                 break;
             case 'test': // (then else)

@@ -23,10 +23,9 @@ function compile(expr, env, assigned, next) {
 
     if (expr.type === 'symbol') {
         isAssigned = (assigned.indexOf(expr) >= 0);
-        return compileRefer(expr, env, isAssigned ?  {
-                                type: 'indirect',
-                                next: next
-                            } : next);
+        return compileRefer(expr, env, isAssigned ?
+                                           { type: 'indirect', next: next } :
+                                           next);
     } else if (expr.type === 'pair') {
         first = expr.car;
         rest = expr.cdr;
@@ -34,7 +33,7 @@ function compile(expr, env, assigned, next) {
             case 'quote': // (quote obj)
                 return {
                     type: 'constant',
-                    obj: rest.car,
+                    object: rest.car,
                     next: next
                 };
             case 'begin': // (begin body)
@@ -57,7 +56,7 @@ function compile(expr, env, assigned, next) {
                                         compile(body, [vars.toArray(), free],
                                                 setUnion(sets,
                                                          setIntersect(assigned, free)),
-                                                {type: 'return', n: vars.getLength()})),
+                                                { type: 'return', n: vars.getLength() })),
                         next: next
                     }
                 );
@@ -67,7 +66,7 @@ function compile(expr, env, assigned, next) {
                 elsec = rest.cdr.cdr.car;
                 thenc = compile(thenc, env, assigned, next);
                 elsec = compile(elsec, env, assigned, next);
-                return compile(test, env, assigned, {type: 'test', then: thenc, else: elsec});
+                return compile(test, env, assigned, { type: 'test', then: thenc, else: elsec });
             case 'set!': // (set! name exp)
                 name = rest.car;
                 exp = rest.cdr.car;
@@ -75,15 +74,15 @@ function compile(expr, env, assigned, next) {
                     name, env,
                     function (n) {
                         return compile(exp, env, assigned,
-                                       {type: 'assign-local', n: n, next: next});
+                                       { type: 'assign-local', n: n, next: next });
                     },
                     function (n) {
                         return compile(exp, env, assigned,
-                                       {type: 'assign-free', n: n, next: next});
+                                       { type: 'assign-free', n: n, next: next });
                     },
                     function (sym) {
                         return compile(exp, env, assigned,
-                                       {type: 'assign-global', sym: sym, next: next});
+                                       { type: 'assign-global', sym: sym, next: next });
                     }
                 );
             case 'call/cc': // (call/cc exp)
@@ -94,29 +93,29 @@ function compile(expr, env, assigned, next) {
                         type: 'argument',
                         next: compile(exp, env, assigned,
                                       isTail(next) ?
-                                        {type: 'shift', n: 1, m: next.n, next: {type: 'apply'}} :
-                                        {type: 'apply'})
+                                        { type: 'shift', n: 1, m: next.n, next: { type: 'apply' } } :
+                                        { type: 'apply' })
                     }
                 };
-                return isTail(next) ? conti : {type: 'frame', ret: next, next: conti};
+                return isTail(next) ? conti : { type: 'frame', ret: next, next: conti };
             default: // (func args)
                 args = rest;
                 func = compile(
                     first, env, assigned,
                     isTail(next) ?
-                        {type: 'shift', n: args.getLength(), m: next.n, next: {type: 'apply'}}:
-                        {type: 'apply'}
+                        { type: 'shift', n: args.getLength(), m: next.n, next: { type: 'apply' } }:
+                        { type: 'apply' }
                 );
                 while (args !== Nil) {
-                    func = compile(args.car, env, assigned, {type: 'argument', next: func});
+                    func = compile(args.car, env, assigned, { type: 'argument', next: func });
                     args = args.cdr;
                 }
-                return isTail(next) ? func : {type: 'frame', ret: next, next: func};
+                return isTail(next) ? func : { type: 'frame', ret: next, next: func };
         }
     } else { // constant
         return {
             type: 'constant',
-            obj: expr,
+            object: expr,
             next: next
         };
     }
@@ -144,7 +143,7 @@ function isTail(next) {
 function collectFree(vars, env, next) {
     var i, len;
     for (i = 0, len = vars.length; i < len; ++i) {
-        next = compileRefer(vars[i], env, {type: 'argument', next: next});
+        next = compileRefer(vars[i], env, { type: 'argument', next: next });
     }
     return next;
 }
@@ -176,7 +175,7 @@ function compileRefer(expr, env, next) {
         returnGlobal = function (sym) {
             return {
                 type: 'refer-global',
-                sym: sym,
+                symbol: sym,
                 next: next
             };
         };
@@ -441,6 +440,6 @@ function makeBoxes(sets, vars, next) {
 exports.compile = function (expr) {
   var env = [[], []];
   var assigned = [];
-  var next = {type: 'halt'};
+  var next = { type: 'halt' };
   return compile(expr, env, assigned, next);
 };
