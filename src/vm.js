@@ -113,7 +113,7 @@ function execute(opcode) {
                 expr = expr.next;
                 break;
             case 'test': // (then else)
-                expr = (acc === Bool.False ? expr.elsec : expr.thenc);
+                expr = (acc === Bool.False ? expr.else : expr.then);
                 break;
             case 'close': // (n body next)
                 acc = makeClosure(expr.body, expr.n, sp);

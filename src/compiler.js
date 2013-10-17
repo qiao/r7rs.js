@@ -54,10 +54,10 @@ function compile(expr, env, assigned, next) {
                         type: 'close',
                         n: free.length,
                         body: makeBoxes(sets, vars,
-                                   compile(body, [vars.toArray(), free],
-                                           setUnion(sets,
-                                                    setIntersect(assigned, free)),
-                                           {type: 'return', n: vars.getLength()})),
+                                        compile(body, [vars.toArray(), free],
+                                                setUnion(sets,
+                                                         setIntersect(assigned, free)),
+                                                {type: 'return', n: vars.getLength()})),
                         next: next
                     }
                 );
@@ -67,7 +67,7 @@ function compile(expr, env, assigned, next) {
                 elsec = rest.cdr.cdr.car;
                 thenc = compile(thenc, env, assigned, next);
                 elsec = compile(elsec, env, assigned, next);
-                return compile(test, env, assigned, {type: 'test', thenc: thenc, elsec: elsec});
+                return compile(test, env, assigned, {type: 'test', then: thenc, else: elsec});
             case 'set!': // (set! name exp)
                 name = rest.car;
                 exp = rest.cdr.car;
