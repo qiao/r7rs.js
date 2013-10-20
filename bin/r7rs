@@ -1,21 +1,35 @@
 #!/usr/bin/env node
 
+
 var fs = require('fs'),
+    optimist = require('optimist'),
     r7rs = require('../');
 
 
-function main(argv) {
-    var filename = argv[2];
+function main() {
+    var argv = optimist
+        .boolean(['parse-only', 'compile-only'])
+        .argv;
+
+    var filename = argv._[0]; // first non-hyphenated option
     fs.readFile(filename, function (err, data) {
         if (err) {
             console.error(err.message);
         } else {
             var source = data.toString();
             var expr = r7rs.parse(source)[0];
+            if (argv['parse-only']) {
+                console.log(JSON.stringify(expr, null, 4));
+                return;
+            }
             var opcode = r7rs.compile(expr);
+            if (argv['compile-only']) {
+                console.log(JSON.stringify(opcode, null, 4));
+                return;
+            }
             r7rs.execute(opcode);
         }
     });
 }
 
-main(process.argv)
+main();
