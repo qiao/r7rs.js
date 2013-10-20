@@ -106,9 +106,8 @@ function compile(expr, env, assigned, next) {
                         { type: 'shift', n: args.getLength(), m: next.n, next: { type: 'apply' } }:
                         { type: 'apply' }
                 );
-                while (args !== Nil) {
+                for (; args !== Nil; args = args.cdr) {
                     func = compile(args.car, env, assigned, { type: 'argument', next: func });
-                    args = args.cdr;
                 }
                 return isTail(next) ? func : { type: 'frame', ret: next, next: func };
         }
@@ -335,9 +334,8 @@ function findFree(expr, vars) {
                 return findFree(exp, vars);
             default:
                 set = [];
-                while (expr !== Nil) {
+                for (; expr !== Nil; expr = expr.cdr) {
                     set = setUnion(findFree(expr.car, vars), set);
-                    expr = expr.cdr;
                 }
                 return set;
         }
@@ -393,10 +391,8 @@ function findSets(expr, vars) {
                 return findSets(exp, vars);
             default:  // apply
                 set = [];
-                pair = expr;
-                while (pair !== Nil) {
+                for (pair = expr; pair !== Nil; pair = pair.cdr) {
                     set = setUnion(findSets(pair.car, vars), set);
-                    pair = pair.cdr;
                 }
                 return set;
         }
@@ -419,12 +415,11 @@ function findSets(expr, vars) {
 function makeBoxes(sets, vars, next) {
     var indices = [], n = 0, i;
 
-    while (vars !== Nil) {
+    for (; vars !== Nil; vars = vars.cdr) {
         if (sets.indexOf(vars.car) >= 0) {
             indices.push(n);
         }
         n += 1;
-        vars = vars.cdr;
     }
     for (i = indices.length - 1; i >= 0; --i) {
         next = {
