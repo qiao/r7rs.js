@@ -29,22 +29,19 @@ function execute(opcode) {
     }
 
     function makeContinuation(sp) {
-        return makeClosure(
-            {
-                type:'refer-local',
-                n: 0,
+        var body = {
+            type:'refer-local',
+            n: 0,
+            next: {
+                type: 'nuate',
+                stack: saveStack(sp),
                 next: {
-                    type: 'nuate',
-                    stack: saveStack(sp),
-                    next: {
-                        type: 'return',
-                        n: 0
-                    }
+                    type: 'return',
+                    n: 0
                 }
-            },
-            sp,
-            sp
-        );
+            }
+        };
+        return makeClosure(body, sp, sp);
     }
 
     function saveStack(sp) {
