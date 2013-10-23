@@ -3,26 +3,40 @@ var path = require('path');
 var colors = require('colors');
 var r7rs = require('../');
 
+function timer(samples, procedure) {
+    var start, end, i;
+
+    start = Date.now();
+    for (i = 0; i < samples; ++i) {
+      procedure();
+    }
+    end = Date.now();
+
+    return (end - start) / samples;
+}
+
 function benchmark(filename) {
-  process.stdout.write(path.basename(filename) + '\t...');
-  var start = Date.now();
-  var source = fs.readFileSync(filename).toString();
-  var expr = r7rs.parse(source)[0];
-  var opcode = r7rs.compile(expr);
-  var object = r7rs.execute(opcode);
-  var end = Date.now();
-  process.stdout.write('\b\b\b' + (end - start + 'ms').green + '\n');
+    process.stdout.write(path.basename(filename) + '\t...');
+
+    var time = timer(5, function () {
+        var source = fs.readFileSync(filename).toString();
+        var expr = r7rs.parse(source)[0];
+        var opcode = r7rs.compile(expr);
+        var object = r7rs.execute(opcode);
+    });
+
+    process.stdout.write('\b\b\b' + (time + 'ms').green + '\n');
 }
 
 function getBenchmarkFiles() {
-  var currentPath = path.resolve(__dirname);
-  var files = fs.readdirSync(currentPath);
+    var currentPath = path.resolve(__dirname);
+    var files = fs.readdirSync(currentPath);
 
-  return files.map(function (filename) {
-    return path.join(currentPath, filename);
-  }).filter(function (filename) {
-    return path.extname(filename) === '.scm';
-  });
+    return files.map(function (filename) {
+        return path.join(currentPath, filename);
+    }).filter(function (filename) {
+        return path.extname(filename) === '.scm';
+    });
 }
 
 getBenchmarkFiles().forEach(benchmark);
