@@ -73,6 +73,19 @@ describe('Compiler', function () {
         eql('(lambda (x) 1)', {
             type: 'close',
             n: 0,
+            variadic: false,
+            body: {
+                type: 'constant',
+                object: new Real(1),
+                next: { type: 'return', n: 1 }
+            },
+            next: { type: 'halt' }
+        });
+
+        eql('(lambda x 1)', {
+            type: 'close',
+            n: 0,
+            variadic: true,
             body: {
                 type: 'constant',
                 object: new Real(1),
@@ -84,6 +97,7 @@ describe('Compiler', function () {
         eql('(lambda (x y) x)', {
             type: 'close',
             n: 0,
+            variadic: false,
             body: {
                 type: 'refer-local',
                 n: 0,
@@ -95,6 +109,7 @@ describe('Compiler', function () {
         eql('(lambda (x) (lambda (y) x))', {
             type: 'close',
             n: 0,
+            variadic: false,
             body: {
                 type: 'refer-local',
                 n: 0,
@@ -103,6 +118,7 @@ describe('Compiler', function () {
                     next: {
                         type: 'close',
                         n: 1,
+                        variadic: false,
                         body: {
                             type: 'refer-free',
                             n: 0,

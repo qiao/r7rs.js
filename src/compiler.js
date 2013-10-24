@@ -18,7 +18,7 @@ var objects = require('./objects'),
  * @returns {Array} Next opcode
  */
 function compile(expr, env, assigned, next) {
-    var isAssigned, first, rest, obj, vars, body, free, sets,
+    var isAssigned, first, rest, obj, vars, body, free, sets, varsArray,
         test, thenc, elsec, name, exp, conti, args, func, i;
 
     if (expr.type === 'symbol') {
@@ -45,18 +45,20 @@ function compile(expr, env, assigned, next) {
             case 'lambda': // (lambda vars body)
                 vars = rest.car;
                 body = rest.cdr.car;
-                free = findFree(body, vars.toArray());
-                sets = findSets(body, vars.toArray());
+                varsArray = vars.type === 'symbol' ? [vars] : vars.toArray();
+                free = findFree(body, varsArray);
+                sets = findSets(body, varsArray);
                 return collectFree(
                     free, env,
                     {
                         type: 'close',
                         n: free.length,
-                        body: makeBoxes(sets, vars,
-                                        compile(body, [vars.toArray(), free],
+                        variadic: vars.type === 'symbol' || !vars.isProperList(),
+                        body: makeBoxes(sets, varsArray,
+                                        compile(body, [varsArray, free],
                                                 setUnion(sets,
                                                          setIntersect(assigned, free)),
-                                                { type: 'return', n: vars.getLength() })),
+                                                { type: 'return', n: varsArray.length })),
                         next: next
                     }
                 );
@@ -408,18 +410,17 @@ function findSets(expr, vars) {
  * of assigned variables (sets) and a list of arguments (vars).
  *
  * @param {Array} sets An array of the assigned variables.
- * @param {Pair} vars A List of variables.
+ * @param {Array} vars An array of variables.
  * @param {Array} next Next opcode.
  * @return {Array} Compiled opcode
  */
 function makeBoxes(sets, vars, next) {
-    var indices = [], n = 0, i;
+    var indices = [], n, i, len;
 
-    for (; vars !== Nil; vars = vars.cdr) {
-        if (sets.indexOf(vars.car) >= 0) {
+    for (i = 0, n = 0, len = vars.length; i < len; ++i, ++n) {
+        if (sets.indexOf(vars[i]) >= 0) {
             indices.push(n);
         }
-        n += 1;
     }
     for (i = indices.length - 1; i >= 0; --i) {
         next = {
