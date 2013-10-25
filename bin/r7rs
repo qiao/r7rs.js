@@ -3,13 +3,36 @@
 
 var fs = require('fs'),
     optimist = require('optimist'),
-    r7rs = require('../');
+    r7rs = require('../'),
+    package = require('../package.json');
 
 
 function main() {
-    var argv = optimist
-        .boolean(['parse-only', 'compile-only'])
-        .argv;
+    var options = optimist
+        .usage(package.name + ' ' + package.version)
+        .options({
+            p: {
+                alias: 'parse-only',
+                boolean: true,
+                describe: 'Parse the file, but do not compile and interpret'
+            },
+            c: {
+                alias: 'compile-only',
+                boolean: true,
+                describe: 'Compile the file, but do not interpret'
+            },
+            h: {
+                alias: 'help',
+                boolean: true,
+                describe: 'Show this help text'
+            }
+        }),
+        argv = options.argv;
+
+    if (!argv._.length || argv.help) {
+        options.showHelp();
+        return;
+    }
 
     var filename = argv._[0]; // first non-hyphenated option
     fs.readFile(filename, function (err, data) {
