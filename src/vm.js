@@ -21,9 +21,10 @@ function execute(opcode) {
 
     function makeClosure(body, n, sp) {
         var i, closure = new Array(n + 1);
-        closure[0] = body;
+        closure[0] = n;
+        closure[1] = body;
         for (i = 0; i < n; ++i) {
-            closure[i + 1] = stack[sp - i - 1];
+            closure[i + 2] = stack[sp - i - 1];
         }
         return closure;
     }
@@ -90,7 +91,7 @@ function execute(opcode) {
                 expr = expr.next;
                 break;
             case 'refer-free': // (n next)
-                acc = closure[expr.n + 1];
+                acc = closure[expr.n + 2];
                 expr = expr.next;
                 break;
             case 'refer-global': // (symbol next)
@@ -102,7 +103,7 @@ function execute(opcode) {
                 expr = expr.next;
                 break;
             case 'assign-free': // (n next)
-                closure[expr.n + 1][0] = acc;
+                closure[expr.n + 2][0] = acc;
                 expr = expr.next;
                 break;
             case 'assign-global': // (symbol next)
@@ -153,7 +154,9 @@ function execute(opcode) {
                         sp -= 3;
                         acc = acc(args);
                     } else {
-                        expr = acc[0];
+                        // the current accumulator is a closure,
+                        // set the next expression to be its body
+                        expr = acc[1];
                         fp = sp;
                         closure = acc;
                     }
