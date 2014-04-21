@@ -81,11 +81,11 @@ function execute(opcode) {
                 expr = expr.next;
                 break;
             case 'box': // (n next)
-                stack[sp - expr.n - 1] = [stack[sp - expr.n - 1]];
+                stack[sp - expr.n - 1] = { value: stack[sp - expr.n - 1] };
                 expr = expr.next;
                 break;
             case 'indirect': // (next)
-                acc = acc[0]; // unbox
+                acc = acc.value; // unbox
                 expr = expr.next;
                 break;
             case 'refer-local': // (n next)
@@ -101,11 +101,11 @@ function execute(opcode) {
                 expr = expr.next;
                 break;
             case 'assign-local': // (n next)
-                stack[fp - expr.n - 1][0] = acc;
+                stack[fp - expr.n - 1].value = acc;
                 expr = expr.next;
                 break;
             case 'assign-free': // (n next)
-                closure.frees[expr.n][0] = acc;
+                closure.frees[expr.n].value = acc;
                 expr = expr.next;
                 break;
             case 'assign-global': // (symbol next)
