@@ -139,7 +139,7 @@ function execute(opcode) {
                 sp = shiftArgs(expr.n, expr.m, sp);
                 expr = expr.next;
                 break;
-            case 'apply': // ()
+            case 'apply': // (n)
                 (function () {
                     var args = [], i;
                     if ((typeof acc) === 'function') {

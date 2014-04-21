@@ -95,8 +95,8 @@ function compile(expr, env, assigned, next) {
                         type: 'argument',
                         next: compile(exp, env, assigned,
                                       isTail(next) ?
-                                        { type: 'shift', n: 1, m: next.n, next: { type: 'apply' } } :
-                                        { type: 'apply' })
+                                        { type: 'shift', n: 1, m: next.n, next: { type: 'apply', n: 1 } } :
+                                        { type: 'apply', n: 1 })
                     }
                 };
                 return isTail(next) ? conti : { type: 'frame', ret: next, next: conti };
@@ -105,8 +105,8 @@ function compile(expr, env, assigned, next) {
                 func = compile(
                     first, env, assigned,
                     isTail(next) ?
-                        { type: 'shift', n: args.getLength(), m: next.n, next: { type: 'apply' } }:
-                        { type: 'apply' }
+                        { type: 'shift', n: args.getLength(), m: next.n, next: { type: 'apply', n: args.getLength() } }:
+                        { type: 'apply', n: args.getLength() }
                 );
                 for (; args !== Nil; args = args.cdr) {
                     func = compile(args.car, env, assigned, { type: 'argument', next: func });
