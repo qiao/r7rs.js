@@ -14,8 +14,8 @@ var objects = require('./objects'),
  *     with the first element being an array of local variables and the 
  *     second element being an array of free variables.
  * @param {Array} assigned The assigned variables in an expression.
- * @param {Array} next Next opcode.
- * @returns {Array} Next opcode
+ * @param {Object} next Next opcode.
+ * @returns {Object} Next opcode
  */
 function compile(expr, env, assigned, next) {
     var isAssigned, first, rest, obj, vars, body, free, sets, varsArray,
@@ -126,7 +126,7 @@ function compile(expr, env, assigned, next) {
 /**
  * Determine whether the next opcode is a tail call.
  *
- * @param {Array} Next
+ * @param {Object} Next
  * @return {Boolean}
  */
 function isTail(next) {
@@ -138,8 +138,8 @@ function isTail(next) {
  *
  * @param {Array} vars
  * @param {Array} env
- * @param {Array} next
- * @return {Array} Compiled opcode
+ * @param {Object} next
+ * @return {Object} Compiled opcode
  */
 function collectFree(vars, env, next) {
     var i, len;
@@ -153,10 +153,10 @@ function collectFree(vars, env, next) {
  * The help function `compileRefer` is used by the compiler for variable
  * references and by `collectFree` to collect free variable values.
  *
- * @param {Array} expr
+ * @param {Object} expr
  * @param {Array} env
- * @param {Array} next
- * @return {Array} Compiled opcode
+ * @param {Object} next
+ * @return {Object} Compiled opcode
  */
 function compileRefer(expr, env, next) {
     var returnLocal = function (n) {
@@ -188,12 +188,12 @@ function compileRefer(expr, env, next) {
  * of local variables or is in the list of free variables, and returns the
  * correponding opcode.
  *
- * @param {Array} expr
+ * @param {Object} expr
  * @param {Array} env
  * @param {Function} returnLocal
  * @param {Function} returnFree
  * @param {Function} returnGlobal
- * @return {Array} compiled opcode
+ * @return {Object} compiled opcode
  */
 function compileLookup(expr, env, returnLocal, returnFree, returnGlobal) {
     var locals = env[0],
@@ -411,8 +411,8 @@ function findSets(expr, vars) {
  *
  * @param {Array} sets An array of the assigned variables.
  * @param {Array} vars An array of variables.
- * @param {Array} next Next opcode.
- * @return {Array} Compiled opcode
+ * @param {Object} next Next opcode.
+ * @return {Object} Compiled opcode
  */
 function makeBoxes(sets, vars, next) {
     var indices = [], n, i, len;
