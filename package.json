@@ -8,8 +8,8 @@
     },
     "devDependencies": {
         "pegjs": "0.7.0",
-        "mocha": "1.13.0",
-        "should": "2.0.2",
+        "mocha": "1.18.2",
+        "should": "3.3.1",
         "browserify": "2.14.1",
         "colors": "0.6.2",
         "jscoverage": "0.5.0-rc1"
