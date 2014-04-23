@@ -16,6 +16,9 @@
     "engines": {
         "node": ">=0.6.0"
     },
+    "scripts": {
+        "test": "make test"
+    },
     "maintainers": [{
         "name": "Xueqiao Xu",
         "email": "xueqiaoxu@gmail.com"
