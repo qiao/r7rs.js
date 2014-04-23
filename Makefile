@@ -1,6 +1,8 @@
 TEST_TIMEOUT = 2000
 TEST_REPORTER = spec
 
+all: parser dist
+
 parser:
 	./node_modules/.bin/pegjs src/parser.pegjs
 
@@ -9,8 +11,6 @@ dist:
 		--standalone r7rs \
 		--entry index.js \
 		> dist/r7rs.js
-
-all: parser dist
 
 test:
 	@NODE_ENV=test \
@@ -22,14 +22,16 @@ test:
 			--bail
 
 test-cov: src-cov
-		@R7RS_COV=1 $(MAKE) test TEST_REPORTER=html-cov > coverage.html
+	@R7RS_COV=1 $(MAKE) test TEST_REPORTER=html-cov > coverage.html
 
 src-cov:
-		@jscoverage src src-cov
+	@jscoverage src src-cov
 
 benchmark:
 	@node benchmark/benchmark.js
 
+clean:
+	rm -f coverage.html
+	rm -rf src-cov
 
-
-.PHONY: parser dist all test test-cov benchmark
+.PHONY: parser dist all test test-cov benchmark clean
