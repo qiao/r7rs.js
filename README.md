@@ -1,6 +1,8 @@
 R7RS.js
 =======
 
+[![Build Status](https://travis-ci.org/qiao/r7rs.js.svg?branch=master)](https://travis-ci.org/qiao/r7rs.js)
+
 R7RS ("small" language) compliant Scheme implementation in JavaScript. (Work in progress)
 
 
