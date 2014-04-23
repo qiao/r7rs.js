@@ -1,7 +1,7 @@
 /*global describe:true, it: true*/
 
-var parse        = require('../src/parser').parse,
-    objects      = require('../src/objects'),
+var parse        = require('..').parse,
+    objects      = require('..').objects,
     Bool         = objects.Bool,
     ByteVector   = objects.ByteVector,
     Char         = objects.Char,

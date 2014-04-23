@@ -1,6 +1,6 @@
 /*global describe:true, it: true*/
 
-var objects = require('../../src/objects'),
+var objects = require('../..').objects,
     Real    = objects.Real,
     Pair    = objects.Pair,
     Nil     = objects.Nil;

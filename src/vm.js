@@ -11,6 +11,36 @@ var objects      = require('./objects'),
     Vector       = objects.Vector,
     TopLevel     = require('./toplevel');
 
+/**
+ * The Virtual Machine has a stack and five registers, namely
+ *   1. accumulator
+ *   2. next expression to execute
+ *   3. frame pointer
+ *   4. closure
+ *   5. stack pointer
+ *
+ * Each stack frame has the following structure:
+ *
+ *        +––––––––––––––––––––––+                        
+ *        | number of arguments  |                        
+ *        +––––––––––––––––––––––+                        
+ *        |        arg 0         |                        
+ *        +––––––––––––––––––––––+                        
+ *        |        arg 1         |                        
+ *        +––––––––––––––––––––––+                        
+ *        |        arg 2         |                        
+ *        +––––––––––––––––––––––+                        
+ *        |                      |                        
+ *        |         ...          |                        
+ *        |                      |                        
+ *        +––––––––––––––––––––––+                        
+ *        |    return address    |                        
+ *        +––––––––––––––––––––––+                        
+ *        |  prev frame pointer  |                        
+ *        +––––––––––––––––––––––+                        
+ *        |        closure       |                        
+ *        +––––––––––––––––––––––+                        
+ */
 function execute(opcode) {
     var acc     = null,             // accumulator
         expr    = opcode,           // next expression to execute

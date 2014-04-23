@@ -21,9 +21,15 @@ test:
 			--recursive \
 			--bail
 
+test-cov: src-cov
+		@R7RS_COV=1 $(MAKE) test TEST_REPORTER=html-cov > coverage.html
+
+src-cov:
+		@jscoverage src src-cov
+
 benchmark:
 	@node benchmark/benchmark.js
 
 
 
-.PHONY: parser dist all test benchmark
+.PHONY: parser dist all test test-cov benchmark
