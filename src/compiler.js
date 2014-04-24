@@ -48,12 +48,25 @@ function compile(expr, env, assigned, next) {
                 varsArray = vars.type === 'symbol' ? [vars] : vars.toArray();
                 free = findFree(body, varsArray);
                 sets = findSets(body, varsArray);
+
+                // Check whether the lambda is variadic.
+                // A variadic function can accept an indefinite number of arguments.
+                //
+                // The following lambdas are all variadic:
+                //   (lambda x x)
+                //   (lambda (x . z) x)
+                //   (lambda (x y . z) x)
                 variadic = (vars.type === 'symbol' || !vars.isProperList());
+
                 return collectFree(
                     free, env,
                     {
                         type: 'close',
                         n: free.length,
+
+                        // XXX: Note that JSON.stringify(Infinity) === 'null'.
+                        // If the compiled opcode is being serialized and later deserialized,
+                        // it will not be the same.
                         numArgs: {
                           min: variadic ? varsArray.length - 1 : varsArray.length,
                           max: variadic ? Infinity : varsArray.length
