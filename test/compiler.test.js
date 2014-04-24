@@ -73,7 +73,10 @@ describe('Compiler', function () {
         eql('(lambda (x) 1)', {
             type: 'close',
             n: 0,
-            variadic: false,
+            numArgs: {
+              min: 1,
+              max: 1
+            },
             body: {
                 type: 'constant',
                 object: new Real(1),
@@ -85,7 +88,10 @@ describe('Compiler', function () {
         eql('(lambda x 1)', {
             type: 'close',
             n: 0,
-            variadic: true,
+            numArgs: {
+              min: 0,
+              max: Infinity
+            },
             body: {
                 type: 'constant',
                 object: new Real(1),
@@ -97,7 +103,10 @@ describe('Compiler', function () {
         eql('(lambda (x y) x)', {
             type: 'close',
             n: 0,
-            variadic: false,
+            numArgs: {
+              min: 2,
+              max: 2
+            },
             body: {
                 type: 'refer-local',
                 n: 0,
@@ -109,7 +118,10 @@ describe('Compiler', function () {
         eql('(lambda (x) (lambda (y) x))', {
             type: 'close',
             n: 0,
-            variadic: false,
+            numArgs: {
+              min: 1,
+              max: 1
+            },
             body: {
                 type: 'refer-local',
                 n: 0,
@@ -118,7 +130,10 @@ describe('Compiler', function () {
                     next: {
                         type: 'close',
                         n: 1,
-                        variadic: false,
+                        numArgs: {
+                          min: 1,
+                          max: 1
+                        },
                         body: {
                             type: 'refer-free',
                             n: 0,

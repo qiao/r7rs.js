@@ -19,7 +19,7 @@ var objects = require('./objects'),
  */
 function compile(expr, env, assigned, next) {
     var isAssigned, first, rest, obj, vars, body, free, sets, varsArray,
-        test, thenc, elsec, name, exp, conti, args, func, i;
+        test, thenc, elsec, name, exp, conti, args, func, i, variadic;
 
     if (expr.type === 'symbol') {
         isAssigned = (assigned.indexOf(expr) >= 0);
@@ -48,12 +48,16 @@ function compile(expr, env, assigned, next) {
                 varsArray = vars.type === 'symbol' ? [vars] : vars.toArray();
                 free = findFree(body, varsArray);
                 sets = findSets(body, varsArray);
+                variadic = (vars.type === 'symbol' || !vars.isProperList());
                 return collectFree(
                     free, env,
                     {
                         type: 'close',
                         n: free.length,
-                        variadic: vars.type === 'symbol' || !vars.isProperList(),
+                        numArgs: {
+                          min: variadic ? varsArray.length - 1 : varsArray.length,
+                          max: variadic ? Infinity : varsArray.length
+                        },
                         body: makeBoxes(sets, varsArray,
                                         compile(body, [varsArray, free],
                                                 setUnion(sets,
