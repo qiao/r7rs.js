@@ -1,6 +1,7 @@
 /*global describe:true, it: true*/
 
 var parse        = require('..').parse,
+    compile      = require('..').compile,
     objects      = require('..').objects,
     Bool         = objects.Bool,
     ByteVector   = objects.ByteVector,
@@ -11,8 +12,7 @@ var parse        = require('..').parse,
     Real         = objects.Real,
     Str          = objects.Str,
     Symbol       = objects.Symbol,
-    Vector       = objects.Vector,
-    compile      = require('../src/compiler').compile;
+    Vector       = objects.Vector;
 
 describe('Compiler', function () {
 
