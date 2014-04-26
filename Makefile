@@ -9,7 +9,7 @@ parser:
 dist:
 	./node_modules/.bin/browserify \
 		--standalone r7rs \
-		--entry index.js \
+		--entry src/index.js \
 		> dist/r7rs.js
 
 test:

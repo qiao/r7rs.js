@@ -1,595 +1,13 @@
 (function(e){if("function"==typeof bootstrap)bootstrap("r7rs",e);else if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else if("undefined"!=typeof ses){if(!ses.ok())return;ses.makeR7rs=e}else"undefined"!=typeof window?window.r7rs=e():global.r7rs=e()})(function(){var define,ses,bootstrap,module,exports;
 return (function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0].call(u.exports,function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({1:[function(require,module,exports){
-exports.parse = require('./src/parser').parse,
-exports.compile = require('./src/compiler').compile,
-exports.execute = require('./src/vm').execute;
-
-},{"./src/parser":2,"./src/compiler":3,"./src/vm":4}],3:[function(require,module,exports){
-(function(){var objects = require('./objects'),
-    Nil     = objects.Nil;
-
-
-/**
- * Compile the S-Expression into opcode.
- * An opcode is an array with the first item being the instruction name and
- * the rest being the parameters.
- * The compilation transforms the expression into Continuation-Passing Style.
- * So each opcode contains a `next` field, which is also an opcode.
- *
- * @param {Pair} expr S-Expression
- * @param {Array} env A compile-time environment is an array of two elements,
- *     with the first element being an array of local variables and the 
- *     second element being an array of free variables.
- * @param {Array} assigned The assigned variables in an expression.
- * @param {Array} next Next opcode.
- * @returns {Array} Next opcode
- */
-function compile(expr, env, assigned, next) {
-    var isAssigned, first, rest, obj, vars, body, free, sets,
-        test, thenc, elsec, name, exp, conti, args, func, i;
-
-    if (expr.type === 'symbol') {
-        isAssigned = (assigned.indexOf(expr) >= 0);
-        return compileRefer(expr, env, isAssigned ? ['indirect', next] : next);
-    } else if (expr.type === 'pair') {
-        first = expr.car;
-        rest = expr.cdr;
-        switch (first.name) {
-            case 'quote': // (quote obj)
-                return ['constant', rest.car, next];
-            case 'begin': // (begin body)
-                body = rest.toArray();
-                for (i = body.length - 1; i >= 0; --i) {
-                    next = compile(body[i], env, assigned, next);
-                }
-                return next;
-            case 'lambda': // (lambda vars body)
-                vars = rest.car;
-                body = rest.cdr.car;
-                free = findFree(body, vars.toArray());
-                sets = findSets(body, vars.toArray());
-                return collectFree(
-                    free, env,
-                    ['close', free.length,
-                     makeBoxes(sets, vars,
-                               compile(body, [vars.toArray(), free],
-                                       setUnion(sets,
-                                                setIntersect(assigned, free)),
-                                       ['return', vars.getLength()])),
-                     next]
-                );
-            case 'if': // (if test thenc elsec)
-                test = rest.car;
-                thenc = rest.cdr.car;
-                elsec = rest.cdr.cdr.car;
-                thenc = compile(thenc, env, assigned, next);
-                elsec = compile(elsec, env, assigned, next);
-                return compile(test, env, assigned, ['test', thenc, elsec]);
-            case 'set!': // (set! name exp)
-                name = rest.car;
-                exp = rest.cdr.car;
-                return compileLookup(
-                    name, env,
-                    function (n) {
-                        return compile(exp, env, assigned,
-                                       ['assign-local', n, next]);
-                    },
-                    function (n) {
-                        return compile(exp, env, assigned,
-                                       ['assign-free', n, next]);
-                    },
-                    function (sym) {
-                        return compile(exp, env, assigned,
-                                       ['assign-global', sym, next]);
-                    }
-                );
-            case 'call/cc': // (call/cc exp)
-                exp = rest.car;
-                conti = ['conti',
-                         ['argument',
-                          compile(exp, env, assigned,
-                                  isTail(next) ?
-                                      ['shift', 1, next[1], ['apply']] :
-                                      ['apply'])]];
-                return isTail(next) ? conti : ['frame', next, conti];
-            default: // (func args)
-                args = rest;
-                func = compile(
-                    first, env, assigned,
-                    isTail(next) ?
-                        ['shift', args.getLength(), next[1], ['apply']] :
-                        ['apply']
-                );
-                while (args !== Nil) {
-                    func = compile(args.car, env, assigned, ['argument', func]);
-                    args = args.cdr;
-                }
-                return isTail(next) ? func : ['frame', next, func];
-        }
-    } else { // constant
-        return ['constant', expr, next];
-    }
-}
-
-
-/**
- * Determine whether the next opcode is a tail call.
- *
- * @param {Array} Next
- * @return {Boolean}
- */
-function isTail(next) {
-    return next[0] === 'return';
-}
-
-/**
- * Collect the free variables for inclusion in the closure.
- *
- * @param {Array} vars
- * @param {Array} env
- * @param {Array} next
- * @return {Array} Compiled opcode
- */
-function collectFree(vars, env, next) {
-    var i, len;
-    for (i = 0, len = vars.length; i < len; ++i) {
-        next = compileRefer(vars[i], env, ['argument', next]);
-    }
-    return next;
-}
-
-/**
- * The help function `compileRefer` is used by the compiler for variable
- * references and by `collectFree` to collect free variable values.
- *
- * @param {Array} expr
- * @param {Array} env
- * @param {Array} next
- * @return {Array} Compiled opcode
- */
-function compileRefer(expr, env, next) {
-    var returnLocal = function (n) {
-            return ['refer-local', n, next];
-        },
-        returnFree = function (n) {
-            return ['refer-free', n, next];
-        },
-        returnGlobal = function (sym) {
-            return ['refer-global', sym, next];
-        };
-    return compileLookup(expr, env, returnLocal, returnFree, returnGlobal);
-}
-
-/**
- * The function `compileLookup` checks whether a variable is in the list
- * of local variables or is in the list of free variables, and returns the
- * correponding opcode.
- *
- * @param {Array} expr
- * @param {Array} env
- * @param {Function} returnLocal
- * @param {Function} returnFree
- * @param {Function} returnGlobal
- * @return {Array} compiled opcode
- */
-function compileLookup(expr, env, returnLocal, returnFree, returnGlobal) {
-    var locals = env[0],
-        free = env[1],
-        n;
-
-    n = locals.indexOf(expr);
-    if (n >= 0) {
-        return returnLocal(n);
-    }
-
-    n = free.indexOf(expr);
-    if (n >= 0) {
-        return returnFree(n);
-    }
-
-    return returnGlobal(expr);
-}
-
-/**
- * Return the union of two sets.
- * Each set is represented by an array.
- *
- * @param {Array} sa
- * @param {Array} sb
- * @return {Array} union
- */
-function setUnion(sa, sb) {
-    var union, item, i, len;
-
-    // create a shallow copy of sa
-    union = sa.slice(0);
-
-    // for each item in sb, if it's NOT in sa,
-    // then push it into the new set.
-    for (i = 0, len = sb.length; i < len; ++i) {
-        item = sb[i];
-        if (sa.indexOf(item) === -1) {
-            union.push(item);
-        }
-    }
-
-    return union;
-}
-
-/**
- * Return the minus of two sets.
- * Each set is represented by an array.
- *
- * @param {Array} sa
- * @param {Array} sb
- * @return {Array} minus
- */
-function setMinus(sa, sb) {
-    var minus = [],
-        item, i, len;
-
-    // for each item in sa, if it's NOT in sb,
-    // then push it into the new set.
-    for (i = 0, len = sa.length; i < len; ++i) {
-        if (sb.indexOf(item) === -1) {
-            minus.push(item);
-        }
-    }
-
-    return minus;
-}
-
-
-/**
- * Return the intersect of two sets.
- * Each set is represented by an array.
- *
- * @param {Array} sa
- * @param {Array} sb
- * @return {Array} intersect
- */
-function setIntersect(sa, sb) {
-    var inter = [],
-        item, i, len;
-
-    // for each item in sa, if it is ALSO in sb,
-    // then push it into the new set.
-    for (i = 0, len = sa.length; i < len; ++i) {
-        if (sb.indexOf(item) >= 0) {
-            inter.push(item);
-        }
-    }
-
-    return inter;
-}
-
-
-/**
- * Find the set of free variables of an expression `expr`, given
- * an initial set of bound variables `vars`.
- *
- * @param {Pair} expr An expression in which free variables are being searched.
- * @param {Array} vars An array of variables to search.
- * @return {Array} An array of the free variables.
- */
-function findFree(expr, vars) {
-    var rest, args, body, test, thenc, elsec, name, exp, set;
-
-    if (expr.type === 'symbol') {
-        if (vars.indexOf(expr) >= 0) {
-            return [];
-        } else {
-            return [expr];
-        }
-    } else if (expr.type === 'pair') {
-        rest = expr.cdr;
-        switch(expr.car.name) {
-            case 'quote': // (quote obj)
-                return [];
-            case 'begin': // (begin body)
-                return findFree(rest, vars);
-            case 'lambda': // (lambda args body)
-                args = rest.car;
-                body = rest.cdr.car;
-                return findFree(body, setUnion(args.toArray(), vars));
-            case 'if': // (if test thenc elsec)
-                test = rest.car;
-                thenc = rest.cdr.car;
-                elsec = rest.cdr.cdr.car;
-                return setUnion(findFree(test, vars),
-                                setUnion(findFree(thenc, vars),
-                                         findFree(elsec, vars)));
-            case 'set!': // (set! name exp)
-                name = rest.car;
-                exp = rest.cdr.car;
-                if (vars.indexOf(name) >= 0) {
-                    return findFree(exp, vars);
-                } else {
-                    return setUnion([name], findFree(exp, vars));
-                }
-                break;
-            case 'call/cc': // (call/cc exp)
-                exp = rest.car;
-                return findFree(exp, vars);
-            default:
-                set = [];
-                while (expr !== Nil) {
-                    set = setUnion(findFree(expr.car, vars), set);
-                    expr = expr.cdr;
-                }
-                return set;
-        }
-    } else { // constant
-        return [];
-    }
-}
-
-/**
- * Find the assigned variables in a lambda expression.
- * This routine will look for assignments to any of the set of
- * variables `vars` and return the set of variables in `vars` that
- * are assigned.
- *
- * @param {Pair} expr An expression in which assigned variables are being searched.
- * @param {Array} vars An array of variables to search.
- * @return {Array} An array of the assigned variables.
- */
-function findSets(expr, vars) {
-    var rest, args, body, test, thenc, elsec, name, exp, set, pair;
-
-    if (expr.type === 'symbol') {
-        return [];
-    } else if (expr.type === 'pair') {
-        rest = expr.cdr;
-        switch (expr.car.name) {
-            case 'quote': // (quote obj)
-                return [];
-            case 'begin': // (begin body)
-                return findSets(rest, vars);
-            case 'lambda': // (lambda args body)
-                args = rest.car;
-                body = rest.cdr.car;
-                return findSets(body, setMinus(vars, args.toArray()));
-            case 'if': // (if test thenc elsec)
-                test = rest.car;
-                thenc = rest.cdr.car;
-                elsec = rest.cdr.cdr.car;
-                return setUnion(findSets(test, vars),
-                                setUnion(findSets(thenc, vars),
-                                         findSets(elsec, vars)));
-            case 'set!': // (set! name exp)
-                name = rest.car;
-                exp = rest.cdr.car;
-                if (vars.indexOf(name) >= 0) {
-                    return setUnion([name], findSets(exp, vars));
-                } else {
-                    return findSets(exp, name);
-                }
-                break;
-            case 'call/cc': // (call/cc exp)
-                exp = rest.car;
-                return findSets(exp, vars);
-            default:  // apply
-                set = [];
-                pair = expr;
-                while (pair !== Nil) {
-                    set = setUnion(findSets(pair.car, vars), set);
-                    pair = pair.cdr;
-                }
-                return set;
-        }
-    } else { // constant
-        return [];
-    }
-}
-
-/**
- * Once the compiler determines what subset of the arguments to a lambda
- * expression are assigned, it must generate code to create boxes for
- * these arguments. The following function generates this code from a list
- * of assigned variables (sets) and a list of arguments (vars).
- *
- * @param {Array} sets An array of the assigned variables.
- * @param {Pair} vars A List of variables.
- * @param {Array} next Next opcode.
- * @return {Array} Compiled opcode
- */
-function makeBoxes(sets, vars, next) {
-    var indices = [], n = 0, i;
-
-    while (vars !== Nil) {
-        if (sets.indexOf(vars.car) >= 0) {
-            indices.push(n);
-        }
-        n += 1;
-        vars = vars.cdr;
-    }
-    for (i = indices.length - 1; i >= 0; --i) {
-        next = ['box', indices[i], next];
-    }
-    return next;
-}
-
-
-exports.compile = function (expr) {
-  var env = [[], []];
-  var assigned = [];
-  var next = ['halt'];
-  return compile(expr, env, assigned, next);
+module.exports = {
+    parse: require('./parser').parse,
+    compile: require('./compiler').compile,
+    execute: require('./vm').execute,
+    objects: require('./objects')
 };
 
-})()
-},{"./objects":5}],4:[function(require,module,exports){
-(function(){var objects      = require('./objects'),
-    Bool         = objects.Bool,
-    ByteVector   = objects.ByteVector,
-    Char         = objects.Char,
-    Complex      = objects.Complex,
-    Nil          = objects.Nil,
-    Pair         = objects.Pair,
-    Real         = objects.Real,
-    Str          = objects.Str,
-    Symbol       = objects.Symbol,
-    Vector       = objects.Vector,
-    TopLevel     = require('./toplevel');
-
-function execute(opcode) {
-    var acc     = null,             // accumulator
-        expr    = opcode,           // next expression to execute
-        fp      = 0,                // frame pointer
-        closure = [],               // closure
-        stack   = new Array(1000),  // call stack
-        sp      = 0;                // stack pointer
-
-    function makeClosure(body, n, sp) {
-        var i, closure = new Array(n + 1);
-        closure[0] = body;
-        for (i = 0; i < n; ++i) {
-            closure[i + 1] = stack[sp - i - 1];
-        }
-        return closure;
-    }
-
-    function makeContinuation(sp) {
-        return makeClosure(
-            ['refer-local', 0, ['nuate', saveStack(sp), ['return', 0]]],
-            sp,
-            sp
-        );
-    }
-
-    function saveStack(sp) {
-        return stack.slice(0, sp);
-    }
-
-    function restoreStack(savedStack) {
-        var i, len;
-        for (i = 0, len = savedStack.length; i < len; ++i) {
-            stack[i] = savedStack[i];
-        }
-        return len;
-    }
-
-    function shiftArgs(n, m, sp) {
-        var i;
-        for (i = n - 1; i >= 0; --i) {
-            stack[sp - i - m - 1] = stack[sp - i - 1];
-        }
-        return sp - m;
-    }
-
-    while (true) {
-        //console.log(JSON.stringify(expr, null, 4));
-        //console.log('acc:', acc);
-        //console.log('stack:', stack.slice(0, sp));
-        //console.log('clos:', JSON.stringify(closure, null, 4));
-        //console.log('---------------------------------------');
-        switch (expr[0]) { // instruction
-            case 'halt':
-                return acc;
-            case 'constant': // (obj next)
-                acc = expr[1];
-                expr = expr[2];
-                break;
-            case 'box': // (n next)
-                stack[sp - expr[1] - 1] = [stack[sp - expr[1] - 1]];
-                expr = expr[2];
-                break;
-            case 'indirect': // (next)
-                acc = acc[0]; // unbox
-                expr = expr[1];
-                break;
-            case 'refer-local': // (n next)
-                acc = stack[fp - expr[1] - 1];
-                expr = expr[2];
-                break;
-            case 'refer-free': // (n next)
-                acc = closure[expr[1] + 1];
-                expr = expr[2];
-                break;
-            case 'refer-global': // (sym next)
-                acc = TopLevel.get(expr[1]);
-                expr = expr[2];
-                break;
-            case 'assign-local': // (n next)
-                stack[fp - expr[1] - 1][0] = acc;
-                expr = expr[2];
-                break;
-            case 'assign-free': // (n next)
-                closure[expr[1] + 1][0] = acc;
-                expr = expr[2];
-                break;
-            case 'assign-global': // (sym next)
-                TopLevel.reset(expr[1], acc);
-                expr = expr[2];
-                break;
-            case 'test': // (then else)
-                expr = (acc === Bool.False ? expr[2] : expr[1]);
-                break;
-            case 'close': // (n body next)
-                acc = makeClosure(expr[2], expr[1], sp);
-                sp -= expr[1];
-                expr = expr[3];
-                break;
-            case 'conti': // (next)
-                acc = makeContinuation(sp);
-                expr = expr[1];
-                break;
-            case 'nuate': // (stack next)
-                sp = restoreStack(expr[1]);
-                expr = expr[2];
-                break;
-            case 'frame': // (ret next)
-                stack[sp++] = closure;
-                stack[sp++] = fp;
-                stack[sp++] = expr[1];
-                expr = expr[2];
-                break;
-            case 'argument': // (next)
-                stack[sp++] = acc;
-                expr = expr[1];
-                break;
-            case 'shift': // (n m next)
-                sp = shiftArgs(expr[1], expr[2], sp);
-                expr = expr[3];
-                break;
-            case 'apply': // ()
-                (function () {
-                    var args = [], i;
-                    if ((typeof acc) === 'function') {
-                        for (i = 0; i < acc.numArgs; ++i) {
-                            args.push(stack[sp - i - 1]);
-                        }
-                        sp -= acc.numArgs;
-                        expr    = stack[sp - 1];
-                        fp      = stack[sp - 2];
-                        closure = stack[sp - 3];
-                        sp -= 3;
-                        acc = acc(args);
-                    } else {
-                        expr = acc[0];
-                        fp = sp;
-                        closure = acc;
-                    }
-                })();
-                break;
-            case 'return': // (n)
-                sp -= expr[1];
-                expr    = stack[sp - 1];
-                fp      = stack[sp - 2];
-                closure = stack[sp - 3];
-                sp -= 3;
-                break;
-            default: // this should be an exception
-                return acc;
-        }
-    }
-}
-
-exports.execute = execute;
-
-})()
-},{"./toplevel":6,"./objects":5}],2:[function(require,module,exports){
+},{"./parser":2,"./compiler":3,"./vm":4,"./objects":5}],2:[function(require,module,exports){
 module.exports = (function(){
   /*
    * Generated by PEG.js 0.7.0.
@@ -6189,72 +5607,664 @@ module.exports = (function(){
   return result;
 })();
 
-},{"./objects":5}],6:[function(require,module,exports){
-var objects = require('./objects'),
-    Pair = objects.Pair;
+},{"./objects":5}],3:[function(require,module,exports){
+(function(){var objects = require('./objects'),
+    Nil     = objects.Nil;
 
-var environment = {};
 
-function defineFunction(name, numArgs, jsFunc) {
-    var func = function (args) {
-        return jsFunc.apply(null, args);
-    };
-    func.numArgs = numArgs;
-    environment[name] = func;
+/**
+ * Compile the S-Expression into opcode.
+ * An opcode is an array with the first item being the instruction name and
+ * the rest being the parameters.
+ * The compilation transforms the expression into Continuation-Passing Style.
+ * So each opcode contains a `next` field, which is also an opcode.
+ *
+ * @param {Pair} expr S-Expression
+ * @param {Array} env A compile-time environment is an array of two elements,
+ *     with the first element being an array of local variables and the 
+ *     second element being an array of free variables.
+ * @param {Array} assigned The assigned variables in an expression.
+ * @param {Object} next Next opcode.
+ * @returns {Object} Next opcode
+ */
+function compile(expr, env, assigned, next) {
+    var isAssigned, first, rest, obj, vars, body, free, sets, varsArray,
+        test, thenc, elsec, name, exp, conti, args, func, i;
+
+    if (expr.type === 'symbol') {
+        isAssigned = (assigned.indexOf(expr) >= 0);
+        return compileRefer(expr, env, isAssigned ?
+                                           { type: 'indirect', next: next } :
+                                           next);
+    } else if (expr.type === 'pair') {
+        first = expr.car;
+        rest = expr.cdr;
+        switch (first.name) {
+            case 'quote': // (quote obj)
+                return {
+                    type: 'constant',
+                    object: rest.car,
+                    next: next
+                };
+            case 'begin': // (begin body)
+                body = rest.toArray();
+                for (i = body.length - 1; i >= 0; --i) {
+                    next = compile(body[i], env, assigned, next);
+                }
+                return next;
+            case 'lambda': // (lambda vars body)
+                vars = rest.car;
+                body = rest.cdr.car;
+                varsArray = vars.type === 'symbol' ? [vars] : vars.toArray();
+                free = findFree(body, varsArray);
+                sets = findSets(body, varsArray);
+                return collectFree(
+                    free, env,
+                    {
+                        type: 'close',
+                        n: free.length,
+                        variadic: vars.type === 'symbol' || !vars.isProperList(),
+                        body: makeBoxes(sets, varsArray,
+                                        compile(body, [varsArray, free],
+                                                setUnion(sets,
+                                                         setIntersect(assigned, free)),
+                                                { type: 'return', n: varsArray.length })),
+                        next: next
+                    }
+                );
+            case 'if': // (if test thenc elsec)
+                test = rest.car;
+                thenc = rest.cdr.car;
+                elsec = rest.cdr.cdr.car;
+                thenc = compile(thenc, env, assigned, next);
+                elsec = compile(elsec, env, assigned, next);
+                return compile(test, env, assigned, { type: 'test', then: thenc, else: elsec });
+            case 'set!': // (set! name exp)
+                name = rest.car;
+                exp = rest.cdr.car;
+                return compileLookup(
+                    name, env,
+                    function (n) {
+                        return compile(exp, env, assigned,
+                                       { type: 'assign-local', n: n, next: next });
+                    },
+                    function (n) {
+                        return compile(exp, env, assigned,
+                                       { type: 'assign-free', n: n, next: next });
+                    },
+                    function (sym) {
+                        return compile(exp, env, assigned,
+                                       { type: 'assign-global', sym: sym, next: next });
+                    }
+                );
+            case 'call/cc': // (call/cc exp)
+                exp = rest.car;
+                conti = {
+                    type: 'conti',
+                    next: {
+                        type: 'argument',
+                        next: compile(exp, env, assigned,
+                                      isTail(next) ?
+                                        { type: 'shift', n: 1, m: next.n, next: { type: 'apply', n: 1 } } :
+                                        { type: 'apply', n: 1 })
+                    }
+                };
+                return isTail(next) ? conti : { type: 'frame', ret: next, next: conti };
+            default: // (func args)
+                args = rest;
+                func = compile(
+                    first, env, assigned,
+                    isTail(next) ?
+                        { type: 'shift', n: args.getLength(), m: next.n, next: { type: 'apply', n: args.getLength() } }:
+                        { type: 'apply', n: args.getLength() }
+                );
+                for (; args !== Nil; args = args.cdr) {
+                    func = compile(args.car, env, assigned, { type: 'argument', next: func });
+                }
+                return isTail(next) ? func : { type: 'frame', ret: next, next: func };
+        }
+    } else { // constant
+        return {
+            type: 'constant',
+            object: expr,
+            next: next
+        };
+    }
 }
 
-defineFunction('car', 1, function (x) {
-    return x.car;
-});
-defineFunction('cdr', 1, function (x) {
-    return x.cdr;
-});
-defineFunction('+', 2, function (x, y) {
-    return x.add(y);
-});
-defineFunction('-', 2, function (x, y) {
-    return x.sub(y);
-});
-defineFunction('*', 2, function (x, y) {
-    return x.mul(y);
-});
-defineFunction('/', 2, function (x, y) {
-    return x.div(y);
-});
-defineFunction('=', 2, function (x, y) {
-    return x.eql(y);
-});
-defineFunction('<', 2, function (x, y) {
-    return x.lt(y);
-});
-defineFunction('>', 2, function (x, y) {
-    return x.gt(y);
-});
-defineFunction('display', 1, function (x) {
-    console.log(x.display());
-});
 
-exports.get = function (sym) {
-    var name = sym.name;
-    if (Object.hasOwnProperty.call(environment, name)) {
-        return environment[sym.name];
+/**
+ * Determine whether the next opcode is a tail call.
+ *
+ * @param {Object} Next
+ * @return {Boolean}
+ */
+function isTail(next) {
+    return next.type === 'return';
+}
+
+/**
+ * Collect the free variables for inclusion in the closure.
+ *
+ * @param {Array} vars
+ * @param {Array} env
+ * @param {Object} next
+ * @return {Object} Compiled opcode
+ */
+function collectFree(vars, env, next) {
+    var i, len;
+    for (i = 0, len = vars.length; i < len; ++i) {
+        next = compileRefer(vars[i], env, { type: 'argument', next: next });
     }
-    throw new Error('unbound variable: ' + name);
-};
+    return next;
+}
 
-exports.set = function (sym, val) {
-    environment[sym.name] = val;
-};
+/**
+ * The help function `compileRefer` is used by the compiler for variable
+ * references and by `collectFree` to collect free variable values.
+ *
+ * @param {Object} expr
+ * @param {Array} env
+ * @param {Object} next
+ * @return {Object} Compiled opcode
+ */
+function compileRefer(expr, env, next) {
+    var returnLocal = function (n) {
+            return {
+                type: 'refer-local',
+                n: n,
+                next: next
+            };
+        },
+        returnFree = function (n) {
+            return {
+                type: 'refer-free',
+                n: n,
+                next: next
+            };
+        },
+        returnGlobal = function (sym) {
+            return {
+                type: 'refer-global',
+                symbol: sym,
+                next: next
+            };
+        };
+    return compileLookup(expr, env, returnLocal, returnFree, returnGlobal);
+}
 
-exports.reset = function (sym, val) {
-    var name = sym.name;
-    if (Object.hasOwnProperty.call(environment, name)) {
-        environment[name] = val;
+/**
+ * The function `compileLookup` checks whether a variable is in the list
+ * of local variables or is in the list of free variables, and returns the
+ * correponding opcode.
+ *
+ * @param {Object} expr
+ * @param {Array} env
+ * @param {Function} returnLocal
+ * @param {Function} returnFree
+ * @param {Function} returnGlobal
+ * @return {Object} compiled opcode
+ */
+function compileLookup(expr, env, returnLocal, returnFree, returnGlobal) {
+    var locals = env[0],
+        free = env[1],
+        n;
+
+    n = locals.indexOf(expr);
+    if (n >= 0) {
+        return returnLocal(n);
     }
-    throw new Error('symbol not defined: ' + name);
+
+    n = free.indexOf(expr);
+    if (n >= 0) {
+        return returnFree(n);
+    }
+
+    return returnGlobal(expr);
+}
+
+/**
+ * Return the union of two sets.
+ * Each set is represented by an array.
+ *
+ * @param {Array} sa
+ * @param {Array} sb
+ * @return {Array} union
+ */
+function setUnion(sa, sb) {
+    var union, item, i, len;
+
+    // create a shallow copy of sa
+    union = sa.slice(0);
+
+    // for each item in sb, if it's NOT in sa,
+    // then push it into the new set.
+    for (i = 0, len = sb.length; i < len; ++i) {
+        item = sb[i];
+        if (sa.indexOf(item) === -1) {
+            union.push(item);
+        }
+    }
+
+    return union;
+}
+
+/**
+ * Return the minus of two sets.
+ * Each set is represented by an array.
+ *
+ * @param {Array} sa
+ * @param {Array} sb
+ * @return {Array} minus
+ */
+function setMinus(sa, sb) {
+    var minus = [],
+        item, i, len;
+
+    // for each item in sa, if it's NOT in sb,
+    // then push it into the new set.
+    for (i = 0, len = sa.length; i < len; ++i) {
+        if (sb.indexOf(item) === -1) {
+            minus.push(item);
+        }
+    }
+
+    return minus;
+}
+
+
+/**
+ * Return the intersect of two sets.
+ * Each set is represented by an array.
+ *
+ * @param {Array} sa
+ * @param {Array} sb
+ * @return {Array} intersect
+ */
+function setIntersect(sa, sb) {
+    var inter = [],
+        item, i, len;
+
+    // for each item in sa, if it is ALSO in sb,
+    // then push it into the new set.
+    for (i = 0, len = sa.length; i < len; ++i) {
+        if (sb.indexOf(item) >= 0) {
+            inter.push(item);
+        }
+    }
+
+    return inter;
+}
+
+
+/**
+ * Find the set of free variables of an expression `expr`, given
+ * an initial set of bound variables `vars`.
+ *
+ * @param {Pair} expr An expression in which free variables are being searched.
+ * @param {Array} vars An array of variables to search.
+ * @return {Array} An array of the free variables.
+ */
+function findFree(expr, vars) {
+    var rest, args, body, test, thenc, elsec, name, exp, set;
+
+    if (expr.type === 'symbol') {
+        if (vars.indexOf(expr) >= 0) {
+            return [];
+        } else {
+            return [expr];
+        }
+    } else if (expr.type === 'pair') {
+        rest = expr.cdr;
+        switch(expr.car.name) {
+            case 'quote': // (quote obj)
+                return [];
+            case 'begin': // (begin body)
+                return findFree(rest, vars);
+            case 'lambda': // (lambda args body)
+                args = rest.car;
+                body = rest.cdr.car;
+                return findFree(body, setUnion(args.toArray(), vars));
+            case 'if': // (if test thenc elsec)
+                test = rest.car;
+                thenc = rest.cdr.car;
+                elsec = rest.cdr.cdr.car;
+                return setUnion(findFree(test, vars),
+                                setUnion(findFree(thenc, vars),
+                                         findFree(elsec, vars)));
+            case 'set!': // (set! name exp)
+                name = rest.car;
+                exp = rest.cdr.car;
+                if (vars.indexOf(name) >= 0) {
+                    return findFree(exp, vars);
+                } else {
+                    return setUnion([name], findFree(exp, vars));
+                }
+                break;
+            case 'call/cc': // (call/cc exp)
+                exp = rest.car;
+                return findFree(exp, vars);
+            default:
+                set = [];
+                for (; expr !== Nil; expr = expr.cdr) {
+                    set = setUnion(findFree(expr.car, vars), set);
+                }
+                return set;
+        }
+    } else { // constant
+        return [];
+    }
+}
+
+/**
+ * Find the assigned variables in a lambda expression.
+ * This routine will look for assignments to any of the set of
+ * variables `vars` and return the set of variables in `vars` that
+ * are assigned.
+ *
+ * @param {Pair} expr An expression in which assigned variables are being searched.
+ * @param {Array} vars An array of variables to search.
+ * @return {Array} An array of the assigned variables.
+ */
+function findSets(expr, vars) {
+    var rest, args, body, test, thenc, elsec, name, exp, set, pair;
+
+    if (expr.type === 'symbol') {
+        return [];
+    } else if (expr.type === 'pair') {
+        rest = expr.cdr;
+        switch (expr.car.name) {
+            case 'quote': // (quote obj)
+                return [];
+            case 'begin': // (begin body)
+                return findSets(rest, vars);
+            case 'lambda': // (lambda args body)
+                args = rest.car;
+                body = rest.cdr.car;
+                return findSets(body, setMinus(vars, args.toArray()));
+            case 'if': // (if test thenc elsec)
+                test = rest.car;
+                thenc = rest.cdr.car;
+                elsec = rest.cdr.cdr.car;
+                return setUnion(findSets(test, vars),
+                                setUnion(findSets(thenc, vars),
+                                         findSets(elsec, vars)));
+            case 'set!': // (set! name exp)
+                name = rest.car;
+                exp = rest.cdr.car;
+                if (vars.indexOf(name) >= 0) {
+                    return setUnion([name], findSets(exp, vars));
+                } else {
+                    return findSets(exp, name);
+                }
+                break;
+            case 'call/cc': // (call/cc exp)
+                exp = rest.car;
+                return findSets(exp, vars);
+            default:  // apply
+                set = [];
+                for (pair = expr; pair !== Nil; pair = pair.cdr) {
+                    set = setUnion(findSets(pair.car, vars), set);
+                }
+                return set;
+        }
+    } else { // constant
+        return [];
+    }
+}
+
+/**
+ * Once the compiler determines what subset of the arguments to a lambda
+ * expression are assigned, it must generate code to create boxes for
+ * these arguments. The following function generates this code from a list
+ * of assigned variables (sets) and a list of arguments (vars).
+ *
+ * @param {Array} sets An array of the assigned variables.
+ * @param {Array} vars An array of variables.
+ * @param {Object} next Next opcode.
+ * @return {Object} Compiled opcode
+ */
+function makeBoxes(sets, vars, next) {
+    var indices = [], n, i, len;
+
+    for (i = 0, n = 0, len = vars.length; i < len; ++i, ++n) {
+        if (sets.indexOf(vars[i]) >= 0) {
+            indices.push(n);
+        }
+    }
+    for (i = indices.length - 1; i >= 0; --i) {
+        next = {
+            type: 'box',
+            n: indices[i],
+            next: next
+        };
+    }
+    return next;
+}
+
+
+exports.compile = function (expr) {
+  var env = [[], []];
+  var assigned = [];
+  var next = { type: 'halt' };
+  return compile(expr, env, assigned, next);
 };
 
-},{"./objects":5}],5:[function(require,module,exports){
+})()
+},{"./objects":5}],4:[function(require,module,exports){
+(function(){var objects      = require('./objects'),
+    Bool         = objects.Bool,
+    ByteVector   = objects.ByteVector,
+    Char         = objects.Char,
+    Complex      = objects.Complex,
+    Nil          = objects.Nil,
+    Pair         = objects.Pair,
+    Real         = objects.Real,
+    Str          = objects.Str,
+    Symbol       = objects.Symbol,
+    Vector       = objects.Vector,
+    TopLevel     = require('./toplevel');
+
+/**
+ * The Virtual Machine has a stack and five registers, namely
+ *   1. accumulator
+ *   2. next expression to execute
+ *   3. frame pointer
+ *   4. closure
+ *   5. stack pointer
+ *
+ * Each stack frame has the following structure:
+ *
+ *        +––––––––––––––––––––––+                        
+ *        | number of arguments  |                        
+ *        +––––––––––––––––––––––+                        
+ *        |        arg 0         |                        
+ *        +––––––––––––––––––––––+                        
+ *        |        arg 1         |                        
+ *        +––––––––––––––––––––––+                        
+ *        |        arg 2         |                        
+ *        +––––––––––––––––––––––+                        
+ *        |                      |                        
+ *        |         ...          |                        
+ *        |                      |                        
+ *        +––––––––––––––––––––––+                        
+ *        |    return address    |                        
+ *        +––––––––––––––––––––––+                        
+ *        |  prev frame pointer  |                        
+ *        +––––––––––––––––––––––+                        
+ *        |        closure       |                        
+ *        +––––––––––––––––––––––+                        
+ */
+function execute(opcode) {
+    var acc     = null,             // accumulator
+        expr    = opcode,           // next expression to execute
+        fp      = 0,                // frame pointer
+        closure = [],               // closure
+        stack   = new Array(1000),  // call stack
+        sp      = 0;                // stack pointer
+
+    function makeClosure(body, n, sp) {
+        var i, frees = new Array(n);
+        for (i = 0; i < n; ++i) {
+            frees[i] = stack[sp - i - 1];
+        }
+        return {
+          n: n,
+          body: body,
+          frees: frees
+        };
+    }
+
+    function makeContinuation(sp) {
+        var body = {
+            type:'refer-local',
+            n: 0,
+            next: {
+                type: 'nuate',
+                stack: saveStack(sp),
+                next: {
+                    type: 'return',
+                    n: 0
+                }
+            }
+        };
+        return makeClosure(body, sp, sp);
+    }
+
+    function saveStack(sp) {
+        return stack.slice(0, sp);
+    }
+
+    function restoreStack(savedStack) {
+        var i, len;
+        for (i = 0, len = savedStack.length; i < len; ++i) {
+            stack[i] = savedStack[i];
+        }
+        return len;
+    }
+
+    function shiftArgs(n, m, sp) {
+        var i;
+        for (i = n - 1; i >= 0; --i) {
+            stack[sp - i - m - 1] = stack[sp - i - 1];
+        }
+        return sp - m;
+    }
+
+    while (true) {
+        //console.log(JSON.stringify(expr, null, 4));
+        //console.log('acc:', acc);
+        //console.log('stack:', stack.slice(0, sp));
+        //console.log('clos:', JSON.stringify(closure, null, 4));
+        //console.log('---------------------------------------');
+        switch (expr.type) { // instruction
+            case 'halt':
+                return acc;
+            case 'constant': // (object next)
+                acc = expr.object;
+                expr = expr.next;
+                break;
+            case 'box': // (n next)
+                stack[sp - expr.n - 1] = { value: stack[sp - expr.n - 1] };
+                expr = expr.next;
+                break;
+            case 'indirect': // (next)
+                acc = acc.value; // unbox
+                expr = expr.next;
+                break;
+            case 'refer-local': // (n next)
+                acc = stack[fp - expr.n - 1];
+                expr = expr.next;
+                break;
+            case 'refer-free': // (n next)
+                acc = closure.frees[expr.n];
+                expr = expr.next;
+                break;
+            case 'refer-global': // (symbol next)
+                acc = TopLevel.get(expr.symbol);
+                expr = expr.next;
+                break;
+            case 'assign-local': // (n next)
+                stack[fp - expr.n - 1].value = acc;
+                expr = expr.next;
+                break;
+            case 'assign-free': // (n next)
+                closure.frees[expr.n].value = acc;
+                expr = expr.next;
+                break;
+            case 'assign-global': // (symbol next)
+                TopLevel.reset(expr.symbol, acc);
+                expr = expr.next;
+                break;
+            case 'test': // (then else)
+                expr = (acc === Bool.False ? expr.else : expr.then);
+                break;
+            case 'close': // (n body next)
+                acc = makeClosure(expr.body, expr.n, sp);
+                sp -= expr.n;
+                expr = expr.next;
+                break;
+            case 'conti': // (next)
+                acc = makeContinuation(sp);
+                expr = expr.next;
+                break;
+            case 'nuate': // (stack next)
+                sp = restoreStack(expr.stack);
+                expr = expr.next;
+                break;
+            case 'frame': // (ret next)
+                stack[sp++] = closure;
+                stack[sp++] = fp;
+                stack[sp++] = expr.ret;
+                expr = expr.next;
+                break;
+            case 'argument': // (next)
+                stack[sp++] = acc;
+                expr = expr.next;
+                break;
+            case 'shift': // (n m next)
+                sp = shiftArgs(expr.n, expr.m, sp);
+                expr = expr.next;
+                break;
+            case 'apply': // (n)
+                (function () {
+                    var args = [], i;
+                    if ((typeof acc) === 'function') {
+                        for (i = 0; i < acc.numArgs; ++i) {
+                            args.push(stack[sp - i - 1]);
+                        }
+                        sp -= acc.numArgs;
+                        expr    = stack[sp - 1];
+                        fp      = stack[sp - 2];
+                        closure = stack[sp - 3];
+                        sp -= 3;
+                        acc = acc(args);
+                    } else {
+                        // the current accumulator is a closure,
+                        // set the next expression to be its body
+                        expr = acc.body;
+                        fp = sp;
+                        closure = acc;
+                    }
+                })();
+                break;
+            case 'return': // (n)
+                sp -= expr.n;
+                expr    = stack[sp - 1];
+                fp      = stack[sp - 2];
+                closure = stack[sp - 3];
+                sp -= 3;
+                break;
+            default: // this should be an exception
+                return acc;
+        }
+    }
+}
+
+exports.execute = execute;
+
+})()
+},{"./toplevel":6,"./objects":5}],5:[function(require,module,exports){
 module.exports = {
     Bool       : require('./bool'),
     ByteVector : require('./bytevector'),
@@ -6426,7 +6436,72 @@ Vector.prototype.toJSON = function () {
 
 module.exports = Vector;
 
-},{}],12:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
+var objects = require('./objects'),
+    Pair = objects.Pair;
+
+var environment = {};
+
+function defineFunction(name, numArgs, jsFunc) {
+    var func = function (args) {
+        return jsFunc.apply(null, args);
+    };
+    func.numArgs = numArgs;
+    environment[name] = func;
+}
+
+defineFunction('car', 1, function (x) {
+    return x.car;
+});
+defineFunction('cdr', 1, function (x) {
+    return x.cdr;
+});
+defineFunction('+', 2, function (x, y) {
+    return x.add(y);
+});
+defineFunction('-', 2, function (x, y) {
+    return x.sub(y);
+});
+defineFunction('*', 2, function (x, y) {
+    return x.mul(y);
+});
+defineFunction('/', 2, function (x, y) {
+    return x.div(y);
+});
+defineFunction('=', 2, function (x, y) {
+    return x.eql(y);
+});
+defineFunction('<', 2, function (x, y) {
+    return x.lt(y);
+});
+defineFunction('>', 2, function (x, y) {
+    return x.gt(y);
+});
+defineFunction('display', 1, function (x) {
+    console.log(x.display());
+});
+
+exports.get = function (sym) {
+    var name = sym.name;
+    if (Object.hasOwnProperty.call(environment, name)) {
+        return environment[sym.name];
+    }
+    throw new Error('unbound variable: ' + name);
+};
+
+exports.set = function (sym, val) {
+    environment[sym.name] = val;
+};
+
+exports.reset = function (sym, val) {
+    var name = sym.name;
+    if (Object.hasOwnProperty.call(environment, name)) {
+        environment[name] = val;
+    }
+    throw new Error('symbol not defined: ' + name);
+};
+
+},{"./objects":5}],12:[function(require,module,exports){
 var Nil = require('./nil');
 
 
@@ -6467,9 +6542,8 @@ Pair.prototype.type = 'pair';
  */
 Pair.prototype.toArray = function () {
     var array = [], pair = this;
-    while (pair.type === 'pair') {
+    for (; pair.type === 'pair'; pair = pair.cdr) {
         array.push(pair.car);
-        pair = pair.cdr;
     }
     if (pair !== Nil) {
         array.push(pair);
@@ -6485,9 +6559,8 @@ Pair.prototype.toArray = function () {
  */
 Pair.prototype.getLength = function () {
     var len = 0, pair = this;
-    while (pair !== Nil) {
+    for (; pair !== Nil; pair = pair.cdr) {
         len += 1;
-        pair = pair.cdr;
     }
     return len;
 };
@@ -6502,12 +6575,11 @@ Pair.prototype.getLength = function () {
 Pair.prototype.toProperList = function () {
     var pair = this,
         list = Nil;
-    while (pair.type === 'pair') {
+    for (; pair.type === 'pair'; pair = pair.cdr) {
         list = new Pair(pair.car, list);
-        pair = pair.cdr;
     }
     if (pair === Nil) {
-        return list;
+        return list.reverse();
     } else {
         list = new Pair(pair, list);
         return list.reverse();
@@ -6556,9 +6628,8 @@ Pair.prototype.isProperList = function () {
 Pair.prototype.reverse = function () {
     var ret = Nil,
         pair = this;
-    while (pair.type === 'pair') {
+    for (; pair.type === 'pair'; pair = pair.cdr) {
         ret = new Pair(pair.car, ret);
-        pair = pair.cdr;
     }
     return ret;
 };
