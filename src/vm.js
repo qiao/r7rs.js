@@ -55,9 +55,9 @@ function execute(opcode) {
             frees[i] = stack[sp - i - 1];
         }
         return {
-          n: n,
-          body: body,
-          frees: frees
+            n: n,
+            body: body,
+            frees: frees
         };
     }
 
@@ -97,8 +97,14 @@ function execute(opcode) {
         return sp - m;
     }
 
+    function dumpOpcode(opcode) {
+        var cloned = JSON.parse(JSON.stringify(opcode));
+        delete cloned.next;
+        console.log(JSON.stringify(cloned));
+    }
+
     while (true) {
-        //console.log(JSON.stringify(expr, null, 4));
+        dumpOpcode(expr);
         //console.log('acc:', acc);
         //console.log('stack:', stack.slice(0, sp));
         //console.log('clos:', JSON.stringify(closure, null, 4));
