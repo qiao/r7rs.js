@@ -2,10 +2,34 @@
 
 
 var fs = require('fs'),
+    readline = require('readline'),
     optimist = require('optimist'),
     r7rs = require('../'),
     package = require('../package.json');
 
+
+function repl() {
+    var rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+
+    rl.setPrompt('> ');
+    rl.prompt();
+
+    rl.on('line', function (source) {
+        try {
+            var expr = r7rs.parse(source)[0];
+            var opcode = r7rs.compile(expr);
+            var object = r7rs.execute(opcode);
+            console.log(object.display());
+        } catch (e) {
+            console.error(e.stack);
+        }
+
+        rl.prompt();
+    });
+}
 
 function main() {
     var options = optimist
@@ -29,7 +53,11 @@ function main() {
         }),
         argv = options.argv;
 
-    if (!argv._.length || argv.help) {
+    if (!argv._.length) {
+        return repl();
+    }
+
+    if (argv.help) {
         options.showHelp();
         return;
     }
