@@ -30,7 +30,7 @@ function compile(expr, env, next) {
                 return {
                     type: 'close',
                     body: compile(body,
-                                  env.concat([vars.toArray()]),
+                                  [vars.toArray()].concat(env),
                                   { type: 'return' }),
                     next: next
                 };
@@ -106,5 +106,5 @@ function compileLookup(name, env) {
 }
 
 exports.compile = function (expr) {
-    return compile(expr, [[], []], { type: 'halt' });
+    return compile(expr, [], { type: 'halt' });
 };
