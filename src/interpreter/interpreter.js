@@ -15,230 +15,97 @@ var objects      = require('../objects'),
 function execute(opcode) {
     var acc = null,
         exp = opcode,
-        env = null,
+        env = [],
         rib = [],
         stk = null;
         
     while (true) {
         switch (exp.type) {
-            case 'halt': return;
+            case 'halt':
+                console.log(acc);
+                return acc;
             case 'constant':
                 acc = exp.object;
                 exp = exp.next;
                 break;
             case 'refer':
+                acc = env[exp.location[0]][exp.location[1]];
                 exp = exp.next;
+                break;
+            case 'close':
+                acc = makeClosure(exp.body, env);
+                exp = exp.next;
+                break;
+            case 'test':
+                exp = acc === Bool.True ? exp.then : exp.else;
+                break;
+            case 'assign':
+                env[exp.location[0]][exp.location[1]] = acc;
+                exp = exp.next;
+                break;
+            case 'conti':
+                acc = makeContinuation(stk);
+                exp = exp.next;
+                break;
+            case 'nuate':
+                acc = env[exp.location[0]][exp.location[1]];
+                stk = exp.stk;
+                exp = { type: 'return' };
+                break;
+            case 'frame':
+                stk = makeCallFrame(exp.ret, env, rib, stk);
+                rib = [];
+                exp = exp.next;
+                break;
+            case 'argument':
+                rib.unshift(acc);
+                exp = exp.next;
+                break;
+            case 'apply':
+                // acc is now a closure
+                env = [rib].concat(acc.env);
+                rib = [];
+                exp = acc.body;
+                break;
+            case 'return':
+                exp = stk.ret;
+                env = stk.env;
+                rib = stk.rib;
+                stk = stk.stk;
                 break;
         }
     }
 }
 
-    this.acc = null;
-    this.exp = null;
-    this.env = null;
-    this.rib = null;
-    this.stk = null;
+function makeClosure(body, env) {
+    return {
+        body: body,
+        env: env
+    };
+}
 
-/**
- * The Virtual Machine has a stack and five registers, namely
- *   1. accumulator
- *   2. next expression to execute
- *   3. frame pointer
- *   4. closure
- *   5. stack pointer
- *
- * Each stack frame has the following structure:
- *
- *        +––––––––––––––––––––––+                        
- *        | number of arguments  |                        
- *        +––––––––––––––––––––––+                        
- *        |        arg 0         |                        
- *        +––––––––––––––––––––––+                        
- *        |        arg 1         |                        
- *        +––––––––––––––––––––––+                        
- *        |        arg 2         |                        
- *        +––––––––––––––––––––––+                        
- *        |                      |                        
- *        |         ...          |                        
- *        |                      |                        
- *        +––––––––––––––––––––––+                        
- *        |    return address    |                        
- *        +––––––––––––––––––––––+                        
- *        |  prev frame pointer  |                        
- *        +––––––––––––––––––––––+                        
- *        |        closure       |                        
- *        +––––––––––––––––––––––+                        
- */
-//function execute(opcode) {
-    //var acc     = null,             // accumulator
-        //expr    = opcode,           // next expression to execute
-        //fp      = 0,                // frame pointer
-        //closure = [],               // closure
-        //stack   = new Array(1000),  // call stack
-        //sp      = 0;                // stack pointer
+function makeContinuation(stk) {
+    return makeClosure({
+        type: 'nuate',
+        stk: stk,
+        location: [0, 0]
+    }, []);
+}
 
-    //function makeClosure(body, n, sp) {
-        //var i, frees = new Array(n);
-        //for (i = 0; i < n; ++i) {
-            //frees[i] = stack[sp - i - 1];
-        //}
-        //return {
-            //n: n,
-            //body: body,
-            //frees: frees
-        //};
-    //}
+function makeCallFrame(ret, env, rib, stk) {
+    return {
+        ret: ret,
+        env: env,
+        rib: rib,
+        stk: stk
+    };
+}
 
-    //function makeContinuation(sp) {
-        //var body = {
-            //type:'refer-local',
-            //n: 0,
-            //next: {
-                //type: 'nuate',
-                //stack: saveStack(sp),
-                //next: {
-                    //type: 'return',
-                    //n: 0
-                //}
-            //}
-        //};
-        //return makeClosure(body, sp, sp);
-    //}
+function logOpcode(opcode) {
+    //var opcode = JSON.parse(JSON.stringify(opcode));
+    //delete opcode.next;
+    //console.log(opcode);
+    console.log(JSON.stringify(opcode, null, 4));
+}
 
-    //function saveStack(sp) {
-        //return stack.slice(0, sp);
-    //}
-
-    //function restoreStack(savedStack) {
-        //var i, len;
-        //for (i = 0, len = savedStack.length; i < len; ++i) {
-            //stack[i] = savedStack[i];
-        //}
-        //return len;
-    //}
-
-    //function shiftArgs(n, m, sp) {
-        //var i;
-        //for (i = n - 1; i >= 0; --i) {
-            //stack[sp - i - m - 1] = stack[sp - i - 1];
-        //}
-        //return sp - m;
-    //}
-
-    //function dumpOpcode(opcode) {
-        //var cloned = JSON.parse(JSON.stringify(opcode));
-        //delete cloned.next;
-        //console.log(JSON.stringify(cloned));
-    //}
-
-    //while (true) {
-        //dumpOpcode(expr);
-        ////console.log('acc:', acc);
-        ////console.log('stack:', stack.slice(0, sp));
-        ////console.log('clos:', JSON.stringify(closure, null, 4));
-        ////console.log('---------------------------------------');
-        //switch (expr.type) { // instruction
-            //case 'halt':
-                //return acc;
-            //case 'constant': // (object next)
-                //acc = expr.object;
-                //expr = expr.next;
-                //break;
-            //case 'box': // (n next)
-                //stack[sp - expr.n - 1] = { value: stack[sp - expr.n - 1] };
-                //expr = expr.next;
-                //break;
-            //case 'indirect': // (next)
-                //acc = acc.value; // unbox
-                //expr = expr.next;
-                //break;
-            //case 'refer-local': // (n next)
-                //acc = stack[fp - expr.n - 1];
-                //expr = expr.next;
-                //break;
-            //case 'refer-free': // (n next)
-                //acc = closure.frees[expr.n];
-                //expr = expr.next;
-                //break;
-            //case 'refer-global': // (symbol next)
-                //acc = TopLevel.get(expr.symbol);
-                //expr = expr.next;
-                //break;
-            //case 'assign-local': // (n next)
-                //stack[fp - expr.n - 1].value = acc;
-                //expr = expr.next;
-                //break;
-            //case 'assign-free': // (n next)
-                //closure.frees[expr.n].value = acc;
-                //expr = expr.next;
-                //break;
-            //case 'assign-global': // (symbol next)
-                //TopLevel.reset(expr.symbol, acc);
-                //expr = expr.next;
-                //break;
-            //case 'test': // (then else)
-                //expr = (acc === Bool.False ? expr.else : expr.then);
-                //break;
-            //case 'close': // (n body next)
-                //acc = makeClosure(expr.body, expr.n, sp);
-                //sp -= expr.n;
-                //expr = expr.next;
-                //break;
-            //case 'conti': // (next)
-                //acc = makeContinuation(sp);
-                //expr = expr.next;
-                //break;
-            //case 'nuate': // (stack next)
-                //sp = restoreStack(expr.stack);
-                //expr = expr.next;
-                //break;
-            //case 'frame': // (ret next)
-                //stack[sp++] = closure;
-                //stack[sp++] = fp;
-                //stack[sp++] = expr.ret;
-                //expr = expr.next;
-                //break;
-            //case 'argument': // (next)
-                //stack[sp++] = acc;
-                //expr = expr.next;
-                //break;
-            //case 'shift': // (n m next)
-                //sp = shiftArgs(expr.n, expr.m, sp);
-                //expr = expr.next;
-                //break;
-            //case 'apply': // (n)
-                //(function () {
-                    //var args = [], i;
-                    //if ((typeof acc) === 'function') {
-                        //for (i = 0; i < acc.numArgs; ++i) {
-                            //args.push(stack[sp - i - 1]);
-                        //}
-                        //sp -= acc.numArgs;
-                        //expr    = stack[sp - 1];
-                        //fp      = stack[sp - 2];
-                        //closure = stack[sp - 3];
-                        //sp -= 3;
-                        //acc = acc(args);
-                    //} else {
-                        //// the current accumulator is a closure,
-                        //// set the next expression to be its body
-                        //expr = acc.body;
-                        //fp = sp;
-                        //closure = acc;
-                    //}
-                //})();
-                //break;
-            //case 'return': // (n)
-                //sp -= expr.n;
-                //expr    = stack[sp - 1];
-                //fp      = stack[sp - 2];
-                //closure = stack[sp - 3];
-                //sp -= 3;
-                //break;
-            //default: // this should be an exception
-                //return acc;
-        //}
-    //}
-//}
-
-//exports.execute = execute;
+exports.execute = execute;

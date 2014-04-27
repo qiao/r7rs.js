@@ -60,7 +60,7 @@ function compile(expr, env, next) {
                     type: 'conti',
                     next: {
                         type: 'argument',
-                        next: compile(expr, env, { type: 'apply' })
+                        next: compile(rest.car, env, { type: 'apply' })
                     }
                 };
                 return isTail(next) ? conti : {
