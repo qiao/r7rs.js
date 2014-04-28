@@ -3,6 +3,7 @@
     "description": "R7RS compliant Scheme implementation in JavaScript",
     "homepage": "http://github.com/qiao/r7rs.js",
     "version": "0.0.1",
+    "keywords": ["language", "scheme", "lisp", "r7rs", "interpreter"],
     "dependencies": {
       "optimist": "0.6.0"
     },
@@ -18,6 +19,9 @@
     },
     "scripts": {
         "test": "make test"
+    },
+    "bin": {
+        "r7rs": "./bin/r7rs"
     },
     "maintainers": [{
         "name": "Xueqiao Xu",
