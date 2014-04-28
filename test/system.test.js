@@ -56,6 +56,8 @@ describe('System Testing', function () {
     });
 
     it('should evaluate closures', function () {
+        eql('((lambda (x) x) 42)', new Real(42));
+        eql('((lambda () 42))', new Real(42));
         eql('(((lambda (x) (lambda (y) (+ x y))) 4) 2)', new Real(6));
     });
 

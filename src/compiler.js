@@ -33,7 +33,8 @@ function compile(expr, env, next) {
             case 'lambda':
                 vars = rest.car;
                 body = rest.cdr.car;
-                variadic = vars.type === 'symbol' || !vars.isProperList();
+                variadic = vars.type === 'symbol' ||
+                           (vars.type === 'pair' && !vars.isProperList());
                 vars = vars.type === 'symbol' ? [vars] : vars.toArray();
                 return {
                     type: 'close',
