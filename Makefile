@@ -24,14 +24,14 @@ test:
 test-cov: src-cov
 	@R7RS_COV=1 $(MAKE) test TEST_REPORTER=html-cov > coverage.html
 
-src-cov:
+src-cov: clean
 	@jscoverage src src-cov
 
 benchmark:
 	@node benchmark/benchmark.js
 
 clean:
-	rm -f coverage.html
-	rm -rf src-cov
+	@rm -f coverage.html
+	@rm -rf src-cov
 
-.PHONY: parser dist all test test-cov benchmark clean
+.PHONY: parser dist all test test-cov src-cov benchmark clean
