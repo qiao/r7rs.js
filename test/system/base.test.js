@@ -1,6 +1,6 @@
 /*global describe:true, it: true*/
 
-var r7rs       = require('..'),
+var r7rs       = require('../..'),
     evaluate   = r7rs.evaluate,
     objects    = r7rs.objects,
     Bool       = objects.Bool,

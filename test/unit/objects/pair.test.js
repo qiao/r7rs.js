@@ -1,6 +1,7 @@
 /*global describe:true, it: true*/
 
-var objects = require('../..').objects,
+var r7rs    = require('../../..'),
+    objects = r7rs.objects,
     Real    = objects.Real,
     Pair    = objects.Pair,
     Nil     = objects.Nil;
