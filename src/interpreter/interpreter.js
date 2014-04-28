@@ -29,7 +29,11 @@ function execute(opcode) {
                 exp = exp.next;
                 break;
             case 'refer':
-                acc = env[exp.location[0]][exp.location[1]];
+                if (exp.location.type === 'index') {
+                    acc = env[exp.location.index[0]][exp.location.index[1]];
+                } else {
+                    acc = TopLevel.get(exp.location.symbol);
+                }
                 exp = exp.next;
                 break;
             case 'close':
@@ -40,7 +44,11 @@ function execute(opcode) {
                 exp = acc === Bool.True ? exp.then : exp.else;
                 break;
             case 'assign':
-                env[exp.location[0]][exp.location[1]] = acc;
+                if (exp.location.type === 'index') {
+                    env[exp.location.index[0]][exp.location.index[1]] = acc;
+                } else {
+                    TopLevel.set(exp.location.symbol, acc);
+                }
                 exp = exp.next;
                 break;
             case 'conti':
@@ -48,7 +56,11 @@ function execute(opcode) {
                 exp = exp.next;
                 break;
             case 'nuate':
-                acc = env[exp.location[0]][exp.location[1]];
+                if (exp.location.type === 'index') {
+                    acc = env[exp.location.index[0]][exp.location.index[1]];
+                } else {
+                    acc = TopLevel.get(exp.location.symbol);
+                }
                 stk = exp.stk;
                 exp = { type: 'return' };
                 break;
@@ -62,10 +74,15 @@ function execute(opcode) {
                 exp = exp.next;
                 break;
             case 'apply':
-                // acc is now a closure
-                env = [rib].concat(acc.env);
-                rib = [];
-                exp = acc.body;
+                if ((typeof acc) === 'function') {
+                    acc = acc(rib);
+                    rib = [];
+                    exp = { type: 'return' };
+                } else {
+                    env = [rib].concat(acc.env);
+                    rib = [];
+                    exp = acc.body;
+                }
                 break;
             case 'return':
                 exp = stk.ret;

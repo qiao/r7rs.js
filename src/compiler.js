@@ -92,17 +92,23 @@ function isTail(next) {
     return next.type === 'return';
 }
 
-function compileLookup(name, env) {
+function compileLookup(symbol, env) {
     var i, j, rib;
     for (i = 0; i < env.length; ++i) {
         rib = env[i];
         for (j = 0; j < rib.length; ++j) {
-            if (name === rib[j]) {
-                return [i, j];
+            if (symbol === rib[j]) {
+                return {
+                    type: 'index',
+                    index: [i, j]
+                };
             }
         }
     }
-    return null;
+    return {
+        type: 'symbol',
+        symbol: symbol
+    };
 }
 
 exports.compile = function (expr) {
