@@ -22,7 +22,7 @@ function execute(opcode) {
     while (true) {
         switch (exp.type) {
             case 'halt':
-                console.log(acc);
+                //console.log(acc);
                 return acc;
             case 'constant':
                 acc = exp.object;
@@ -105,7 +105,10 @@ function makeContinuation(stk) {
     return makeClosure({
         type: 'nuate',
         stk: stk,
-        location: [0, 0]
+        location: {
+            type: 'index',
+            index: [0, 0]
+        }
     }, []);
 }
 
