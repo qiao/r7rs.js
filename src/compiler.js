@@ -4,7 +4,7 @@ var objects = require('./objects'),
 
 function compile(expr, env, next) {
     var first, rest, vars, body, test, thenc, elsec, name, exp,
-        conti, args, i, len, func;
+        conti, args, i, len, func, variadic;
 
     if (expr.type === 'symbol') {
         return {
@@ -33,10 +33,14 @@ function compile(expr, env, next) {
             case 'lambda':
                 vars = rest.car;
                 body = rest.cdr.car;
+                variadic = vars.type === 'symbol' || !vars.isProperList();
+                vars = vars.type === 'symbol' ? [vars] : vars.toArray();
                 return {
                     type: 'close',
+                    numArgs: vars.length,
+                    variadic: variadic,
                     body: compile(body,
-                                  [vars.toArray()].concat(env),
+                                  [vars].concat(env),
                                   { type: 'return' }),
                     next: next
                 };

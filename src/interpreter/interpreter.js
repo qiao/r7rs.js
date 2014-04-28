@@ -37,7 +37,7 @@ function execute(opcode) {
                 exp = exp.next;
                 break;
             case 'close':
-                acc = makeClosure(exp.body, env);
+                acc = makeClosure(exp.body, env, exp.variadic, exp.numArgs);
                 exp = exp.next;
                 break;
             case 'test':
@@ -79,6 +79,9 @@ function execute(opcode) {
                     rib = [];
                     exp = { type: 'return' };
                 } else {
+                    if (acc.variadic) {
+                        fixRib(rib, acc.numArgs);
+                    }
                     env = [rib].concat(acc.env);
                     rib = [];
                     exp = acc.body;
@@ -94,10 +97,12 @@ function execute(opcode) {
     }
 }
 
-function makeClosure(body, env) {
+function makeClosure(body, env, variadic, numArgs) {
     return {
         body: body,
-        env: env
+        env: env,
+        variadic: variadic,
+        numArgs: numArgs
     };
 }
 
@@ -119,6 +124,17 @@ function makeCallFrame(ret, env, rib, stk) {
         rib: rib,
         stk: stk
     };
+}
+
+function fixRib(rib, numArgs) {
+    var rest = Nil,
+        numRest = rib.length - numArgs + 1,
+        i;
+
+    for (i = 0; i < numRest; ++i) {
+        rest = new Pair(rib.pop(), rest);
+    }
+    rib.push(rest);
 }
 
 function logOpcode(opcode) {
