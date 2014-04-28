@@ -19,10 +19,7 @@ function repl() {
 
     rl.on('line', function (source) {
         try {
-            var expr = r7rs.parse(source)[0];
-            var opcode = r7rs.compile(expr);
-            var object = r7rs.execute(opcode);
-            console.log(object.display());
+            console.log(r7rs.evaluate(source).display());
         } catch (e) {
             console.error(e.stack);
         }
