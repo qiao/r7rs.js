@@ -24,6 +24,12 @@ function compile(expr, env, next) {
                     object: rest.car,
                     next: next
                 };
+            case 'begin':
+                body = rest.toArray();
+                for (i = body.length - 1; i >= 0; --i) {
+                    next = compile(body[i], env, next);
+                }
+                return next;
             case 'lambda':
                 vars = rest.car;
                 body = rest.cdr.car;
@@ -50,7 +56,7 @@ function compile(expr, env, next) {
             case 'set!':
                 name = rest.car;
                 exp = rest.cdr.car;
-                return compile(expr, env, {
+                return compile(exp, env, {
                     type: 'assign',
                     location: compileLookup(name, env),
                     next: next
