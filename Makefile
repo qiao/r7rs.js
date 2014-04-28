@@ -19,6 +19,7 @@ test:
 			--timeout $(TEST_TIMEOUT) \
 			--reporter $(TEST_REPORTER) \
 			--recursive \
+			--check-leaks \
 			--bail
 
 test-cov: src-cov
