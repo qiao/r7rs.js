@@ -25,6 +25,9 @@ describe('System Testing', function () {
         eql('4.2', new Real(4.2));
 
         eql('"hello"', new Str('hello'));
+
+        eql("'hello", new Symbol('hello'));
+        eql("'42", new Real(42));
     });
 
     it('should evaluate simple applications', function () {
