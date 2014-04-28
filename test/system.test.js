@@ -35,6 +35,15 @@ describe('System Testing', function () {
         eql('(+ (+ (+ 4 2) 4) 2)', new Real(12));
     });
 
+    it('should evaluate conditionals', function () {
+        eql('(if #t 4 2)', new Real(4));
+        eql('(if #f 4 2)', new Real(2));
+        eql('(if #t (if #t 4 2) (if #t 4 2))', new Real(4));
+        eql('(if #t (if #f 4 2) (if #t 4 2))', new Real(2));
+        eql('(if #f (if #t 4 2) (if #t 4 2))', new Real(4));
+        eql('(if #f (if #t 4 2) (if #f 4 2))', new Real(2));
+    });
+
     it('should evaluate continuations', function () {
         eql('(call/cc (lambda (k) (k 42)))', new Real(42));
     });
