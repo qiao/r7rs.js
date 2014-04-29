@@ -12,18 +12,20 @@ var objects      = require('../objects'),
     TopLevel     = require('../toplevel');
 
 
-function execute(opcode) {
+function execute(opcode, env) {
     var acc = null,
         exp = opcode,
-        env = [],
+        env = env,
         rib = [],
         stk = null;
         
     while (true) {
         switch (exp.type) {
             case 'halt':
-                //console.log(acc);
-                return acc;
+                return {
+                    acc: acc,
+                    env: env
+                };
             case 'constant':
                 acc = exp.object;
                 exp = exp.next;
@@ -34,6 +36,10 @@ function execute(opcode) {
                 } else {
                     acc = TopLevel.get(exp.location.symbol);
                 }
+                exp = exp.next;
+                break;
+            case 'define':
+                TopLevel.set(exp.variable, acc);
                 exp = exp.next;
                 break;
             case 'close':

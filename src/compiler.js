@@ -4,7 +4,7 @@ var objects = require('./objects'),
 
 function compile(expr, env, next) {
     var first, rest, vars, body, test, thenc, elsec, name, exp,
-        conti, args, i, len, func, variadic;
+        conti, args, i, len, func, variadic, variable, expression;
 
     if (expr.type === 'symbol') {
         return {
@@ -30,6 +30,14 @@ function compile(expr, env, next) {
                     next = compile(body[i], env, next);
                 }
                 return next;
+            case 'define': // (define sym exp)
+                variable = rest.car;
+                expression = rest.cdr.car;
+                return compile(expression, env, {
+                    type: 'define',
+                    variable: variable,
+                    next: next
+                });
             case 'lambda':
                 vars = rest.car;
                 body = rest.cdr.car;
