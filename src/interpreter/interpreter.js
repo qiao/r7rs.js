@@ -151,10 +151,10 @@ function logOpcode(opcode) {
 }
 
 exports.execute = function (opcodes) {
-    var i, len, opcode, result, env = [];
+    var i, len, result, env = [];
 
     for (i = 0, len = opcodes.length; i < len; ++i) {
-        result = execute(opcodes[i]);
+        result = execute(opcodes[i], env);
         env = result.env;
     }
 
