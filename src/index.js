@@ -5,17 +5,7 @@ var parse = require('./parser').parse,
 
 
 function evaluate(source) {
-    var exprs = parse(source),
-        expr,
-        env = [],
-        i, len, result;
-
-    for (i = 0, len = exprs.length; i < len; ++i) {
-        expr = exprs[i];
-        result = execute(compile(expr), env);
-        env = result.env;
-    }
-    return result.acc;
+    return execute(compile(parse(source)));
 }
 
 module.exports = {

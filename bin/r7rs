@@ -65,17 +65,18 @@ function main() {
             console.error(err.message);
         } else {
             var source = data.toString();
-            var expr = r7rs.parse(source)[0];
+            var exprs = r7rs.parse(source);
             if (argv['parse-only']) {
-                console.log(JSON.stringify(expr, null, 4));
+                console.log(JSON.stringify(exprs, null, 4));
                 return;
             }
-            var opcode = r7rs.compile(expr);
+
+            var opcodes = r7rs.compile(exprs);
             if (argv['compile-only']) {
-                console.log(JSON.stringify(opcode, null, 4));
+                console.log(JSON.stringify(opcodes, null, 4));
                 return;
             }
-            r7rs.execute(opcode);
+            r7rs.execute(opcodes);
         }
     });
 }

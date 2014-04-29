@@ -150,4 +150,13 @@ function logOpcode(opcode) {
     console.log(JSON.stringify(opcode, null, 4));
 }
 
-exports.execute = execute;
+exports.execute = function (opcodes) {
+    var i, len, opcode, result, env = [];
+
+    for (i = 0, len = opcodes.length; i < len; ++i) {
+        result = execute(opcodes[i]);
+        env = result.env;
+    }
+
+    return result.acc;
+};

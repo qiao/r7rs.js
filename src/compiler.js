@@ -1,7 +1,6 @@
 var objects = require('./objects'),
     Nil     = objects.Nil;
 
-
 function compile(expr, env, next) {
     var first, rest, vars, body, test, thenc, elsec, name, exp,
         conti, args, i, len, func, variadic, variable, expression;
@@ -130,6 +129,12 @@ function compileLookup(symbol, env) {
     };
 }
 
-exports.compile = function (expr) {
-    return compile(expr, [], { type: 'halt' });
+exports.compile = function (exprs) {
+    var i, len, expr, opcodes = [];
+
+    for (i = 0, len = exprs.length; i < len; ++i) {
+        opcodes.push(compile(exprs[i], [], { type: 'halt' }));
+    }
+
+    return opcodes;
 };
