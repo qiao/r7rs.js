@@ -1,5 +1,6 @@
 TEST_TIMEOUT = 2000
 TEST_REPORTER = spec
+TEST_DIR = test
 
 all: parser dist
 
@@ -12,7 +13,15 @@ dist:
 		--entry src/index.js \
 		> dist/r7rs.js
 
-test:
+test: system-test
+
+system-test: unit-test
+	@$(MAKE) test-helper TEST_DIR=test/system
+
+unit-test:
+	@$(MAKE) test-helper TEST_DIR=test/unit
+
+test-helper:
 	@NODE_ENV=test \
 		./node_modules/.bin/mocha \
 			--require should \
@@ -20,7 +29,8 @@ test:
 			--reporter $(TEST_REPORTER) \
 			--recursive \
 			--check-leaks \
-			--bail
+			--bail \
+			$(TEST_DIR)
 
 test-cov: src-cov
 	@R7RS_COV=1 $(MAKE) test TEST_REPORTER=html-cov > coverage.html
@@ -35,4 +45,5 @@ clean:
 	@rm -f coverage.html
 	@rm -rf src-cov
 
-.PHONY: parser dist all test test-cov src-cov benchmark clean
+.PHONY: parser dist all test system-test unit-test test-helper \
+	test-cov src-cov benchmark clean
