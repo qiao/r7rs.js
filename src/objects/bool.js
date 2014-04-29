@@ -15,6 +15,10 @@ Bool.False = new Bool(false);
 
 Bool.prototype.type = 'bool';
 
+Bool.prototype.display = function () {
+    return this.value ? '#t' : '#f';
+};
+
 Bool.prototype.toJSON = function () {
     return {
         type: this.type,
