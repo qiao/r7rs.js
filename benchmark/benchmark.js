@@ -20,9 +20,7 @@ function benchmark(filename) {
 
     var time = timer(5, function () {
         var source = fs.readFileSync(filename).toString();
-        var expr = r7rs.parse(source)[0];
-        var opcode = r7rs.compile(expr);
-        var object = r7rs.execute(opcode);
+        r7rs.evaluate(source);
     });
 
     process.stdout.write('\b\b\b' + (time + 'ms').green + '\n');
