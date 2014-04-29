@@ -20,7 +20,9 @@ test:
 			--reporter $(TEST_REPORTER) \
 			--recursive \
 			--check-leaks \
-			--bail
+			--bail \
+			test/unit \
+			test/system
 
 test-cov: src-cov
 	@R7RS_COV=1 $(MAKE) test TEST_REPORTER=html-cov > coverage.html
