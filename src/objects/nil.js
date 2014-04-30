@@ -10,6 +10,10 @@ Nil.toArray = function () {
     return [];
 };
 
+Nil.display = function () {
+    return '()';
+};
+
 Nil.toJSON = function () {
     return {
         type: Nil.type
