@@ -85,4 +85,16 @@ describe('Pair', function () {
             });
         });
     });
+
+    describe('#display()', function () {
+        it('should not contain a dot in a proper list', function () {
+            pair = new Pair(new Real(1), new Pair(new Real(2), Nil));
+            pair.display().should.eql('(1 2)');
+        });
+
+        it('should conain a dot in an inproper list', function () {
+            pair = new Pair(new Real(1), new Real(2));
+            pair.display().should.eql('(1 . 2)');
+        });
+    });
 });

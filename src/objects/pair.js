@@ -130,6 +130,41 @@ Pair.prototype.reverse = function () {
     return ret;
 };
 
+Pair.prototype.display = function () {
+    var strs = [], pair = this;
+
+    strs.push('(');
+
+    // push all the elements in the list except the last one
+    for (; pair.type === 'pair'; pair = pair.cdr) {
+        strs.push(pair.car.display());
+        strs.push(' ');
+    }
+
+    // after the for loop, `pair' now points to the last element in
+    // the list.
+    // if the last element is Nil, then the list is a proper list,
+    // and we discard the excessive space.
+    // else, the list is inproper, and we insert an dot before the 
+    // last element.
+    if (pair === Nil) {
+        strs.pop();
+    } else {
+        strs.push('. ');
+        strs.push(pair.display());
+    }
+
+    strs.push(')');
+
+    return strs.join('');
+};
+
+Pair.prototype.append = function (x) {
+    var array = this.toArray();
+    array.push(x);
+    return Pair.makeList(array);
+};
+
 
 /**
  * @function
