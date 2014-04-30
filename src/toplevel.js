@@ -1,5 +1,7 @@
 var objects = require('./objects'),
-    Pair = objects.Pair;
+    Pair = objects.Pair,
+    Bool = objects.Bool,
+    Nil = objects.Nil;
 
 var environment = {};
 
@@ -40,6 +42,18 @@ defineFunction('>', 2, function (x, y) {
 });
 defineFunction('display', 1, function (x) {
     console.log(x.display());
+});
+defineFunction('null?', 1, function (list) {
+    return new Bool(list === Nil);
+});
+defineFunction('cons', 2, function (x, y) {
+    return new Pair(x, y);
+});
+defineFunction('append', 2, function (xs, x) {
+    if (xs === Nil) {
+        return new Pair(x, Nil);
+    }
+    return xs.append(x);
 });
 
 exports.get = function (sym) {
