@@ -1,6 +1,62 @@
 var objects = require('./objects'),
     Nil     = objects.Nil;
 
+/**
+ * Compile the expression into the intermediate form that can be executed by
+ * the interpreter. The strategies includes:
+ * 
+ *   1. CPS Transformation
+ *   2. Reference Optimization
+ *
+ *
+ * 1. CPS Transformation
+ * ---------------------
+ *
+ * TBD
+ *
+ *
+ * 2. Reference Optimization
+ * -------------------------
+ *
+ * The compiler maintains a compile-time environment and
+ * subsitutes the variables by their locations in the environment, so as to
+ * optimize the lookup speed in the interpreter. 
+ * Consider the following expression:
+ *
+ *   (lambda (x y)
+ *     (lambda (z)
+ *       (+ x y z)))
+ *
+ * We can substitute the `x` and `y` on the last line by their depth in the
+ * lexcial scope and index in the argument list. For example, focusing on the
+ * last line, the variable `z` is defined in the direct enclosing lambda, 
+ * thus has a depth of 0, and since it's the first argument in the lambda 
+ * where it's defined, its index is 0. As for `y`, it's not defined in the
+ * direct enclosing lambda, but the parent one, therefore it has a depth of 1.
+ * And since `y` is the second argument in the lambda where it's defined, 
+ * its index is 1.
+ * Therefore, the original expression can be transformed into something like
+ * the following. Note that it's just an illustration for conveying the idea;
+ * It's not the real output.
+ *
+ *   (lambda (x y)
+ *     (lambda (z)
+ *       (+ [1, 0] [1, 1] [0, 0])))
+ *
+ * The compile-time environment is represented as an array of array, in which
+ * each sub-array represents an argument list(a.k.a. value rib). Take the above
+ * expression as example again. Initially, the environment is an empty
+ * array, []. When the compiler encounters the outer lambda, it creates an
+ * argument list and insert it into the environment. So the environment becomes
+ * [[x, y]]. And when evaluating the inner lambda, it inserts another arugment 
+ * list, and the environment becomes [[z], [x, y]].
+ * Therefore, we can use [1, 0] to reference `x`, [1, 1] to reference `y` and
+ * [0, 0] to reference `z`.
+ *
+ * @param {*} expr The expression to compile.
+ * @param {Array} env The compile-time environment.
+ * @param {Object} next The next opeartion to execute.
+ */
 function compile(expr, env, next) {
     var first, rest, vars, body, test, thenc, elsec, name, exp,
         conti, args, i, len, func, variadic, variable, expression;
