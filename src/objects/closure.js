@@ -6,6 +6,9 @@ function Closure(body, env, numArgs, isVariadic) {
 }
 
 Closure.prototype.display = function () {
+    if (this.body.type === 'nuate') {
+        return '#<continuation>';
+    }
     return '#<closure>';
 };
 
