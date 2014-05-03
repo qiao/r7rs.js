@@ -8,5 +8,6 @@ module.exports = {
     Real       : require('./real'),
     Str        : require('./str'),
     Symbol     : require('./symbol'),
-    Vector     : require('./vector')
+    Vector     : require('./vector'),
+    Closure    : require('./closure')
 };

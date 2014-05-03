@@ -9,6 +9,7 @@ var objects      = require('../objects'),
     Str          = objects.Str,
     Symbol       = objects.Symbol,
     Vector       = objects.Vector,
+    Closure      = objects.Closure,
     TopLevel     = require('../toplevel');
 
 
@@ -43,7 +44,7 @@ function execute(opcode, env) {
                 exp = exp.next;
                 break;
             case 'close':
-                acc = makeClosure(exp.body, env, exp.variadic, exp.numArgs);
+                acc = new Closure(exp.body, env, exp.numArgs, exp.variadic);
                 exp = exp.next;
                 break;
             case 'test':
@@ -85,7 +86,7 @@ function execute(opcode, env) {
                     rib = [];
                     exp = { type: 'return' };
                 } else {
-                    if (acc.variadic) {
+                    if (acc.isVariadic) {
                         fixRib(rib, acc.numArgs);
                     }
                     env = [rib].concat(acc.env);
@@ -103,24 +104,15 @@ function execute(opcode, env) {
     }
 }
 
-function makeClosure(body, env, variadic, numArgs) {
-    return {
-        body: body,
-        env: env,
-        variadic: variadic,
-        numArgs: numArgs
-    };
-}
-
 function makeContinuation(stk) {
-    return makeClosure({
+    return new Closure({
         type: 'nuate',
         stk: stk,
         location: {
             type: 'index',
             index: [0, 0]
         }
-    }, []);
+    }, [], 0, false);
 }
 
 function makeCallFrame(ret, env, rib, stk) {
