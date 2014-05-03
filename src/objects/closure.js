@@ -5,4 +5,8 @@ function Closure(body, env, numArgs, isVariadic) {
     this.isVariadic = isVariadic;
 }
 
+Closure.prototype.display = function () {
+    return '#<closure>';
+};
+
 module.exports = Closure;
