@@ -11,7 +11,15 @@ describe('Closure', function () {
     var closure;
 
     describe('#display()', function () {
-        closure = new Closure({ type: 'halt' }, [], 0, false);
-        closure.display().should.eql('#<closure>');
+
+        it('should return "#<closure>" when it\'s a simple closure', function () {
+            closure = new Closure({ type: 'halt' }, [], 0, false);
+            closure.display().should.eql('#<closure>');
+        });
+
+        it('should return "#<continuation>" when it\'s a continuation', function () {
+            closure = new Closure({ type: 'nuate' }, [], 0, false);
+            closure.display().should.eql('#<continuation>');
+        });
     });
 });
