@@ -20,27 +20,31 @@ defineFunction('cdr', 1, function (x) {
     return x.cdr;
 });
 defineFunction('+', 2, function (x, y) {
-    return x.add(y);
+    return x + y;
 });
 defineFunction('-', 2, function (x, y) {
-    return x.sub(y);
+    return x - y;
 });
 defineFunction('*', 2, function (x, y) {
-    return x.mul(y);
+    return x * y;
 });
 defineFunction('/', 2, function (x, y) {
-    return x.div(y);
+    return x / y;
 });
 defineFunction('=', 2, function (x, y) {
-    return x.eql(y);
+    return x === y;
 });
 defineFunction('<', 2, function (x, y) {
-    return x.lt(y);
+    return (x < y);
 });
 defineFunction('>', 2, function (x, y) {
-    return x.gt(y);
+    return (x > y);
 });
 defineFunction('display', 1, function (x) {
+    if ((typeof x) === 'number') {
+        console.log(x);
+        return;
+    }
     console.log(x.display());
 });
 defineFunction('null?', 1, function (list) {

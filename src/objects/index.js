@@ -5,7 +5,6 @@ module.exports = {
     Complex    : require('./complex'),
     Nil        : require('./nil'),
     Pair       : require('./pair'),
-    Real       : require('./real'),
     Str        : require('./str'),
     Symbol     : require('./symbol'),
     Vector     : require('./vector'),
