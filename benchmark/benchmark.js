@@ -18,8 +18,8 @@ function timer(samples, procedure) {
 function benchmark(filename) {
     process.stdout.write(path.basename(filename) + '\t...');
 
+    var source = fs.readFileSync(filename).toString();
     var time = timer(5, function () {
-        var source = fs.readFileSync(filename).toString();
         r7rs.evaluate(source);
     });
 
