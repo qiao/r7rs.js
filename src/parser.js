@@ -1779,7 +1779,7 @@ module.exports = (function(){
           }
         }
         if (result0 !== null) {
-          result0 = (function(offset) { return true;  })(pos0);
+          result0 = (function(offset) { return new Bool(true);  })(pos0);
         }
         if (result0 === null) {
           pos = pos0;
@@ -1807,7 +1807,7 @@ module.exports = (function(){
             }
           }
           if (result0 !== null) {
-            result0 = (function(offset) { return false; })(pos0);
+            result0 = (function(offset) { return new Bool(false); })(pos0);
           }
           if (result0 === null) {
             pos = pos0;
@@ -5500,6 +5500,7 @@ module.exports = (function(){
       
       
       var objects      = require('./objects'),
+          Bool         = objects.Bool,
           ByteVector   = objects.ByteVector,
           Char         = objects.Char,
           Complex      = objects.Complex,
