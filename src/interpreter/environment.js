@@ -3,7 +3,7 @@ function Environment(parent) {
      * A map from symbol name to its index
      * @private
      */
-    this._symbolIndices = {};
+    this._indices = {};
 
     /**
      * An array containing the values of the defined symbols in the environemnt
@@ -25,11 +25,9 @@ function Environment(parent) {
  * @param {*} value
  */
 Environment.prototype.define = function (symbol, value) {
-    var name = symbol.name;
-
-    this._symbolIndices[name] = this._values.length;
-    this._values.push(value);
+    this._store(symbol, value);
 };
+
 
 /**
  * Get the index of the symbol in the environment.
@@ -43,7 +41,7 @@ Environment.prototype.define = function (symbol, value) {
 Environment.prototype.getIndex = function (symbol) {
     var i, value;
 
-    i = this._symbolIndices[symbol.name];
+    i = this._indices[symbol.name];
     if (i !== undefined) {
         return i;
     }
@@ -58,6 +56,13 @@ Environment.prototype.getIndex = function (symbol) {
     }
 
     return this._store(symbol, value);
+};
+
+
+Environment.prototype._store = function (symbol, value) {
+    this._indices[symbol.name] = this._values.length;
+    this._values.push(value);
+    return this._values.length - 1;
 };
 
 
