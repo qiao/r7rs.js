@@ -1,6 +1,6 @@
 /* global describe: true, it: true, beforeEach: true */
 
-var r7rs    = require('../../..'),
+var r7rs    = require('../..'),
     objects = r7rs.objects,
     Symbol  = objects.Symbol,
     Environment = r7rs.Environment;

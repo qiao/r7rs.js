@@ -35,12 +35,15 @@ function execute(opcode, env) {
                 if (exp.location.type === 'index') {
                     acc = env[exp.location.index[0]][exp.location.index[1]];
                 } else {
-                    acc = TopLevel.get(exp.location.symbol);
+                    if (exp.location.index === -1) {
+                        exp.location.index = TopLevel.getIndex(exp.location.symbol);
+                    }
+                    acc = TopLevel.lookupByIndex(exp.location.index);
                 }
                 exp = exp.next;
                 break;
             case 'define':
-                TopLevel.set(exp.variable, acc);
+                TopLevel.define(exp.variable, acc);
                 exp = exp.next;
                 break;
             case 'close':
@@ -54,7 +57,10 @@ function execute(opcode, env) {
                 if (exp.location.type === 'index') {
                     env[exp.location.index[0]][exp.location.index[1]] = acc;
                 } else {
-                    TopLevel.set(exp.location.symbol, acc);
+                    if (exp.location.index === -1) {
+                        exp.location.index = TopLevel.getIndex(exp.location.symbol);
+                    }
+                    TopLevel.set(exp.location.index, acc);
                 }
                 exp = exp.next;
                 break;
@@ -63,11 +69,7 @@ function execute(opcode, env) {
                 exp = exp.next;
                 break;
             case 'nuate':
-                if (exp.location.type === 'index') {
-                    acc = env[exp.location.index[0]][exp.location.index[1]];
-                } else {
-                    acc = TopLevel.get(exp.location.symbol);
-                }
+                acc = env[exp.location.index[0]][exp.location.index[1]];
                 stk = exp.stk;
                 exp = { type: 'return' };
                 break;

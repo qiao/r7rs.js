@@ -1,5 +1,6 @@
 var objects = require('./objects'),
-    Nil     = objects.Nil;
+    Nil     = objects.Nil,
+    TopLevel = require('./toplevel');
 
 /**
  * Compile the expression into the intermediate form that can be executed by
@@ -180,8 +181,9 @@ function compileLookup(symbol, env) {
         }
     }
     return {
-        type: 'symbol',
-        symbol: symbol
+        type: 'global',
+        symbol: symbol,
+        index: -1,
     };
 }
 

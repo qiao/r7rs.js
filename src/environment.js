@@ -89,5 +89,4 @@ Environment.prototype.lookupByIndex = function (index) {
     return this._values[index];
 };
 
-
 module.exports = Environment;
