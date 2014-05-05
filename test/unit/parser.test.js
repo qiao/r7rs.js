@@ -3,7 +3,6 @@
 var r7rs         = require('../..'),
     parse        = r7rs.parse,
     objects      = r7rs.objects,
-    Bool         = objects.Bool,
     ByteVector   = objects.ByteVector,
     Char         = objects.Char,
     Complex      = objects.Complex,
@@ -100,10 +99,10 @@ describe('Parser', function () {
     });
 
     it('should parse booleans', function () {
-        eql('#t'     , new Bool(true));
-        eql('#f'     , new Bool(false));
-        eql('#true'  , new Bool(true));
-        eql('#false' , new Bool(false));
+        eql('#t'     , true);
+        eql('#f'     , false);
+        eql('#true'  , true);
+        eql('#false' , false);
     });
 
     it('should parse characters', function () {
