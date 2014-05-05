@@ -1,6 +1,7 @@
 var parse = require('./parser').parse,
     compile = require('./compiler').compile,
     execute = require('./interpreter').execute,
+    Environment = require('./interpreter').Environment,
     objects = require('./objects');
 
 
@@ -13,5 +14,6 @@ module.exports = {
     compile: compile,
     execute: execute,
     objects: objects,
-    evaluate: evaluate
+    evaluate: evaluate,
+    Environment: Environment
 };

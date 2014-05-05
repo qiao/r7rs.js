@@ -1,3 +1,4 @@
 module.exports = {
-    execute: require('./interpreter').execute
+    execute: require('./interpreter').execute,
+    Environment: require('./environment')
 };
