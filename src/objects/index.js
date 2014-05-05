@@ -1,4 +1,5 @@
 module.exports = {
+    Bool       : require('./bool'),
     ByteVector : require('./bytevector'),
     Char       : require('./char'),
     Complex    : require('./complex'),
