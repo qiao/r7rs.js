@@ -173,8 +173,8 @@ Pair.prototype.append = function (x) {
 Pair.prototype.toJSON = function () {
     return {
         type: this.type,
-        car: this.car.toJSON ? this.car.toJSON() : this.car,
-        cdr: this.cdr.toJSON ? this.cdr.toJSON() : this.cdr
+        car: this.car.toJSON(),
+        cdr: this.cdr.toJSON()
     };
 };
 

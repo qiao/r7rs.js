@@ -3073,7 +3073,7 @@ module.exports = (function(){
                           pos0 = pos;
                           result0 = parse_real2();
                           if (result0 !== null) {
-                            result0 = (function(offset, r) { return (r);        })(pos0, result0);
+                            result0 = (function(offset, r) { return new Real(r);        })(pos0, result0);
                           }
                           if (result0 === null) {
                             pos = pos0;
@@ -3657,7 +3657,7 @@ module.exports = (function(){
                           pos0 = pos;
                           result0 = parse_real8();
                           if (result0 !== null) {
-                            result0 = (function(offset, r) { return (r);        })(pos0, result0);
+                            result0 = (function(offset, r) { return new Real(r);        })(pos0, result0);
                           }
                           if (result0 === null) {
                             pos = pos0;
@@ -4241,7 +4241,7 @@ module.exports = (function(){
                           pos0 = pos;
                           result0 = parse_real10();
                           if (result0 !== null) {
-                            result0 = (function(offset, r) { return (r);        })(pos0, result0);
+                            result0 = (function(offset, r) { return new Real(r);        })(pos0, result0);
                           }
                           if (result0 === null) {
                             pos = pos0;
@@ -5039,7 +5039,7 @@ module.exports = (function(){
                           pos0 = pos;
                           result0 = parse_real16();
                           if (result0 !== null) {
-                            result0 = (function(offset, r) { return (r);        })(pos0, result0);
+                            result0 = (function(offset, r) { return new Real(r);        })(pos0, result0);
                           }
                           if (result0 === null) {
                             pos = pos0;
@@ -5506,6 +5506,7 @@ module.exports = (function(){
           Complex      = objects.Complex,
           Nil          = objects.Nil,
           Pair         = objects.Pair,
+          Real         = objects.Real,
           Str          = objects.Str,
           Symbol       = objects.Symbol,
           Vector       = objects.Vector;

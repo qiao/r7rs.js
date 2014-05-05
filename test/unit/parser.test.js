@@ -9,6 +9,7 @@ var r7rs         = require('../..'),
     Complex      = objects.Complex,
     Nil          = objects.Nil,
     Pair         = objects.Pair,
+    Real         = objects.Real,
     Str          = objects.Str,
     Symbol       = objects.Symbol,
     Vector       = objects.Vector;
@@ -27,23 +28,23 @@ describe('Parser', function () {
     });
 
     it('should parse numbers', function () {
-        eql('42'         , 42);
-        eql('#d42'       , 42);
-        eql('#b101010'   , 42);
-        eql('#o52'       , 42);
-        eql('#x2a'       , 42);
-        eql('#x2A'       , 42);
+        eql('42'         , new Real(42));
+        eql('#d42'       , new Real(42));
+        eql('#b101010'   , new Real(42));
+        eql('#o52'       , new Real(42));
+        eql('#x2a'       , new Real(42));
+        eql('#x2A'       , new Real(42));
 
-        eql('42.0'       , 42.0);
-        eql('+4.2e1'     , 42.0);
-        eql('.42e2'      , 42.0);
-        eql('#d#i420e-1' , 42.0);
+        eql('42.0'       , new Real(42.0));
+        eql('+4.2e1'     , new Real(42.0));
+        eql('.42e2'      , new Real(42.0));
+        eql('#d#i420e-1' , new Real(42.0));
 
-        eql('84/2'         , 42.0);
-        eql('#d84/2'       , 42.0);
-        eql('#b1010100/10' , 42.0);
-        eql('#o0124/2'     , 42.0);
-        eql('#x54/2'       , 42.0);
+        eql('84/2'         , new Real(42.0));
+        eql('#d84/2'       , new Real(42.0));
+        eql('#b1010100/10' , new Real(42.0));
+        eql('#o0124/2'     , new Real(42.0));
+        eql('#x54/2'       , new Real(42.0));
 
         eql('4+2i'         , new Complex(4, 2));
         eql('#d4+2i'       , new Complex(4, 2));
@@ -152,7 +153,11 @@ describe('Parser', function () {
     });
 
     it('should parse vectors', function () {
-        eql('#(0 1 2)', new Vector([0, 1, 2]));
+        eql('#(0 1 2)', new Vector([
+            new Real(0),
+            new Real(1),
+            new Real(2)
+        ]));
 
         eql('#("hello" "world" #\\!)', new Vector([
             new Str('hello'),
@@ -172,14 +177,14 @@ describe('Parser', function () {
     });
 
     it('should parse pairs', function () {
-        eql('(1 . 2)', new Pair(1, 2));
+        eql('(1 . 2)', new Pair(new Real(1), new Real(2)));
 
         eql('(+ 1 2)',
             new Pair(
                 new Symbol('+'),
                 new Pair(
-                    1,
-                    new Pair(2, Nil)
+                    new Real(1),
+                    new Pair(new Real(2), Nil)
                 )
             )
         );
@@ -189,7 +194,7 @@ describe('Parser', function () {
                 new Symbol('define'),
                 new Pair(
                     new Symbol('x'),
-                    new Pair(1, Nil)
+                    new Pair(new Real(1), Nil)
                 )
             )
         );

@@ -5,11 +5,13 @@
 {
 
 var objects      = require('./objects'),
+    Bool         = objects.Bool,
     ByteVector   = objects.ByteVector,
     Char         = objects.Char,
     Complex      = objects.Complex,
     Nil          = objects.Nil,
     Pair         = objects.Pair,
+    Real         = objects.Real,
     Str          = objects.Str,
     Symbol       = objects.Symbol,
     Vector       = objects.Vector;
@@ -191,8 +193,8 @@ symbolElement
     / [^|\\]
 
 boolean 'boolean'
-    = ('#true' / '#t') { return true;  }
-    / ('#false' / '#f') { return false; }
+    = ('#true' / '#t') { return new Bool(true);  }
+    / ('#false' / '#f') { return new Bool(false); }
 
 character 'character'
     = '#\\x' h:hexScalarValue  { return new Char(String.fromCharCode(h)); }
@@ -257,7 +259,7 @@ complex2
     / r:real2 '-i'                { return new Complex(r, -1); }
     / '+' i:ureal2 'i'            { return new Complex(0, i);  }
     / '-' i:ureal2 'i'            { return new Complex(0, -i); }
-    / r:real2                     { return (r);        }
+    / r:real2                     { return new Real(r);        }
     / '+i'                        { return new Complex(0, 1);  }
     / '-i'                        { return new Complex(0, -1); }
     
@@ -293,7 +295,7 @@ complex8
     / r:real8 '-i'                 { return new Complex(r, -1); }
     / '+' i:ureal8 'i'             { return new Complex(0, i);  }
     / '-' i:ureal8 'i'             { return new Complex(0, -i); }
-    / r:real8                      { return (r);        }
+    / r:real8                      { return new Real(r);        }
     / '+i'                         { return new Complex(0, 1);  }
     / '-i'                         { return new Complex(0, -1); }
     
@@ -330,7 +332,7 @@ complex10
     / r:real10 '-i'                 { return new Complex(r, -1); }
     / '+' i:ureal10 'i'             { return new Complex(0, i);  }
     / '-' i:ureal10 'i'             { return new Complex(0, -i); }
-    / r:real10                      { return (r);        } 
+    / r:real10                      { return new Real(r);        } 
     / '+i'                          { return new Complex(0, 1);  }
     / '-i'                          { return new Complex(0, -1); }
     
@@ -400,7 +402,7 @@ complex16
     / r:real16 '-i'                 { return new Complex(r, -1); }
     / '+' i:ureal16 'i'             { return new Complex(0, i);  }
     / '-' i:ureal16 'i'             { return new Complex(0, -i); }
-    / r:real16                      { return (r);        }
+    / r:real16                      { return new Real(r);        }
     / '+i'                          { return new Complex(0, 1);  }
     / '-i'                          { return new Complex(0, -1); }
     
