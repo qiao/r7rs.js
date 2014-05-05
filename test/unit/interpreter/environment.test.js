@@ -30,5 +30,12 @@ describe('Environment', function () {
             env.getIndex(foo).should.eql(0);
             env.getIndex(bar).should.eql(1);
         });
+
+        it('should return the index for symbols defined in parent', function () {
+            var foo = new Symbol('foo');
+
+            env.define(foo, 1);
+            (new Environment(env)).getIndex(foo).should.eql(0);
+        });
     });
 });
