@@ -14,47 +14,33 @@ function defineFunction(name, jsFunc) {
     environment.define(new Symbol(name), func);
 }
 
-defineFunction('car', function (x) {
-    return x.car;
-});
-defineFunction('cdr', function (x) {
-    return x.cdr;
-});
 defineFunction('+', function (x, y) {
-    return x.add(y);
+    return x + y;
 });
 defineFunction('-', function (x, y) {
-    return x.sub(y);
+    return x - y;
 });
 defineFunction('*', function (x, y) {
-    return x.mul(y);
+    return x * y;
 });
 defineFunction('/', function (x, y) {
-    return x.div(y);
+    return x / y;
 });
 defineFunction('=', function (x, y) {
-    return x.eql(y);
+    return x === y;
 });
 defineFunction('<', function (x, y) {
-    return x.lt(y);
+    return (x < y);
 });
 defineFunction('>', function (x, y) {
-    return x.gt(y);
+    return (x > y);
 });
-defineFunction('display', function (x) {
-    console.log(x.display());
-});
-defineFunction('null?', function (list) {
-    return new Bool(list === Nil);
-});
-defineFunction('cons', function (x, y) {
-    return new Pair(x, y);
-});
-defineFunction('append', function (xs, x) {
-    if (xs === Nil) {
-        return new Pair(x, Nil);
+defineFunction('display', 1, function (x) {
+    if ((typeof x) === 'number') {
+        console.log(x);
+        return;
     }
-    return xs.append(x);
+    console.log(x.display());
 });
 
 module.exports = environment;

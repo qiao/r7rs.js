@@ -51,7 +51,7 @@ function execute(opcode, env) {
                 exp = exp.next;
                 break;
             case 'test':
-                exp = acc === Bool.True ? exp.then : exp.else;
+                exp = acc ? exp.then : exp.else;
                 break;
             case 'assign':
                 if (exp.location.type === 'index') {
