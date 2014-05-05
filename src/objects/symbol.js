@@ -19,4 +19,8 @@ Symbol.prototype.toJSON = function () {
     };
 };
 
+Symbol.prototype.display = function () {
+    return '\'' + this.name;
+};
+
 module.exports = Symbol;
