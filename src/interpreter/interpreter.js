@@ -79,7 +79,7 @@ function execute(opcode, env) {
                 exp = exp.next;
                 break;
             case 'argument':
-                rib.unshift(acc);
+                rib.push(acc);
                 exp = exp.next;
                 break;
             case 'apply':

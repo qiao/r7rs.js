@@ -143,8 +143,9 @@ function compile(expr, env, next) {
                 };
             default:
                 func = compile(first, env, { type: 'apply' });
-                for (args = rest; args !== Nil; args = args.cdr) {
-                    func = compile(args.car, env, {
+                args = rest.toArray();
+                for (i = args.length - 1; i >= 0; --i) {
+                    func = compile(args[i], env, {
                         type: 'argument', next: func
                     });
                 }
