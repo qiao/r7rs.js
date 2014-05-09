@@ -135,6 +135,7 @@ function compile(expr, env, next) {
                     type: 'conti',
                     next: {
                         type: 'argument',
+                        i: 0,
                         next: compile(rest.car, env, { type: 'apply' })
                     }
                 };
