@@ -139,18 +139,19 @@ function compile(expr, env, next) {
                     }
                 };
                 return isTail(next) ? conti : {
-                    type: 'frame', ret: next, next: conti
+                    type: 'frame', numArgs: 1, ret: next, next: conti
                 };
             default:
                 func = compile(first, env, { type: 'apply' });
                 args = rest.toArray();
                 for (i = args.length - 1; i >= 0; --i) {
                     func = compile(args[i], env, {
-                        type: 'argument', next: func
+                        type: 'argument', i: i, next: func
                     });
                 }
                 return isTail(next) ? func : {
                     type: 'frame',
+                    numArgs: args.length,
                     ret: next,
                     next: func
                 };

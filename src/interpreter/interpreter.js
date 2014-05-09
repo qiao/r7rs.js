@@ -75,11 +75,11 @@ function execute(opcode, env) {
                 break;
             case 'frame':
                 stk = makeCallFrame(exp.ret, env, rib, stk);
-                rib = [];
+                rib = new Array(exp.numArgs);
                 exp = exp.next;
                 break;
             case 'argument':
-                rib.push(acc);
+                rib[exp.i] = acc;
                 exp = exp.next;
                 break;
             case 'apply':
