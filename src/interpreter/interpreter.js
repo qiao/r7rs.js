@@ -21,6 +21,8 @@ function execute(opcode, env) {
         stk = null;
         
     while (true) {
+        //console.log('acc', acc);
+        //logOpcode(exp);
         switch (exp.type) {
             case 'halt':
                 return {
@@ -85,14 +87,12 @@ function execute(opcode, env) {
             case 'apply':
                 if ((typeof acc) === 'function') {
                     acc = acc(rib);
-                    rib = [];
                     exp = { type: 'return' };
                 } else {
                     if (acc.isVariadic) {
                         fixRib(rib, acc.numArgs);
                     }
                     env = [rib].concat(acc.env);
-                    rib = [];
                     exp = acc.body;
                 }
                 break;
