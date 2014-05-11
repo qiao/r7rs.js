@@ -136,21 +136,21 @@ function compile(expr, env, next) {
                     next: {
                         type: 'argument',
                         i: 0,
-                        next: compile(rest.car, env, { type: 'apply', numArgs: 1 })
+                        next: compile(rest.car, env, { type: 'apply' })
                     }
                 };
                 return isTail(next) ? conti : {
                     type: 'frame', numArgs: 1, ret: next, next: conti
                 };
             default:
+                func = compile(first, env, { type: 'apply' });
                 args = rest.toArray();
-                func = compile(first, env, { type: 'apply', numArgs: args.length });
                 for (i = args.length - 1; i >= 0; --i) {
                     func = compile(args[i], env, {
                         type: 'argument', i: i, next: func
                     });
                 }
-                return {
+                return isTail(next) ? func : {
                     type: 'frame',
                     numArgs: args.length,
                     ret: next,
