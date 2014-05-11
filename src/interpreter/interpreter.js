@@ -83,17 +83,16 @@ function execute(opcode, env) {
                 exp = exp.next;
                 break;
             case 'apply':
-                if ((typeof acc) === 'function') {
-                    acc = acc(rib);
-                    rib = [];
-                    exp = { type: 'return' };
-                } else {
+                if (acc.type === 'closure') {
                     if (acc.isVariadic) {
                         fixRib(rib, acc.numArgs);
                     }
                     env = [rib].concat(acc.env);
                     rib = [];
                     exp = acc.body;
+                } else {
+                    acc = acc(rib);
+                    exp = { type: 'return' };
                 }
                 break;
             case 'return':

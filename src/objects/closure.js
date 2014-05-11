@@ -12,4 +12,6 @@ Closure.prototype.display = function () {
     return '#<closure>';
 };
 
+Closure.prototype.type = 'closure';
+
 module.exports = Closure;
