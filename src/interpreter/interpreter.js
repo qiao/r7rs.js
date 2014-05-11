@@ -69,7 +69,7 @@ function execute(opcode, env) {
                 exp = exp.next;
                 break;
             case 'nuate':
-                acc = env[exp.location.index[0]][exp.location.index[1]];
+                acc = env[0][0];
                 stk = exp.stk;
                 exp = { type: 'return' };
                 break;
@@ -108,11 +108,7 @@ function execute(opcode, env) {
 function makeContinuation(stk) {
     return new Closure({
         type: 'nuate',
-        stk: stk,
-        location: {
-            type: 'index',
-            index: [0, 0]
-        }
+        stk: stk
     }, [], 0, false);
 }
 
