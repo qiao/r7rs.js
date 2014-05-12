@@ -7,54 +7,55 @@ var objects = require('./objects'),
 
 var environment = new Environment();
 
-function defineFunction(name, jsFunc) {
-    var func = function (args) {
-        return jsFunc.apply(null, args);
-    };
-    environment.define(new Symbol(name), func);
+function define(bindings) {
+    for (var name in bindings) {
+        environment.define(new Symbol(name), bindings[name]);
+    }
 }
 
-defineFunction('car', function (x) {
-    return x.car;
-});
-defineFunction('cdr', function (x) {
-    return x.cdr;
-});
-defineFunction('+', function (x, y) {
-    return x.add(y);
-});
-defineFunction('-', function (x, y) {
-    return x.sub(y);
-});
-defineFunction('*', function (x, y) {
-    return x.mul(y);
-});
-defineFunction('/', function (x, y) {
-    return x.div(y);
-});
-defineFunction('=', function (x, y) {
-    return x.eql(y);
-});
-defineFunction('<', function (x, y) {
-    return x.lt(y);
-});
-defineFunction('>', function (x, y) {
-    return x.gt(y);
-});
-defineFunction('display', function (x) {
-    console.log(x.display());
-});
-defineFunction('null?', function (list) {
-    return new Bool(list === Nil);
-});
-defineFunction('cons', function (x, y) {
-    return new Pair(x, y);
-});
-defineFunction('append', function (xs, x) {
-    if (xs === Nil) {
-        return new Pair(x, Nil);
+define({
+    '+': function (args) {
+        return args[0].add(args[1]);
+    },
+    '-': function (args) {
+        return args[0].sub(args[1]);
+    },
+    '*': function (args) {
+        return args[0].mul(args[1]);
+    }, 
+    '/': function (args) {
+        return args[0].div(args[1]);
+    },
+    '=': function (args) {
+        return args[0].eql(args[1]);
+    },
+    '<': function (args) {
+        return args[0].lt(args[1]);
+    },
+    '>': function (args) {
+        return args[0].gt(args[1]);
+    },
+    'display': function (args) {
+        console.log(args[0].display());
+    },
+    'cons': function (args) {
+        return new Pair(args[0], args[1]);
+    },
+    'car': function (args) {
+        return args[0].car;
+    },
+    'cdr': function (args) {
+        return args[0].cdr;
+    },
+    'null?': function (args) {
+        return new Bool(args[0] === Nil);
+    },
+    'append': function (args) {
+        if (args[0] === Nil) {
+            return new Pair(args[1], Nil);
+        }
+        return args[0].append(args[1]);
     }
-    return xs.append(x);
 });
 
 module.exports = environment;
