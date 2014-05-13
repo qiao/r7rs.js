@@ -25,13 +25,9 @@ function execute(opcode, env) {
         type = exp.type;
 
         switch (type.length) {
-        case 3:
-            switch (type) {
-            case 'arg':
-                rib[exp.i] = acc;
-                exp = exp.next;
-                break;
-            }
+        case 3: // type is 'arg'
+            rib[exp.i] = acc;
+            exp = exp.next;
             break;
         case 4:
             switch (type) {
