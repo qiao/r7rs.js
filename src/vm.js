@@ -22,13 +22,12 @@ function execute(opcode, env) {
         
     while (true) {
         switch (exp.type) {
-            case 'halt':
-                return {
-                    acc: acc,
-                    env: env
-                };
             case 'constant':
                 acc = exp.object;
+                exp = exp.next;
+                break;
+            case 'argument':
+                rib[exp.i] = acc;
                 exp = exp.next;
                 break;
             case 'refer':
@@ -42,40 +41,6 @@ function execute(opcode, env) {
                 }
                 exp = exp.next;
                 break;
-            case 'define':
-                TopLevel.define(exp.variable, acc);
-                exp = exp.next;
-                break;
-            case 'close':
-                acc = new Closure(exp.body, env, exp.numArgs, exp.variadic);
-                exp = exp.next;
-                break;
-            case 'test':
-                exp = acc === Bool.True ? exp.then : exp.else;
-                break;
-            case 'assign':
-                if (exp.location.type === 'index') {
-                    env[exp.location.index[0]][exp.location.index[1]] = acc;
-                } else {
-                    if (exp.location.index === -1) {
-                        exp.location.index = TopLevel.getIndex(exp.location.symbol);
-                    }
-                    TopLevel.set(exp.location.index, acc);
-                }
-                exp = exp.next;
-                break;
-            case 'conti':
-                acc = new Closure({
-                    type: 'nuate',
-                    stk: stk
-                }, [], 0, false);
-                exp = exp.next;
-                break;
-            case 'nuate':
-                acc = env[0][0];
-                stk = exp.stk;
-                exp = { type: 'return' };
-                break;
             case 'frame':
                 stk = {
                     ret: exp.ret,
@@ -84,10 +49,6 @@ function execute(opcode, env) {
                     stk: stk
                 };
                 rib = new Array(exp.numArgs);
-                exp = exp.next;
-                break;
-            case 'argument':
-                rib[exp.i] = acc;
                 exp = exp.next;
                 break;
             case 'apply':
@@ -109,6 +70,45 @@ function execute(opcode, env) {
                 rib = stk.rib;
                 stk = stk.stk;
                 break;
+            case 'close':
+                acc = new Closure(exp.body, env, exp.numArgs, exp.variadic);
+                exp = exp.next;
+                break;
+            case 'test':
+                exp = acc === Bool.True ? exp.then : exp.else;
+                break;
+            case 'assign':
+                if (exp.location.type === 'index') {
+                    env[exp.location.index[0]][exp.location.index[1]] = acc;
+                } else {
+                    if (exp.location.index === -1) {
+                        exp.location.index = TopLevel.getIndex(exp.location.symbol);
+                    }
+                    TopLevel.set(exp.location.index, acc);
+                }
+                exp = exp.next;
+                break;
+            case 'define':
+                TopLevel.define(exp.variable, acc);
+                exp = exp.next;
+                break;
+            case 'conti':
+                acc = new Closure({
+                    type: 'nuate',
+                    stk: stk
+                }, [], 0, false);
+                exp = exp.next;
+                break;
+            case 'nuate':
+                acc = env[0][0];
+                stk = exp.stk;
+                exp = { type: 'return' };
+                break;
+            case 'halt':
+                return {
+                    acc: acc,
+                    env: env
+                };
         }
     }
 }
