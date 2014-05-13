@@ -65,7 +65,10 @@ function execute(opcode, env) {
                 exp = exp.next;
                 break;
             case 'conti':
-                acc = makeContinuation(stk);
+                acc = new Closure({
+                    type: 'nuate',
+                    stk: stk
+                }, [], 0, false);
                 exp = exp.next;
                 break;
             case 'nuate':
@@ -74,7 +77,12 @@ function execute(opcode, env) {
                 exp = { type: 'return' };
                 break;
             case 'frame':
-                stk = makeCallFrame(exp.ret, env, rib, stk);
+                stk = {
+                    ret: exp.ret,
+                    env: env,
+                    rib: rib,
+                    stk: stk
+                };
                 rib = new Array(exp.numArgs);
                 exp = exp.next;
                 break;
@@ -103,22 +111,6 @@ function execute(opcode, env) {
                 break;
         }
     }
-}
-
-function makeContinuation(stk) {
-    return new Closure({
-        type: 'nuate',
-        stk: stk
-    }, [], 0, false);
-}
-
-function makeCallFrame(ret, env, rib, stk) {
-    return {
-        ret: ret,
-        env: env,
-        rib: rib,
-        stk: stk
-    };
 }
 
 function fixRib(rib, numArgs) {
