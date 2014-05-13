@@ -63,7 +63,7 @@ function compile(expr, env, next) {
         conti, args, i, len, func, variadic, variable, expression;
 
     if (expr.type === 'symbol') {
-        return compileLookup('ref', expr, env, next);
+        return compileRefer(expr, env, next);
     } else if (expr.type === 'pair') {
 
         first = expr.car;
@@ -121,7 +121,7 @@ function compile(expr, env, next) {
             case 'set!':
                 name = rest.car;
                 exp = rest.cdr.car;
-                return compile(exp, env, compileLookup('set', name, env, next));
+                return compile(exp, env, compileAssign(name, env, next));
             case 'call/cc':
                 conti = {
                     type: 'conti',
@@ -161,6 +161,31 @@ function compile(expr, env, next) {
 function isTail(next) {
     return next.type === 'return';
 }
+
+function compileRefer(symbol, env, next) {
+    var type = {
+        '+': 'add',
+        '-': 'sub',
+        '*': 'mul',
+        '/': 'div',
+        '<': 'lt',
+        '>': 'gt',
+        '<=': 'le',
+        '>=': 'ge',
+        '=': 'eql'
+    }[symbol.name];
+
+    if (type) {
+        return { type: type };
+    }
+
+    return compileLookup('ref', symbol, env, next);
+}
+
+function compileAssign(symbol, env, next) {
+    return compileLookup('set', symbol, env, next);
+}
+
 
 function compileLookup(type, symbol, env, next) {
     var i, j, rib;
