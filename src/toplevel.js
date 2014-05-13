@@ -8,8 +8,11 @@ var objects = require('./objects'),
 var environment = new Environment();
 
 function define(bindings) {
-    for (var name in bindings) {
-        environment.define(new Symbol(name), bindings[name]);
+    var name, value;
+    for (name in bindings) {
+        value = bindings[name];
+        value.type = '';
+        environment.define(new Symbol(name), value);
     }
 }
 
