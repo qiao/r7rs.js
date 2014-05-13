@@ -39,8 +39,16 @@ Real.prototype.lt = function (other) {
     return new Bool(this.value < other.value);
 };
 
+Real.prototype.le = function (other) {
+    return new Bool(this.value <= other.value);
+};
+
 Real.prototype.gt = function (other) {
     return new Bool(this.value > other.value);
+};
+
+Real.prototype.ge = function (other) {
+    return new Bool(this.value >= other.value);
 };
 
 Real.prototype.display = function () {
