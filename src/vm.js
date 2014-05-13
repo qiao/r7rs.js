@@ -31,8 +31,30 @@ function execute(opcode, env) {
             break;
         case 4:
             switch (type) {
+            case 'lref':
+                acc = env[exp.depth][exp.offset];
+                exp = exp.next;
+                break;
+            case 'gref':
+                if (exp.index === -1) {
+                    exp.index = TopLevel.getIndex(exp.symbol);
+                }
+                acc = TopLevel.lookupByIndex(exp.index);
+                exp = exp.next;
+                break;
             case 'test':
                 exp = acc === Bool.True ? exp.then : exp.else;
+                break;
+            case 'lset':
+                env[exp.depth][exp.offset] = acc;
+                exp = exp.next;
+                break;
+            case 'gset':
+                if (exp.index === -1) {
+                    exp.index = TopLevel.getIndex(exp.symbol);
+                }
+                TopLevel.set(exp.index, acc);
+                exp = exp.next;
                 break;
             case 'halt':
                 return {
@@ -43,17 +65,6 @@ function execute(opcode, env) {
             break;
         case 5:
             switch (type) {
-            case 'refer':
-                if (exp.location.type === 'index') {
-                    acc = env[exp.location.index[0]][exp.location.index[1]];
-                } else {
-                    if (exp.location.index === -1) {
-                        exp.location.index = TopLevel.getIndex(exp.location.symbol);
-                    }
-                    acc = TopLevel.lookupByIndex(exp.location.index);
-                }
-                exp = exp.next;
-                break;
             case 'apply':
                 if (acc.type === 'closure') {
                     if (acc.isVariadic) {
@@ -105,17 +116,6 @@ function execute(opcode, env) {
                 env = stk.env;
                 rib = stk.rib;
                 stk = stk.stk;
-                break;
-            case 'assign':
-                if (exp.location.type === 'index') {
-                    env[exp.location.index[0]][exp.location.index[1]] = acc;
-                } else {
-                    if (exp.location.index === -1) {
-                        exp.location.index = TopLevel.getIndex(exp.location.symbol);
-                    }
-                    TopLevel.set(exp.location.index, acc);
-                }
-                exp = exp.next;
                 break;
             case 'define':
                 TopLevel.define(exp.variable, acc);
