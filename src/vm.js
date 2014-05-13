@@ -1,4 +1,4 @@
-var objects      = require('../objects'),
+var objects      = require('./objects'),
     Bool         = objects.Bool,
     ByteVector   = objects.ByteVector,
     Char         = objects.Char,
@@ -10,7 +10,7 @@ var objects      = require('../objects'),
     Symbol       = objects.Symbol,
     Vector       = objects.Vector,
     Closure      = objects.Closure,
-    TopLevel     = require('../toplevel');
+    TopLevel     = require('./toplevel');
 
 
 function execute(opcode, env) {

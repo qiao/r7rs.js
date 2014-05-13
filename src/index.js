@@ -1,6 +1,6 @@
 var parse = require('./parser').parse,
     compile = require('./compiler').compile,
-    execute = require('./interpreter').execute,
+    execute = require('./vm').execute,
     Environment = require('./environment'),
     objects = require('./objects');
 
