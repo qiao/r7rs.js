@@ -22,14 +22,6 @@ function execute(opcode, env) {
         
     while (true) {
         switch (exp.type) {
-            case 'constant':
-                acc = exp.object;
-                exp = exp.next;
-                break;
-            case 'argument':
-                rib[exp.i] = acc;
-                exp = exp.next;
-                break;
             case 'refer':
                 if (exp.location.type === 'index') {
                     acc = env[exp.location.index[0]][exp.location.index[1]];
@@ -41,14 +33,8 @@ function execute(opcode, env) {
                 }
                 exp = exp.next;
                 break;
-            case 'frame':
-                stk = {
-                    ret: exp.ret,
-                    env: env,
-                    rib: rib,
-                    stk: stk
-                };
-                rib = new Array(exp.numArgs);
+            case 'arg':
+                rib[exp.i] = acc;
                 exp = exp.next;
                 break;
             case 'apply':
@@ -64,18 +50,32 @@ function execute(opcode, env) {
                     exp = { type: 'return' };
                 }
                 break;
+            case 'frame':
+                stk = {
+                    ret: exp.ret,
+                    env: env,
+                    rib: rib,
+                    stk: stk
+                };
+                rib = new Array(exp.numArgs);
+                exp = exp.next;
+                break;
             case 'return':
                 exp = stk.ret;
                 env = stk.env;
                 rib = stk.rib;
                 stk = stk.stk;
                 break;
-            case 'close':
-                acc = new Closure(exp.body, env, exp.numArgs, exp.variadic);
+            case 'const':
+                acc = exp.object;
                 exp = exp.next;
                 break;
             case 'test':
                 exp = acc === Bool.True ? exp.then : exp.else;
+                break;
+            case 'close':
+                acc = new Closure(exp.body, env, exp.numArgs, exp.variadic);
+                exp = exp.next;
                 break;
             case 'assign':
                 if (exp.location.type === 'index') {

@@ -76,7 +76,7 @@ function compile(expr, env, next) {
         switch (first.name) {
             case 'quote':
                 return {
-                    type: 'constant',
+                    type: 'const',
                     object: rest.car,
                     next: next
                 };
@@ -134,7 +134,7 @@ function compile(expr, env, next) {
                 conti = {
                     type: 'conti',
                     next: {
-                        type: 'argument',
+                        type: 'arg',
                         i: 0,
                         next: compile(rest.car, env, { type: 'apply' })
                     }
@@ -147,7 +147,7 @@ function compile(expr, env, next) {
                 args = rest.toArray();
                 for (i = args.length - 1; i >= 0; --i) {
                     func = compile(args[i], env, {
-                        type: 'argument', i: i, next: func
+                        type: 'arg', i: i, next: func
                     });
                 }
                 return isTail(next) ? func : {
@@ -159,7 +159,7 @@ function compile(expr, env, next) {
         }
     } else {
         return {
-            type: 'constant',
+            type: 'const',
             object: expr,
             next: next
         };
