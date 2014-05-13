@@ -45,7 +45,7 @@ function execute(opcode, env) {
                 break;
             }
             break;
-        case 3: // type is 'arg'
+        case 3:
             switch (type) {
             case 'arg':
                 rib[exp.i] = acc;
