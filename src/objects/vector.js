@@ -18,6 +18,20 @@ Vector.makeWithFill = function (n, fill) {
 
 Vector.prototype.type = 'vector';
 
+Vector.prototype.getLength = function () {
+    return this.elements.length;
+};
+
+Vector.prototype.ref = function (i) {
+    // TODO: throw error on invalid index
+    return this.elements[i];
+};
+
+Vector.prototype.set = function (i, v) {
+    // TODO: throw error on invalid index
+    this.elements[i] = v;
+};
+
 Vector.prototype.toJSON = function () {
     return {
         type: this.type,
