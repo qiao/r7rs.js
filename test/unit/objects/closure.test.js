@@ -1,4 +1,4 @@
-/*global describe:true, it: true*/
+/* global describe, it */
 
 var r7rs    = require('../../..'),
     objects = r7rs.objects,

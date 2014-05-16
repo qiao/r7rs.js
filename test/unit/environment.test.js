@@ -1,4 +1,4 @@
-/* global describe: true, it: true, beforeEach: true */
+/* global describe, it, beforeEach */
 
 var r7rs    = require('../..'),
     objects = r7rs.objects,
