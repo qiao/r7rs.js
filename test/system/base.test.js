@@ -40,6 +40,9 @@ describe('System Testing', function () {
 
     it('should evaluate conditionals', function () {
         eql('(if #t 4 2)', new Real(4));
+        eql('(if 1 4 2)', new Real(4));
+        eql('(if 0 4 2)', new Real(4));
+        eql('(if \'() 4 2)', new Real(4));
         eql('(if #f 4 2)', new Real(2));
         eql('(if #t (if #t 4 2) (if #t 4 2))', new Real(4));
         eql('(if #t (if #f 4 2) (if #t 4 2))', new Real(2));
