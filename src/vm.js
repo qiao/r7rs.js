@@ -87,7 +87,10 @@ function execute(opcode, env) {
                 exp = exp.next;
                 break;
             case 'test':
-                exp = acc === Bool.True ? exp.then : exp.else;
+                // R7RS Section 6.3
+                // Only #f counts as false in conditional expressions.
+                // All other Scheme values, including #t, count as true.
+                exp = acc === Bool.False ? exp.else : exp.then;
                 break;
             case 'lset':
                 env[exp.depth][exp.offset] = acc;
