@@ -55,7 +55,10 @@ Pair.prototype.toArray = function () {
  */
 Pair.prototype.getLength = function () {
     var len = 0, pair = this;
-    for (; pair !== Nil; pair = pair.cdr) {
+    for (; pair.type === 'pair'; pair = pair.cdr) {
+        len += 1;
+    }
+    if (pair !== Nil) {
         len += 1;
     }
     return len;
