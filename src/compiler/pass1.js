@@ -5,7 +5,39 @@ var objects = require('../objects'),
 
 
 /**
- * compile the s-expression into intermediate form
+ * Compile the s-expression into intermediate form.
+ *
+ * ref:
+ *   symbol: Symbol
+ *
+ * set:
+ *   symbol: Symbol
+ *   expr: IForm
+ *
+ * const:
+ *   value: *
+ *
+ * if:
+ *   test: IForm
+ *   then: IForm
+ *   else: IForm
+ *
+ * define:
+ *   id: Symbol
+ *   expr: IForm
+ *
+ * lambda:
+ *   args: [Symbol]
+ *   variadic: Bool,
+ *   body: IForm
+ *
+ * call:
+ *   proc: IForm
+ *   args: [IForm]
+ *
+ * seq:
+ *   body: [IForm]
+ *   
  */
 function compile(expr) {
     if (expr.type === 'symbol') {
@@ -37,8 +69,9 @@ function compile(expr) {
             case 'if':
                 return {
                     type: 'if',
-                    then: compile(expr.cdr.car),
-                    'else': compile(expr.cdr.cdr.car)
+                    test: compile(expr.cdr.car),
+                    then: compile(expr.cdr.cdr.car),
+                    'else': compile(expr.cdr.cdr.cdr.car)
                 };
             default: // call
                 return compileCall(expr);
