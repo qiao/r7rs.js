@@ -189,11 +189,16 @@ function compileCall(expr) {
     };
 }
 
-if (!module.parent) {
-    var fs = require('fs');
-    var s = fs.readFileSync(process.argv[2]).toString();
-    var parse = require('../parser').parse;
-    console.log(JSON.stringify(
-        compile(parse(s)[0]),
-        null, 4));
-}
+exports.compile = function (exprs) {
+    var i, body = [];
+
+    for (i = 0; i < exprs.length; ++i) {
+        body.push(compile(exprs[i]));
+    }
+
+    return {
+        type: 'seq',
+        body: body
+    };
+};
+
