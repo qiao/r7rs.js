@@ -64,10 +64,7 @@ function execute(opcode) {
                 exp = exp.next;
                 break;
             case 'halt':
-                return {
-                    acc: acc,
-                    env: env
-                };
+                return acc;
             }
             break;
         case 5:
