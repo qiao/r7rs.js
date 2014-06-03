@@ -1,114 +1,94 @@
-// compile the intermediate form into CPS.
 
-function compile(expr, env, next) {
+function compile(expr) {
     switch (expr.type) {
-        case 'ref':
-            return compileLookup('ref', expr.symbol, env, next);
         case 'set':
-            return compile(expr.expr,
-                           env,
-                           compileLookup('set', expr.symbol, env, next));
-        case 'const':
             return {
-                type: 'const',
-                value: expr.value,
-                next: next
+                type: 'set',
+                symbol: expr.symbol,
+                expr: compile(expr.expr)
             };
         case 'if':
-            return compile(expr.test, env, {
-                type: 'test',
-                then: compile(expr.then, env, next),
-                'else': compile(expr.else, env, next),
-            });
+            return {
+                type: 'if',
+                test: compile(expr.test),
+                then: compile(expr.then),
+                'else': compile(expr.else)
+            };
         case 'define':
-            return compile(expr.expr, env, {
+            return {
                 type: 'define',
                 id: expr.id,
-                next: next
-            });
+                expr: compile(expr.expr)
+            };
         case 'lambda':
             return {
-                type: 'close',
-                nargs: expr.args.length,
+                type: 'lambda',
+                args: expr.args,
                 variadic: expr.variadic,
-                body: compile(expr.body,
-                              [expr.args].concat(env),
-                              { type: 'return' }),
-                next: next
+                body: compile(expr.body)
             };
         case 'call':
-            return compileCall(expr, env, next);
+            return compileCall(expr);
         case 'seq':
-            return compileSeq(expr, env, next);
+            return compileSeq(expr);
     }
+
+    return expr;
 }
 
 
-function compileLookup(type, sym, env, next) {
-    var depth, offset, rib;
+function compileSeq(expr) {
+    var i, body;
 
-    for (depth = 0; depth < env.length; ++depth) {
-        rib = env[depth];
-        for (offset = 0; offset < rib.length; ++offset) {
-            if (rib[offset] === sym) {
-                return {
-                    type: 'l' + type,
-                    depth: depth,
-                    offset: offset,
-                    next: next
-                };
-            }
-        }
+    body = [];
+
+    for (i = 0; i < expr.body.length; ++i) {
+        body.push(compile(expr.body[i]));
     }
 
     return {
-        type: 'g' + type,
-        id: sym,
-        index: -1,
-        next: next
+        type: 'seq',
+        body: body
     };
 }
 
 
-function compileCall(expr, env, next) {
-    var proc, args, i, ret, isTail;
+function compileCall(expr) {
+    var proc, args, name, i;
 
-    proc = expr.proc;
-    args = expr.args;
+    proc = compile(expr.proc);
+    args = compileArgs(expr.args);
 
-    ret = compile(proc, env, { type: 'apply' });
+    //if (proc.type === 'ref') {
+        //name = proc.symbol.name;
+        //switch (name) {
+            //case '+': return { type: 'add', args: args };
+            //case '-': return { type: 'sub', args: args };
+        //}
+    //}
 
-    for (i = args.length - 1; i >= 0; --i) {
-        ret = compile(args[i], env, {
-            type: 'arg',
-            i: i,
-            next: ret
-        });
-    }
-
-    isTail = next.type === 'return';
-    return isTail ? ret : {
-        type: 'frame',
-        nargs: args.length,
-        ret: next,
-        next: ret
+    return {
+        type: 'call',
+        proc: proc,
+        args: args
     };
 }
 
 
-function compileSeq(expr, env, next) {
-    var body, i;
+function compileArgs(args) {
+    var i, ret;
 
-    body = expr.body;
-
-    for (i = body.length - 1; i >= 0; --i) {
-        next = compile(body[i], env, next);
+    ret = [];
+    for (i = 0; i < args.length; ++i) {
+        ret.push(compile(args[i]));
     }
 
-    return next;
+    return ret;
 }
 
 
 exports.compile = function (expr) {
-    return compile(expr, [], { type: 'halt' });
+  var a = compile(expr);
+  //console.log(JSON.stringify(a, null, 4));
+  return a;
 };
