@@ -1,18 +1,19 @@
 var fs = require('fs');
 var path = require('path');
 var colors = require('colors');
+var now = require('performance-now');
 var r7rs = require('../');
 
 function timer(samples, procedure) {
     var start, end, i;
 
-    start = Date.now();
+    start = now();
     for (i = 0; i < samples; ++i) {
       procedure();
     }
-    end = Date.now();
+    end = now();
 
-    return (end - start) / samples;
+    return ((end - start) / samples).toFixed(1);
 }
 
 function benchmark(filename) {
