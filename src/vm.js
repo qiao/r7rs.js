@@ -25,53 +25,9 @@ function execute(opcode, env) {
         type = exp.type;
 
         switch (type.length) {
-        case 2:
-            switch (type) {
-            case 'lt':
-                acc = rib[0].lt(rib[1]);
-                exp = { type: 'return' };
-                break;
-            case 'le':
-                acc = rib[0].le(rib[1]);
-                exp = { type: 'return' };
-                break;
-            case 'gt':
-                acc = rib[0].gt(rib[1]);
-                exp = { type: 'return' };
-                break;
-            case 'ge':
-                acc = rib[0].ge(rib[1]);
-                exp = { type: 'return' };
-                break;
-            }
-            break;
-        case 3:
-            switch (type) {
-            case 'arg':
-                rib[exp.i] = acc;
-                exp = exp.next;
-                break;
-            case 'eql':
-                acc = rib[0].eql(rib[1]);
-                exp = { type: 'return' };
-                break;
-            case 'add':
-                acc = rib[0].add(rib[1]);
-                exp = { type: 'return' };
-                break;
-            case 'sub':
-                acc = rib[0].sub(rib[1]);
-                exp = { type: 'return' };
-                break;
-            case 'mul':
-                acc = rib[0].mul(rib[1]);
-                exp = { type: 'return' };
-                break;
-            case 'div':
-                acc = rib[0].div(rib[1]);
-                exp = { type: 'return' };
-                break;
-            }
+        case 3: // arg
+            rib[exp.i] = acc;
+            exp = exp.next;
             break;
         case 4:
             switch (type) {

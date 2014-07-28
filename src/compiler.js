@@ -163,22 +163,6 @@ function isTail(next) {
 }
 
 function compileRefer(symbol, env, next) {
-    var type = {
-        '+': 'add',
-        '-': 'sub',
-        '*': 'mul',
-        '/': 'div',
-        '<': 'lt',
-        '>': 'gt',
-        '<=': 'le',
-        '>=': 'ge',
-        '=': 'eql'
-    }[symbol.name];
-
-    if (type) {
-        return { type: type };
-    }
-
     return compileLookup('ref', symbol, env, next);
 }
 
