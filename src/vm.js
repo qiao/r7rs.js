@@ -13,10 +13,10 @@ var objects      = require('./objects'),
     TopLevel     = require('./toplevel');
 
 
-function execute(opcode, env) {
+function execute(opcode) {
     var acc = null,
         exp = opcode,
-        env = env,
+        env = [],
         rib = [],
         stk = null,
         type;
@@ -37,7 +37,7 @@ function execute(opcode, env) {
                 break;
             case 'gref':
                 if (exp.index === -1) {
-                    exp.index = TopLevel.getIndex(exp.symbol);
+                    exp.index = TopLevel.getIndex(exp.id);
                 }
                 acc = TopLevel.lookupByIndex(exp.index);
                 exp = exp.next;
@@ -60,10 +60,7 @@ function execute(opcode, env) {
                 exp = exp.next;
                 break;
             case 'halt':
-                return {
-                    acc: acc,
-                    env: env
-                };
+                return acc;
             }
             break;
         case 5:
@@ -71,7 +68,7 @@ function execute(opcode, env) {
             case 'apply':
                 if (acc.type === 'closure') {
                     if (acc.isVariadic) {
-                        fixRib(rib, acc.numArgs);
+                        fixRib(rib, acc.nargs);
                     }
                     env = [rib].concat(acc.env);
                     rib = [];
@@ -88,15 +85,15 @@ function execute(opcode, env) {
                     rib: rib,
                     stk: stk
                 };
-                rib = new Array(exp.numArgs);
+                rib = new Array(exp.nargs);
                 exp = exp.next;
                 break;
             case 'const':
-                acc = exp.object;
+                acc = exp.value;
                 exp = exp.next;
                 break;
             case 'close':
-                acc = new Closure(exp.body, env, exp.numArgs, exp.variadic);
+                acc = new Closure(exp.body, env, exp.nargs, exp.variadic);
                 exp = exp.next;
                 break;
             case 'conti':
@@ -121,7 +118,7 @@ function execute(opcode, env) {
                 stk = stk.stk;
                 break;
             case 'define':
-                TopLevel.define(exp.variable, acc);
+                TopLevel.define(exp.id, acc);
                 exp = exp.next;
                 break;
             }
@@ -130,12 +127,12 @@ function execute(opcode, env) {
     }
 }
 
-function fixRib(rib, numArgs) {
+function fixRib(rib, nargs) {
     var rest = Nil,
-        numRest = rib.length - numArgs + 1,
+        nrest = rib.length - nargs + 1,
         i;
 
-    for (i = 0; i < numRest; ++i) {
+    for (i = 0; i < nrest; ++i) {
         rest = new Pair(rib.pop(), rest);
     }
     rib.push(rest);
@@ -148,13 +145,4 @@ function logOpcode(opcode) {
     console.log(JSON.stringify(opcode, null, 4));
 }
 
-exports.execute = function (opcodes) {
-    var i, len, result, env = [];
-
-    for (i = 0, len = opcodes.length; i < len; ++i) {
-        result = execute(opcodes[i], env);
-        env = result.env;
-    }
-
-    return result.acc;
-};
+exports.execute = execute;
