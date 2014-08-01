@@ -1,6 +1,6 @@
 function Symbol(name) {
     // make sure that there is exactly one copy for each symbol
-    if (Object.hasOwnProperty.call(Symbol.symbols, name)) {
+    if (Object.prototype.hasOwnProperty.call(Symbol.symbols, name)) {
         return Symbol.symbols[name];
     } else {
         this.name = name;
