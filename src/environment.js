@@ -1,21 +1,21 @@
 function Environment(parent) {
-    /**
-     * A map from symbol name to its index
-     * @private
-     */
-    this._indices = {};
+  /**
+   * A map from symbol name to its index
+   * @private
+   */
+  this._indices = {};
 
-    /**
-     * An array containing the values of the defined symbols in the environemnt
-     * @private
-     */
-    this._values = [];
+  /**
+   * An array containing the values of the defined symbols in the environemnt
+   * @private
+   */
+  this._values = [];
 
-    /**
-     * Parent environment.
-     * @private
-     */
-    this._parent = parent;
+  /**
+   * Parent environment.
+   * @private
+   */
+  this._parent = parent;
 }
 
 
@@ -25,7 +25,7 @@ function Environment(parent) {
  * @param {*} value
  */
 Environment.prototype.define = function (symbol, value) {
-    this._store(symbol, value);
+  this._store(symbol, value);
 };
 
 
@@ -39,30 +39,28 @@ Environment.prototype.define = function (symbol, value) {
  * @return {Number} The index of the symbol, -1 if the symbol is undefined
  */
 Environment.prototype.getIndex = function (symbol) {
-    var i, value;
+  var i = this._indices[symbol.name];
+  if (i !== undefined) {
+    return i;
+  }
 
-    i = this._indices[symbol.name];
-    if (i !== undefined) {
-        return i;
-    }
+  if (!this._parent) {
+    return -1;
+  }
 
-    if (!this._parent) {
-        return -1;
-    }
-    
-    value = this._parent.lookupBySymbol(symbol);
-    if (value === null) {
-        return -1;
-    }
+  var value = this._parent.lookupBySymbol(symbol);
+  if (value === null) {
+    return -1;
+  }
 
-    return this._store(symbol, value);
+  return this._store(symbol, value);
 };
 
 
 Environment.prototype._store = function (symbol, value) {
-    this._indices[symbol.name] = this._values.length;
-    this._values.push(value);
-    return this._values.length - 1;
+  this._indices[symbol.name] = this._values.length;
+  this._values.push(value);
+  return this._values.length - 1;
 };
 
 
@@ -72,11 +70,11 @@ Environment.prototype._store = function (symbol, value) {
  * @return {*} The bound value, null if the symbol is undefined
  */
 Environment.prototype.lookupBySymbol = function (symbol) {
-    var index = this.getIndex(symbol);
-    if (index === -1) {
-        return null;
-    }
-    return this._values[index];
+  var index = this.getIndex(symbol);
+  if (index === -1) {
+    return null;
+  }
+  return this._values[index];
 };
 
 
@@ -86,7 +84,7 @@ Environment.prototype.lookupBySymbol = function (symbol) {
  * @return {*} The bound value
  */
 Environment.prototype.lookupByIndex = function (index) {
-    return this._values[index];
+  return this._values[index];
 };
 
 module.exports = Environment;

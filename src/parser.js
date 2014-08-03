@@ -451,8 +451,8 @@ module.exports = (function(){
         }
         if (result0 !== null) {
           result0 = (function(offset, ds) {
-                return Pair.makeList(ds);
-            })(pos0, result0[3]);
+            return Pair.makeList(ds);
+          })(pos0, result0[3]);
         }
         if (result0 === null) {
           pos = pos0;
@@ -575,12 +575,12 @@ module.exports = (function(){
           }
           if (result0 !== null) {
             result0 = (function(offset, ds, d) {
-                  var i, len = ds.length, pair = new Pair(ds[len - 1], d);
-                  for (i = len - 2; i >= 0; --i) {
-                      pair = new Pair(ds[i], pair);
-                  }
-                  return pair;
-                })(pos0, result0[3], result0[7]);
+                var i, len = ds.length, pair = new Pair(ds[len - 1], d);
+                for (i = len - 2; i >= 0; --i) {
+                  pair = new Pair(ds[i], pair);
+                }
+                return pair;
+              })(pos0, result0[3], result0[7]);
           }
           if (result0 === null) {
             pos = pos0;
@@ -639,15 +639,15 @@ module.exports = (function(){
         }
         if (result0 !== null) {
           result0 = (function(offset, a, d) {
-                var symbol;
-                switch (a) {
-                    case ',@': symbol = new Symbol('unquote-splicing'); break;
-                    case ',':  symbol = new Symbol('unquote'); break;
-                    case '\'': symbol = new Symbol('quote'); break;
-                    case '`':  symbol = new Symbol('quasiquote'); break; 
-                }
-                return new Pair(symbol, new Pair(d, Nil));
-              })(pos0, result0[0], result0[1]);
+              var symbol;
+              switch (a) {
+                case ',@': symbol = new Symbol('unquote-splicing'); break;
+                case ',':  symbol = new Symbol('unquote'); break;
+                case '\'': symbol = new Symbol('quote'); break;
+                case '`':  symbol = new Symbol('quasiquote'); break; 
+              }
+              return new Pair(symbol, new Pair(d, Nil));
+            })(pos0, result0[0], result0[1]);
         }
         if (result0 === null) {
           pos = pos0;
@@ -1593,8 +1593,8 @@ module.exports = (function(){
         }
         if (result0 !== null) {
           result0 = (function(offset, e, d, s) {
-                  return e + '.' + d + s.join('');
-              })(pos0, result0[0], result0[2], result0[3]);
+              return e + '.' + d + s.join('');
+            })(pos0, result0[0], result0[2], result0[3]);
         }
         if (result0 === null) {
           pos = pos0;
@@ -1628,8 +1628,8 @@ module.exports = (function(){
           }
           if (result0 !== null) {
             result0 = (function(offset, e, ss, s) {
-                    return e + ss + s.join('');
-                })(pos0, result0[0], result0[1], result0[2]);
+                return e + ss + s.join('');
+              })(pos0, result0[0], result0[1], result0[2]);
           }
           if (result0 === null) {
             pos = pos0;
@@ -1673,8 +1673,8 @@ module.exports = (function(){
               }
               if (result0 !== null) {
                 result0 = (function(offset, n, ss) {
-                        return '.' + n + ss.join('');
-                    })(pos0, result0[1], result0[2]);
+                    return '.' + n + ss.join('');
+                  })(pos0, result0[1], result0[2]);
               }
               if (result0 === null) {
                 pos = pos0;
@@ -2747,10 +2747,10 @@ module.exports = (function(){
         }
         if (result0 !== null) {
           result0 = (function(offset, radius, angle) {
-                  var real = Math.cos(angle) * radius,
-                      imag = Math.sin(angle) * radius;
-                  return new Complex(real, imag);
-              })(pos0, result0[0], result0[2]);
+              var real = Math.cos(angle) * radius;
+              var imag = Math.sin(angle) * radius;
+              return new Complex(real, imag);
+            })(pos0, result0[0], result0[2]);
         }
         if (result0 === null) {
           pos = pos0;
@@ -3331,10 +3331,10 @@ module.exports = (function(){
         }
         if (result0 !== null) {
           result0 = (function(offset, radius, angle) {
-                  var real = Math.cos(angle) * radius,
-                      imag = Math.sin(angle) * radius;
-                  return new Complex(real, imag);
-              })(pos0, result0[0], result0[2]);
+              var real = Math.cos(angle) * radius;
+              var imag = Math.sin(angle) * radius;
+              return new Complex(real, imag);
+            })(pos0, result0[0], result0[2]);
         }
         if (result0 === null) {
           pos = pos0;
@@ -3915,10 +3915,10 @@ module.exports = (function(){
         }
         if (result0 !== null) {
           result0 = (function(offset, radius, angle) {
-                  var real = Math.cos(angle) * radius,
-                      imag = Math.sin(angle) * radius;
-                  return new Complex(real, imag);
-              })(pos0, result0[0], result0[2]);
+              var real = Math.cos(angle) * radius;
+              var imag = Math.sin(angle) * radius;
+              return new Complex(real, imag);
+            })(pos0, result0[0], result0[2]);
         }
         if (result0 === null) {
           pos = pos0;
@@ -4417,12 +4417,12 @@ module.exports = (function(){
         }
         if (result0 !== null) {
           result0 = (function(offset, ds, s) {
-                  var num = parseFloat('.' + ds.join(''));
-                  if (s) {
-                      num *= Math.pow(10, s);
-                  }
-                  return num;
-              })(pos0, result0[1], result0[2]);
+              var num = parseFloat('.' + ds.join(''));
+              if (s) {
+                  num *= Math.pow(10, s);
+              }
+              return num;
+            })(pos0, result0[1], result0[2]);
         }
         if (result0 === null) {
           pos = pos0;
@@ -4479,12 +4479,12 @@ module.exports = (function(){
           }
           if (result0 !== null) {
             result0 = (function(offset, whole, fraction, s) {
-                    var num = parseInt(whole.join(''), 10) + parseFloat('.' + fraction.join(''));
-                    if (s) {
-                        num *= Math.pow(10, s);
-                    }
-                    return num;
-                })(pos0, result0[0], result0[2], result0[3]);
+                var num = parseInt(whole.join(''), 10) + parseFloat('.' + fraction.join(''));
+                if (s) {
+                    num *= Math.pow(10, s);
+                }
+                return num;
+              })(pos0, result0[0], result0[2], result0[3]);
           }
           if (result0 === null) {
             pos = pos0;
@@ -4507,11 +4507,11 @@ module.exports = (function(){
             }
             if (result0 !== null) {
               result0 = (function(offset, u, s) {
-                      if (s) {
-                          u *= Math.pow(10, s);
-                      }
-                      return u;
-                  })(pos0, result0[0], result0[1]);
+                  if (s) {
+                      u *= Math.pow(10, s);
+                  }
+                  return u;
+                })(pos0, result0[0], result0[1]);
             }
             if (result0 === null) {
               pos = pos0;
@@ -4557,8 +4557,8 @@ module.exports = (function(){
         }
         if (result0 !== null) {
           result0 = (function(offset, e, s, ds) {
-                  return parseInt(ds.join(''), 10) * (s === '-' ? -1: 1);
-              })(pos0, result0[0], result0[1], result0[2]);
+                return parseInt(ds.join(''), 10) * (s === '-' ? -1: 1);
+            })(pos0, result0[0], result0[1], result0[2]);
         }
         if (result0 === null) {
           pos = pos0;
@@ -4713,10 +4713,10 @@ module.exports = (function(){
         }
         if (result0 !== null) {
           result0 = (function(offset, radius, angle) {
-                  var real = Math.cos(angle) * radius,
-                      imag = Math.sin(angle) * radius;
-                  return new Complex(real, imag);
-              })(pos0, result0[0], result0[2]);
+                var real = Math.cos(angle) * radius,
+                    imag = Math.sin(angle) * radius;
+                return new Complex(real, imag);
+            })(pos0, result0[0], result0[2]);
         }
         if (result0 === null) {
           pos = pos0;
@@ -5498,18 +5498,17 @@ module.exports = (function(){
       }
       
       
-      
-      var objects      = require('./objects'),
-          Bool         = objects.Bool,
-          ByteVector   = objects.ByteVector,
-          Char         = objects.Char,
-          Complex      = objects.Complex,
-          Nil          = objects.Nil,
-          Pair         = objects.Pair,
-          Real         = objects.Real,
-          Str          = objects.Str,
-          Symbol       = objects.Symbol,
-          Vector       = objects.Vector;
+      var objects      = require('./objects');
+      var Bool         = objects.Bool;
+      var ByteVector   = objects.ByteVector;
+      var Char         = objects.Char;
+      var Complex      = objects.Complex;
+      var Nil          = objects.Nil;
+      var Pair         = objects.Pair;
+      var Real         = objects.Real;
+      var Str          = objects.Str;
+      var Symbol       = objects.Symbol;
+      var Vector       = objects.Vector;
       
       
       var result = parseFunctions[startRule]();

@@ -5,8 +5,8 @@ var Nil = require('./nil');
  * @class
  */
 function Pair(car, cdr) {
-    this.car = car;
-    this.cdr = cdr;
+  this.car = car;
+  this.cdr = cdr;
 }
 
 
@@ -17,12 +17,11 @@ function Pair(car, cdr) {
  * @return {Pair}
  */
 Pair.makeList = function (array) {
-    var list = Nil,
-        i;
-    for (i = array.length - 1; i >= 0; --i) {
-        list = new Pair(array[i], list);
-    }
-    return list;
+  var list = Nil;
+  for (var i = array.length - 1; i >= 0; --i) {
+    list = new Pair(array[i], list);
+  }
+  return list;
 };
 
 
@@ -37,14 +36,14 @@ Pair.prototype.type = 'pair';
  * @return {Array}
  */
 Pair.prototype.toArray = function () {
-    var array = [], pair = this;
-    for (; pair.type === 'pair'; pair = pair.cdr) {
-        array.push(pair.car);
-    }
-    if (pair !== Nil) {
-        array.push(pair);
-    }
-    return array;
+  var array = [], pair = this;
+  for (; pair.type === 'pair'; pair = pair.cdr) {
+    array.push(pair.car);
+  }
+  if (pair !== Nil) {
+    array.push(pair);
+  }
+  return array;
 };
 
 
@@ -54,14 +53,14 @@ Pair.prototype.toArray = function () {
  * @return {Number}
  */
 Pair.prototype.getLength = function () {
-    var len = 0, pair = this;
-    for (; pair.type === 'pair'; pair = pair.cdr) {
-        len += 1;
-    }
-    if (pair !== Nil) {
-        len += 1;
-    }
-    return len;
+  var len = 0, pair = this;
+  for (; pair.type === 'pair'; pair = pair.cdr) {
+    len += 1;
+  }
+  if (pair !== Nil) {
+    len += 1;
+  }
+  return len;
 };
 
 
@@ -72,17 +71,17 @@ Pair.prototype.getLength = function () {
  * @return {Pair}
  */
 Pair.prototype.toProperList = function () {
-    var pair = this,
-        list = Nil;
-    for (; pair.type === 'pair'; pair = pair.cdr) {
-        list = new Pair(pair.car, list);
-    }
-    if (pair === Nil) {
-        return list.reverse();
-    } else {
-        list = new Pair(pair, list);
-        return list.reverse();
-    }
+  var pair = this;
+  var list = Nil;
+  for (; pair.type === 'pair'; pair = pair.cdr) {
+    list = new Pair(pair.car, list);
+  }
+  if (pair === Nil) {
+    return list.reverse();
+  } else {
+    list = new Pair(pair, list);
+    return list.reverse();
+  }
 };
 
 
@@ -91,17 +90,17 @@ Pair.prototype.toProperList = function () {
  * @return {Number}
  */
 Pair.prototype.getDotPosition = function () {
-    var pos = 0,
-        pair = this;
-    while (pair.type === 'pair') {
-        pos += 1;
-        pair = pair.cdr;
-    }
-    if (pair === Nil) {
-        return pos;
-    } else {
-        return -1;
-    }
+  var pos = 0;
+  var pair = this;
+  while (pair.type === 'pair') {
+    pos += 1;
+    pair = pair.cdr;
+  }
+  if (pair === Nil) {
+    return pos;
+  } else {
+    return -1;
+  }
 };
 
 
@@ -111,11 +110,11 @@ Pair.prototype.getDotPosition = function () {
  * @return {Boolean}
  */
 Pair.prototype.isProperList = function () {
-    var pair = this;
-    while (pair.type === 'pair') {
-        pair = pair.cdr;
-    }
-    return pair === Nil;
+  var pair = this;
+  while (pair.type === 'pair') {
+    pair = pair.cdr;
+  }
+  return pair === Nil;
 };
 
 
@@ -125,47 +124,47 @@ Pair.prototype.isProperList = function () {
  * @return {Pair}
  */
 Pair.prototype.reverse = function () {
-    var ret = Nil,
-        pair = this;
-    for (; pair.type === 'pair'; pair = pair.cdr) {
-        ret = new Pair(pair.car, ret);
-    }
-    return ret;
+  var ret = Nil;
+  var pair = this;
+  for (; pair.type === 'pair'; pair = pair.cdr) {
+    ret = new Pair(pair.car, ret);
+  }
+  return ret;
 };
 
 Pair.prototype.display = function () {
-    var strs = [], pair = this;
+  var strs = [], pair = this;
 
-    strs.push('(');
+  strs.push('(');
 
-    // push all the elements in the list except the last one
-    for (; pair.type === 'pair'; pair = pair.cdr) {
-        strs.push(pair.car.display());
-        strs.push(' ');
-    }
+  // push all the elements in the list except the last one
+  for (; pair.type === 'pair'; pair = pair.cdr) {
+    strs.push(pair.car.display());
+    strs.push(' ');
+  }
 
-    // after the for loop, `pair' now points to the last element in
-    // the list.
-    // if the last element is Nil, then the list is a proper list,
-    // and we discard the excessive space.
-    // else, the list is inproper, and we insert an dot before the 
-    // last element.
-    if (pair === Nil) {
-        strs.pop();
-    } else {
-        strs.push('. ');
-        strs.push(pair.display());
-    }
+  // after the for loop, `pair' now points to the last element in
+  // the list.
+  // if the last element is Nil, then the list is a proper list,
+  // and we discard the excessive space.
+  // else, the list is inproper, and we insert an dot before the 
+  // last element.
+  if (pair === Nil) {
+    strs.pop();
+  } else {
+    strs.push('. ');
+    strs.push(pair.display());
+  }
 
-    strs.push(')');
+  strs.push(')');
 
-    return strs.join('');
+  return strs.join('');
 };
 
 Pair.prototype.append = function (x) {
-    var array = this.toArray();
-    array.push(x);
-    return Pair.makeList(array);
+  var array = this.toArray();
+  array.push(x);
+  return Pair.makeList(array);
 };
 
 
@@ -174,11 +173,11 @@ Pair.prototype.append = function (x) {
  * @return {Object}
  */
 Pair.prototype.toJSON = function () {
-    return {
-        type: this.type,
-        car: this.car.toJSON(),
-        cdr: this.cdr.toJSON()
-    };
+  return {
+    type: this.type,
+    car: this.car.toJSON(),
+    cdr: this.cdr.toJSON()
+  };
 };
 
 
