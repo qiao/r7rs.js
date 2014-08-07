@@ -51,28 +51,28 @@ function compile(expr) {
     switch (expr.car.name) {
       case 'quote':
         return {
-        type: 'const',
-        value: expr.cdr.car
-      };
+          type: 'const',
+          value: expr.cdr.car
+        };
       case 'define':
         return compileDefine(expr);
       case 'lambda':
         return compileLambda(expr);
       case 'set!':
         return {
-        type: 'set',
-        symbol: expr.cdr.car,
-        expr: compile(expr.cdr.cdr.car)
-      };
+          type: 'set',
+          symbol: expr.cdr.car,
+          expr: compile(expr.cdr.cdr.car)
+        };
       case 'begin':
         return compileBegin(expr);
       case 'if':
         return {
-        type: 'if',
-        test: compile(expr.cdr.car),
-        then: compile(expr.cdr.cdr.car),
-        'else': compile(expr.cdr.cdr.cdr.car)
-      };
+          type: 'if',
+          test: compile(expr.cdr.car),
+          then: compile(expr.cdr.cdr.car),
+          'else': compile(expr.cdr.cdr.cdr.car)
+        };
       default: // call
         return compileCall(expr);
     }
