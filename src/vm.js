@@ -66,27 +66,27 @@ function execute(opcode) {
         switch (type) {
           case 'apply':
             if (acc.type === 'closure') {
-            if (acc.isVariadic) {
-              fixRib(rib, acc.nargs);
+              if (acc.isVariadic) {
+                fixRib(rib, acc.nargs);
+              }
+              env = [rib].concat(acc.env);
+              rib = [];
+              exp = acc.body;
+            } else {
+              acc = acc(rib);
+              exp = { type: 'return' };
             }
-            env = [rib].concat(acc.env);
-            rib = [];
-            exp = acc.body;
-          } else {
-            acc = acc(rib);
-            exp = { type: 'return' };
-          }
-          break;
+            break;
           case 'frame':
             stk = {
-            ret: exp.ret,
-            env: env,
-            rib: rib,
-            stk: stk
-          };
-          rib = new Array(exp.nargs);
-          exp = exp.next;
-          break;
+              ret: exp.ret,
+              env: env,
+              rib: rib,
+              stk: stk
+            };
+            rib = new Array(exp.nargs);
+            exp = exp.next;
+            break;
         case 'const':
           acc = exp.value;
           exp = exp.next;
