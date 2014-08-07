@@ -67,7 +67,7 @@ describe('System Testing', function () {
   it('should evaluate variadic closures', function () {
     eql('((lambda x x) 1 2)',
         new Pair(new Real(1), new Pair(new Real(2), Nil)));
-        eql('((lambda (x y . z) z) 1 2 3 4)',
-            new Pair(new Real(3), new Pair(new Real(4), Nil)));
+    eql('((lambda (x y . z) z) 1 2 3 4)',
+        new Pair(new Real(3), new Pair(new Real(4), Nil)));
   });
 });
