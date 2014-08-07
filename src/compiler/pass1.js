@@ -162,10 +162,13 @@ function compileBegin(expr) {
   for (expr = expr.cdr; expr !== Nil; expr = expr.cdr) {
     body.push(compile(expr.car));
   }
-  return {
-    type: 'seq',
-    body: body
-  };
+  if (body.length > 1) {
+    return {
+      type: 'seq',
+      body: body
+    };
+  }
+  return body[0];
 }
 
 function compileCall(expr) {
