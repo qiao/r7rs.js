@@ -1,19 +1,19 @@
 // Since `String` is a builtin type in ECMAScript, so we use `Str` instead.
 function Str(value) {
-    this.value = value;
+  this.value = value;
 }
 
 Str.prototype.type = 'string';
 
 Str.prototype.toJSON = function () {
-    return {
-        type: this.type,
-        value: this.value
-    };
+  return {
+    type: this.type,
+    value: this.value
+  };
 };
 
 Str.prototype.display = function () {
-    return '"' + this.value + '"';
+  return '"' + this.value + '"';
 };
 
 module.exports = Str;
