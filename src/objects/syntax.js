@@ -13,3 +13,5 @@ Syntax.syntaxes = {}; // allocated syntaxes
 Syntax.prototype.display = function () {
   return '#<syntax ' + this.name + '>';
 };
+
+module.exports = Syntax;
