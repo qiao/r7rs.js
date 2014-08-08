@@ -53,7 +53,7 @@ function execute(opcode) {
             break;
           case 'gset':
             if (exp.index === -1) {
-              exp.index = TopLevel.getIndex(exp.id.name);
+              exp.index = TopLevel.getIndex(exp.id);
             }
             TopLevel.set(exp.index, acc);
             exp = exp.next;

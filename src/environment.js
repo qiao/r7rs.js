@@ -20,26 +20,26 @@ function Environment(parent) {
 
 
 /**
- * Create a name-value binding in the environment.
- * @param {String} name
+ * Create a symbol-value binding in the environment.
+ * @param {Symbol} symbol
  * @param {*} value
  */
-Environment.prototype.define = function (name, value) {
-  this._store(name, value);
+Environment.prototype.define = function (symbol, value) {
+  this._store(symbol, value);
 };
 
 
 /**
- * Get the index of the name in the environment.
+ * Get the index of the symbol in the environment.
  * The index can later be used for accessing the bound
- * value of the name in a quicker manner.
+ * value of the symbol in a quicker manner.
  * @public
  * @method
- * @param {String} name 
- * @return {Number} The index of the name, -1 if the name is undefined
+ * @param {Symbol} symbol
+ * @return {Number} The index of the symbol, -1 if the symbol is undefined
  */
-Environment.prototype.getIndex = function (name) {
-  var i = this._indices[name];
+Environment.prototype.getIndex = function (symbol) {
+  var i = this._indices[symbol.name];
   if (i !== undefined) {
     return i;
   }
@@ -48,36 +48,29 @@ Environment.prototype.getIndex = function (name) {
     return -1;
   }
 
-  var value = this._parent.lookupByName(name);
+  var value = this._parent.lookupBySymbol(symbol);
   if (value === null) {
     return -1;
   }
 
-  return this._store(name, value);
+  return this._store(symbol, value);
 };
 
 
-/**
- * Store the name-value binding in the environment
- * and returns the index of the binding.
- * @param {String} name
- * @param {*} value
- * @return {Number} The index of the binding
- */
-Environment.prototype._store = function (name, value) {
-  this._indices[name] = this._values.length;
+Environment.prototype._store = function (symbol, value) {
+  this._indices[symbol.name] = this._values.length;
   this._values.push(value);
   return this._values.length - 1;
 };
 
 
 /**
- * Look up the bound value of the name in the environment.
- * @param {String} name
- * @return {*} The bound value, null if the name is undefined
+ * Look up the bound value of the symbol in the environment.
+ * @param {Symbol} symbol
+ * @return {*} The bound value, null if the symbol is undefined
  */
-Environment.prototype.lookupByName = function (name) {
-  var index = this.getIndex(name);
+Environment.prototype.lookupBySymbol = function (symbol) {
+  var index = this.getIndex(symbol);
   if (index === -1) {
     return null;
   }

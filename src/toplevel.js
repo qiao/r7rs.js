@@ -12,7 +12,7 @@ function define(bindings) {
   for (name in bindings) {
     value = bindings[name];
     value.type = '';
-    environment.define(name, value);
+    environment.define(new Symbol(name), value);
   }
 }
 
