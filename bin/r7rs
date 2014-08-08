@@ -1,84 +1,85 @@
 #!/usr/bin/env node
 
 
-var fs = require('fs'),
-    readline = require('readline'),
-    optimist = require('optimist'),
-    r7rs = require('../'),
-    package = require('../package.json');
+var fs = require('fs');
+var readline = require('readline');
+var optimist = require('optimist');
+var r7rs = require('..');
+var package = require('../package.json');
 
 
 function repl() {
-    var rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout
-    });
+  var rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
 
-    rl.setPrompt('> ');
+  rl.setPrompt('> ');
+  rl.prompt();
+
+  rl.on('line', function (source) {
+    try {
+      console.log(r7rs.evaluate(source).display());
+    } catch (e) {
+      console.error(e.stack);
+    }
+
     rl.prompt();
-
-    rl.on('line', function (source) {
-        try {
-            console.log(r7rs.evaluate(source).display());
-        } catch (e) {
-            console.error(e.stack);
-        }
-
-        rl.prompt();
-    });
+  });
 }
 
 function main() {
-    var options = optimist
-        .usage(package.name + ' ' + package.version)
-        .options({
-            p: {
-                alias: 'parse-only',
-                boolean: true,
-                describe: 'Parse the file, but do not compile and interpret'
-            },
-            c: {
-                alias: 'compile-only',
-                boolean: true,
-                describe: 'Compile the file, but do not interpret'
-            },
-            h: {
-                alias: 'help',
-                boolean: true,
-                describe: 'Show this help text'
-            }
-        }),
-        argv = options.argv;
-
-    if (!argv._.length) {
-        return repl();
-    }
-
-    if (argv.help) {
-        options.showHelp();
-        return;
-    }
-
-    var filename = argv._[0]; // first non-hyphenated option
-    fs.readFile(filename, function (err, data) {
-        if (err) {
-            console.error(err.message);
-        } else {
-            var source = data.toString();
-            var exprs = r7rs.parse(source);
-            if (argv['parse-only']) {
-                console.log(JSON.stringify(exprs, null, 4));
-                return;
-            }
-
-            var opcodes = r7rs.compile(exprs);
-            if (argv['compile-only']) {
-                console.log(JSON.stringify(opcodes, null, 4));
-                return;
-            }
-            r7rs.execute(opcodes);
-        }
+  var options = optimist
+    .usage(package.name + ' ' + package.version)
+    .options({
+      p: {
+        alias: 'parse-only',
+        boolean: true,
+        describe: 'Parse the file, but do not compile and interpret'
+      },
+      c: {
+        alias: 'compile-only',
+        boolean: true,
+        describe: 'Compile the file, but do not interpret'
+      },
+      h: {
+        alias: 'help',
+        boolean: true,
+        describe: 'Show this help text'
+      }
     });
+  var argv = options.argv;
+
+  if (!argv._.length) {
+    return repl();
+  }
+
+  if (argv.help) {
+    options.showHelp();
+    return;
+  }
+
+  var filename = argv._[0]; // first non-hyphenated option
+  fs.readFile(filename, function (err, data) {
+    if (err) {
+      console.error(err.message);
+      return;
+    } 
+
+    var source = data.toString();
+    var exprs = r7rs.parse(source);
+    if (argv['parse-only']) {
+      console.log(JSON.stringify(exprs, null, 4));
+      return;
+    }
+
+    var opcodes = r7rs.compile(exprs);
+    if (argv['compile-only']) {
+      console.log(JSON.stringify(opcodes, null, 4));
+      return;
+    }
+    r7rs.execute(opcodes);
+  });
 }
 
 main();
