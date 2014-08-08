@@ -9,5 +9,6 @@ module.exports = {
   Str        : require('./str'),
   Symbol     : require('./symbol'),
   Vector     : require('./vector'),
-  Closure    : require('./closure')
+  Closure    : require('./closure'),
+  Syntax     : require('./syntax')
 };
