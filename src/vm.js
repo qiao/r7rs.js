@@ -36,7 +36,7 @@ function execute(opcode) {
             break;
           case 'gref':
             if (exp.index === -1) {
-              exp.index = TopLevel.getIndex(exp.id.name);
+              exp.index = TopLevel.getIndex(exp.id);
             }
             acc = TopLevel.lookupByIndex(exp.index);
             exp = exp.next;
