@@ -10,6 +10,8 @@ function Syntax(name) {
 
 Syntax.syntaxes = {}; // allocated syntaxes
 
+Syntax.prototype.type = 'syntax';
+
 Syntax.prototype.display = function () {
   return '#<syntax ' + this.name + '>';
 };
