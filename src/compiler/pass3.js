@@ -3,11 +3,11 @@
 function compile(expr, env, next) {
   switch (expr.type) {
     case 'ref':
-      return compileLookup('ref', expr.symbol, env, next);
+      return compileLookup('ref', expr.id, env, next);
     case 'set':
       return compile(expr.expr,
                      env,
-                     compileLookup('set', expr.symbol, env, next));
+                     compileLookup('set', expr.id, env, next));
     case 'const':
       return {
         type: 'const',

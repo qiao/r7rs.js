@@ -4,7 +4,7 @@ function compile(expr) {
     case 'set':
       return {
         type: 'set',
-        symbol: expr.symbol,
+        id: expr.id,
         expr: compile(expr.expr)
       };
     case 'if':
@@ -53,14 +53,6 @@ function compileSeq(expr) {
 function compileCall(expr) {
   var proc = compile(expr.proc);
   var args = compileArgs(expr.args);
-
-  //if (proc.type === 'ref') {
-  //  name = proc.symbol.name;
-  //  switch (name) {
-  //    case '+': return { type: 'add', args: args };
-  //    case '-': return { type: 'sub', args: args };
-  //  }
-  //}
 
   return {
     type: 'call',

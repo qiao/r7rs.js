@@ -1,12 +1,12 @@
 /**
- * @fileoverview This pass compile the s-expression into the 
+ * @fileoverview This pass compiles the s-expression into the 
  *   tree intermediate form, which is composed of the following nodes:
  *
  *   ref:
- *     symbol: Symbol
+ *     id: Symbol
  *
  *   set:
- *     symbol: Symbol
+ *     id: Symbol
  *     expr: IForm
  *
  *   const:
@@ -32,6 +32,12 @@
  *
  *   seq:
  *     body: [IForm]
+ *
+ *   let:
+ *     ids: [Symbol]
+ *     values: [IForm]
+ *     body: IForm
+ *     
  *     
  *   During this pass, several transformations are performed, including:
  *
@@ -55,7 +61,7 @@ function compile(expr, env) {
   if (expr.type === 'symbol') {
     return {
       type: 'ref',
-      symbol: expr
+      id: expr
     };
   }
 
@@ -66,8 +72,7 @@ function compile(expr, env) {
     };
   }
 
-  // now expr is a pair, which has the following form
-  // (head args*)
+  // now expr is a pair, which has the form: (head args*)
   var head = expr.car;
   var operator = env.lookupBySymbol(head);
 
@@ -89,7 +94,7 @@ function compile(expr, env) {
     case 'set!':
       return {
         type: 'set',
-        symbol: expr.cdr.car,
+        id: expr.cdr.car,
         expr: compile(expr.cdr.cdr.car, env)
       };
     case 'begin':
@@ -121,7 +126,7 @@ function compileDefine(expr, env) {
     return {
       type: 'define',
       id: second,
-      expr: compile(expr.cdr.cdr.car)
+      expr: compile(expr.cdr.cdr.car, env)
     };
   }
 
@@ -145,7 +150,14 @@ function compileLambda(expr, env) {
   // (lambda (<formals>) <body>)
   // (lambda <formal> <body>)
   var args = expr.cdr.car;
-  var body = compileBody(expr.cdr.cdr, env);
+  
+  // define the formals in the environment
+  var newEnv = new Environment(env);
+  for (var i = 0, len = args.length; i < len; ++i) {
+    newEnv.define(args[i], args[i]);
+  }
+
+  var body = compileBody(expr.cdr.cdr, newEnv);
 
   if (args.type === 'symbol') {
     return {
@@ -209,7 +221,7 @@ function compileCall(expr, env) {
 }
 
 /**
- * The main entry point of compilation.
+ * The main entry point of the compilation.
  * @param {Array.<Object>} exprs An array of s-expressions
  * @return {Object} The tree intermediate form
  */
