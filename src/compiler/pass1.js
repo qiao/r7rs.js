@@ -37,6 +37,8 @@
  *     ids: [Symbol]
  *     values: [IForm]
  *     body: IForm
+ *
+ *   void:
  *     
  *     
  *   During this pass, several transformations are performed, including:
@@ -239,9 +241,13 @@ exports.compile = function (exprs) {
     body.push(compile(exprs[i], env));
   }
 
-  return body.length === 1 ? body[0] : {
-    type: 'seq',
-    body: body
-  };
+  switch (body.length) {
+    case 0:
+      return { type: 'void' };
+    case 1:
+      return body[0];
+    default:
+      return { type: 'seq', body: body };
+  }
 };
 

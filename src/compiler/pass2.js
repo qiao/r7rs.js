@@ -31,6 +31,8 @@ function compile(expr) {
       return compileCall(expr);
     case 'seq':
       return compileSeq(expr);
+    case 'void':
+      return expr;
   }
 
   return expr;

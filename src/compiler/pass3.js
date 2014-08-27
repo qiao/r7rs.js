@@ -40,10 +40,8 @@ function compile(expr, env, next) {
       return compileCall(expr, env, next);
     case 'seq':
       return compileSeq(expr, env, next);
-    case 'add':
-      return {
-        type: 'close'
-      };
+    case 'void':
+      return next;
   }
 }
 
