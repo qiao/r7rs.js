@@ -239,7 +239,7 @@ exports.compile = function (exprs) {
     body.push(compile(exprs[i], env));
   }
 
-  return {
+  return body.length === 1 ? body[0] : {
     type: 'seq',
     body: body
   };
