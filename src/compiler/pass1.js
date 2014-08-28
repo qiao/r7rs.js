@@ -260,8 +260,8 @@ function compileLet(expr, env) {
 }
 
 function compileLetrec(expr, env) {
-  // (let ((<id> <value>)
-  //       (<id> <value>))
+  // (letrec ((<id> <value>)
+  //          (<id> <value>))
   //   <body>)
   var bindings = expr.cdr.car.toArray();
   var ids = [];
