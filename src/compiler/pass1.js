@@ -38,6 +38,11 @@
  *     values: [IForm]
  *     body: IForm
  *
+ *   letrec:
+ *     ids: [Symbol]
+ *     values: [IForm]
+ *     body: IForm
+ *
  *   void:
  *     
  *     
@@ -108,6 +113,10 @@ function compile(expr, env) {
         then: compile(expr.cdr.cdr.car, env),
         'else': compile(expr.cdr.cdr.cdr.car, env)
       };
+    case 'let':
+      return compileLet(expr, env);
+    case 'letrec':
+      return compileLetrec(expr, env);
     default:
       throw new Error('should not reach here');
   }
@@ -222,6 +231,65 @@ function compileCall(expr, env) {
   };
 }
 
+function compileLet(expr, env) {
+  // (let ((<id> <value>)
+  //       (<id> <value>))
+  //   <body>)
+  var bindings = expr.cdr.car.toArray();
+  var ids = [];
+  var values = [];
+  var newEnv = new Environment(env);
+
+  for (var i = 0, len = bindings.length; i < len; ++i) {
+    var binding = bindings[i];
+    var id = binding.car;
+    var value = binding.cdr.car;
+
+    ids.push(id);
+    values.push(compile(value, env));
+  
+    newEnv.define(id, id);
+  }
+
+  return {
+    type: 'let',
+    ids: ids,
+    values: values,
+    body: compileBody(expr.cdr.cdr, newEnv)
+  };
+}
+
+function compileLetrec(expr, env) {
+  // (let ((<id> <value>)
+  //       (<id> <value>))
+  //   <body>)
+  var bindings = expr.cdr.car.toArray();
+  var ids = [];
+  var values = [];
+  var newEnv = new Environment(env);
+
+  for (var i = 0, len = bindings.length; i < len; ++i) {
+    var binding = bindings[i];
+    var id = binding.car;
+    ids.push(id);
+    newEnv.define(id, id);
+  }
+
+  for (i = 0, len = bindings.length; i < len; ++i) {
+    var binding = bindings[i];
+    var value = binding.cdr.car;
+    values.push(compile(value, newEnv));
+  }
+
+  return {
+    type: 'letrec',
+    ids: ids,
+    values: values,
+    body: compileBody(expr.cdr.cdr, newEnv)
+  };
+}
+
+
 /**
  * The main entry point of the compilation.
  * @param {Array.<Object>} exprs An array of s-expressions
@@ -235,11 +303,14 @@ exports.compile = function (exprs) {
   env.define(new Symbol('lambda') , new Syntax('lambda'));
   env.define(new Symbol('set!')   , new Syntax('set!'));
   env.define(new Symbol('begin')  , new Syntax('begin'));
+  env.define(new Symbol('let')    , new Syntax('let'));
+  env.define(new Symbol('letrec') , new Syntax('letrec'));
 
   var body = [];
   for (var i = 0; i < exprs.length; ++i) {
     body.push(compile(exprs[i], env));
   }
+  console.log(JSON.stringify(body, null, 4));
 
   switch (body.length) {
     case 0:
