@@ -1,5 +1,5 @@
 var passes = [
-  require('./pass1'),
+  require('./compileTreeIL'),
   require('./pass2'),
   require('./pass3')
 ];
