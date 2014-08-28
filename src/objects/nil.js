@@ -10,6 +10,10 @@ Nil.toArray = function () {
   return [];
 };
 
+Nil.isProperList = function () {
+  return true;
+};
+
 Nil.display = function () {
   return '()';
 };
@@ -19,5 +23,6 @@ Nil.toJSON = function () {
     type: Nil.type
   };
 };
+
 
 module.exports = Nil;
