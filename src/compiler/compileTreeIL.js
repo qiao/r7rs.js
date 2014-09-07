@@ -23,7 +23,7 @@
  *
  *   lambda:
  *     args: [Symbol]
- *     variadic: Bool
+ *     variadic: Boolean
  *     body: IForm
  *
  *   call:
@@ -39,6 +39,7 @@
  *     body: IForm
  *
  *   letrec:
+ *     sequential: Boolean
  *     ids: [Symbol]
  *     values: [IForm]
  *     body: IForm
@@ -124,36 +125,13 @@ function compile(expr, env) {
 
 
 function compileDefine(expr, env) {
-  // R7RS Section 5.3
-  // (define <variable> <expression>)
-  // (define (<variable> <formals>) <body>)
-  //   => (define <variable>
-  //        (lambda (<formals>) <body>))
-  // (define (<variable> . <formal>) <body>)
-  //   => (define <variable>
-  //        (lambda <formal> <body>))
-  var second = expr.cdr.car;
-  if (second.type === 'symbol') {
-    return {
-      type: 'define',
-      id: second,
-      expr: compile(expr.cdr.cdr.car, env)
-    };
-  }
+  expr = normalizeDefine(expr);
 
-  // second.type === 'pair'
-  var id = second.car;
-  var formals = second.cdr;
-  var body = expr.cdr.cdr;
-  var lambda = new Pair(new Symbol('lambda'),
-                        new Pair(formals,
-                                 body));
-
-  return compileDefine(Pair.makeList([
-    new Symbol('define'),
-    id,
-    lambda
-  ]), env);
+  return {
+    type: 'define',
+    id: expr.cdr.car,
+    expr: compile(expr.cdr.cdr.car, env)
+  };
 }
 
 function compileLambda(expr, env) {
@@ -188,11 +166,67 @@ function compileLambda(expr, env) {
   };
 }
 
-function compileBody(expr, env) {
-  var body = [];
-  for (; expr !== Nil; expr = expr.cdr) {
-    body.push(compile(expr.car, env));
+function normalizeDefine(expr) {
+  // R7RS Section 5.3
+  // (define <id> <expression>)
+  // (define (<id> <formals>) <body>)
+  //   => (define <id>
+  //        (lambda (<formals>) <body>))
+  // (define (<id> . <formal>) <body>)
+  //   => (define <id>
+  //        (lambda <formal> <body>))
+  var second = expr.cdr.car;
+  if (second.type === 'symbol') {
+    return expr;
   }
+
+  // second.type === 'pair'
+  var id = second.car;
+  var formals = second.cdr;
+  var body = expr.cdr.cdr;
+  var lambda = new Pair(new Symbol('lambda'),
+                        new Pair(formals,
+                                 body));
+  return Pair.makeList([
+    new Symbol('define'),
+    id,
+    lambda
+  ]);
+}
+
+//function transformInternalDefinitions(exprs, env) {
+  //var bindings = [];
+
+  //for (; exprs !== Nil; exprs = exprs.cdr) {
+    //var expr = exprs.car;
+    //var head = env.lookupBySymbol(expr.car);
+
+    //// check for internal definitions
+    //if (head && head.type === 'syntax' && head.name === 'define') {
+      //var define = normalizeDefine(expr);
+      //var id = define.cdr.car;
+      //var value = define.cdr.cdr.car;
+      //bindings.push(Pair.makeList([id, value]));
+    //} else {
+      //break;
+    //}
+  //}
+
+  
+  //return Pair.makeList([
+    //new Symbol('letrec*'),
+    //Pair.makeList(bindings),
+    //exprs
+  //]);
+//}
+
+function compileBody(exprs, env) {
+  var body = [];
+
+  for (; exprs !== Nil; exprs = exprs.cdr) {
+    body.push(compile(exprs.car, env));
+  }
+
   if (body.length > 1) {
     return {
       type: 'seq',
@@ -283,6 +317,7 @@ function compileLetrec(expr, env) {
 
   return {
     type: 'letrec',
+    sequential: false,
     ids: ids,
     values: values,
     body: compileBody(expr.cdr.cdr, newEnv)
