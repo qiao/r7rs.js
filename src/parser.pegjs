@@ -20,7 +20,7 @@ start
   = __ ds:datum* { return ds; }
 
 datum 'datum'
-  = __ (d:simpleDatum _) __  { return d; }
+  = __ d:simpleDatum __  { return d; }
   / compoundDatum
   / d:(label '=' datum) { return d; }
   / d:(label '#') { return d; }
