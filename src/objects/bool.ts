@@ -3,18 +3,18 @@ import Type from './type';
 
 export default class Bool implements ScmObject {
 
-  static True = new Bool(true);
-  static False = new Bool(false);
+  static TRUE: Bool = new Bool(true);
+  static FALSE: Bool = new Bool(false);
 
   value: boolean;
 
   type: Type = Type.BOOL;
 
   constructor(value: boolean) {
-    if (value && Bool.True) {
-      return Bool.True;
-    } else if (!value && Bool.False) {
-      return Bool.False;
+    if (value && Bool.TRUE) {
+      return Bool.TRUE;
+    } else if (!value && Bool.FALSE) {
+      return Bool.FALSE;
     } else {
       this.value = value;
     }
