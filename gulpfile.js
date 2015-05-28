@@ -18,6 +18,7 @@ gulp.task('default', ['parser'], function() {
       noImplicitAny: true,
       removeComments: false,
       target: 'ES3',
+      typescript: require('typescript')
     }))
     .pipe(gulp.dest('lib'));
 });
