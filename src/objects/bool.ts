@@ -1,7 +1,7 @@
-import ScmObject = require('./scmobject');
-import Type = require('./type');
+import ScmObject from './scmobject';
+import Type from './type';
 
-class Bool implements ScmObject {
+export default class Bool implements ScmObject {
 
   static True = new Bool(true);
   static False = new Bool(false);
@@ -31,5 +31,3 @@ class Bool implements ScmObject {
     return this.value ? '#t' : '#f';
   }
 }
-
-export = Bool;

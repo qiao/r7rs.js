@@ -1,15 +1,24 @@
-class Char {
+import ScmObject from './scmobject';
+import Type from './type';
+
+export default class Char implements ScmObject {
+
+  type: Type = Type.Char;
+
   value: string;
+
   constructor(value: string) {
     this.value = value;
   }
-  type: string = 'char';
+
   toJSON() {
     return {
       type: this.type,
       value: this.value
     };
   }
-}
 
-export = Char;
+  display() {
+    return '\#' + this.value;
+  }
+}

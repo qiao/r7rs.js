@@ -1,7 +1,7 @@
-import ScmObject = require('./scmobject');
-import Type = require('./type');
+import ScmObject from './scmobject';
+import Type from './type';
 
-class ByteVector implements ScmObject {
+export default class ByteVector implements ScmObject {
 
   type: Type = Type.ByteVector;
 

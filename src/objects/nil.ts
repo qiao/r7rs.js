@@ -1,11 +1,14 @@
-import List = require('./list');
-import Type = require('./type');
+import List from './list';
+import Type from './type';
 
-export = <List>{
+var Nil: List = {
   type: Type.Nil,
-  length: 0,
+  getLength: () => { return 0; },
   toArray: () => { return [] },
   isProperList: () => { return true; },
   display: () => { return '()'; },
-  toJSON: () => { return Type.Nil; }
+  toJSON: () => { return Type.Nil; },
+  reverse: () => { return Nil; }
 };
+
+export default Nil;

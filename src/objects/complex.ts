@@ -1,7 +1,7 @@
-import ScmObject = require('./scmobject');
-import Type = require('./type');
+import ScmObject from './scmobject';
+import Type from './type';
 
-class Complex implements ScmObject {
+export default class Complex implements ScmObject {
   
   type: Type = Type.Complex;
 
@@ -25,5 +25,3 @@ class Complex implements ScmObject {
     return '';
   }
 }
-
-export = Complex;
