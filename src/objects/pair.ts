@@ -18,7 +18,6 @@ export default class Pair implements List {
   car: ScmObject;
   cdr: ScmObject;
 
-
   constructor(car: ScmObject, cdr: ScmObject) {
     this.car = car;
     this.cdr = cdr;
@@ -27,8 +26,8 @@ export default class Pair implements List {
   toArray(): Array<ScmObject> {
     var array: Array<ScmObject> = [];
     var pair: ScmObject = this;
-    for (; pair.type === Type.Pair; pair = pair.cdr) {
-      array.push(pair.car);
+    for (; pair.type === Type.Pair; pair = (<Pair>pair).cdr) {
+      array.push((<Pair>pair).car);
     }
     if (pair !== Nil) {
       array.push(pair);
@@ -38,8 +37,7 @@ export default class Pair implements List {
 
   isProperList(): boolean {
     var pair: ScmObject = this;
-    while (pair.type === Type.Pair) {
-      pair = pair.cdr;
+    for (; pair.type === Type.Pair; pair = (<Pair>pair).cdr) {
     }
     return pair === Nil;
   };
@@ -47,7 +45,7 @@ export default class Pair implements List {
   getLength(): number {
     var len = 0;
     var pair: ScmObject = this;
-    for (; pair.type === Type.Pair; pair = pair.cdr) {
+    for (; pair.type === Type.Pair; pair = (<Pair>pair).cdr) {
       len += 1;
     }
     if (pair !== Nil) {
@@ -61,10 +59,10 @@ export default class Pair implements List {
    * (x y . z) -> (x y z)
    */
   toProperList(): List {
-    var pair: List = this;
-    var list = Nil;
-    for (; pair.type === Type.Pair; pair = pair.cdr) {
-      list = new Pair(pair.car, list);
+    var pair: ScmObject = this;
+    var list: List = Nil;
+    for (; pair.type === Type.Pair; pair = (<Pair>pair).cdr) {
+      list = new Pair((<Pair>pair).car, list);
     }
     if (pair === Nil) {
       return list.reverse();
@@ -75,11 +73,10 @@ export default class Pair implements List {
   }
 
   getDotPosition(): number {
-    var pos = 0;
-    var pair = this;
-    while (pair.type === Type.Pair) {
+    var pos: number = 0;
+    var pair: ScmObject = this;
+    for (; pair.type === Type.Pair; pair = (<Pair>pair).cdr) {
       pos += 1;
-      pair = pair.cdr;
     }
     if (pair === Nil) {
       return pos;
@@ -88,16 +85,16 @@ export default class Pair implements List {
     }
   }
 
-  reverse() {
-    var ret = Nil;
+  reverse(): List {
+    var ret: List = Nil;
     var pair: ScmObject = this;
-    for (; pair.type === Type.Pair; pair = pair.cdr) {
-      ret = new Pair(pair.car, ret);
+    for (; pair.type === Type.Pair; pair = (<Pair>pair).cdr) {
+      ret = new Pair((<Pair>pair).car, ret);
     }
     return ret;
   }
 
-  append(x: ScmObject) {
+  append(x: ScmObject): List {
     var array = this.toArray();
     array.push(x);
     return Pair.fromArray(array);
@@ -118,8 +115,8 @@ export default class Pair implements List {
     strs.push('(');
 
     // push all the elements in the list except the last one
-    for (; pair.type === Type.Pair; pair = pair.cdr) {
-      strs.push(pair.car.display());
+    for (; pair.type === Type.Pair; pair = (<Pair>pair).cdr) {
+      strs.push((<Pair>pair).car.display());
       strs.push(' ');
     }
 
