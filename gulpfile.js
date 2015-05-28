@@ -1,9 +1,17 @@
 var gulp = require('gulp');
+var gutil = require('gulp-util');
+var peg = require('gulp-peg');
 var ts = require('gulp-typescript');
 
 
+gulp.task('parser', function() {
+  gulp.src('src/**/*.pegjs')
+    .pipe(peg().on('error', gutil.log))
+    .pipe(gulp.dest('lib'));
+});
 
-gulp.task('default', function() {
+
+gulp.task('default', ['parser'], function() {
   gulp.src('src/**/*.ts')
     .pipe(ts({
       module: 'commonjs',
