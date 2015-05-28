@@ -3,7 +3,7 @@ import Type from './type';
 
 export default class Char implements ScmObject {
 
-  type: Type = Type.Char;
+  type: Type = Type.CHAR;
 
   value: string;
 

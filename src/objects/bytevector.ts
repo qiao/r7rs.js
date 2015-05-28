@@ -3,7 +3,7 @@ import Type from './type';
 
 export default class ByteVector implements ScmObject {
 
-  type: Type = Type.ByteVector;
+  type: Type = Type.BYTE_VECTOR;
 
   bytes: Array<number>;
 

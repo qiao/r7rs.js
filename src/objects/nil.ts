@@ -2,12 +2,12 @@ import List from './list';
 import Type from './type';
 
 var Nil: List = {
-  type: Type.Nil,
+  type: Type.NIL,
   getLength: () => { return 0; },
   toArray: () => { return [] },
   isProperList: () => { return true; },
   display: () => { return '()'; },
-  toJSON: () => { return Type.Nil; },
+  toJSON: () => { return Type.NIL; },
   reverse: () => { return Nil; }
 };
 

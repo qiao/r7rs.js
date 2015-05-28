@@ -8,7 +8,7 @@ export default class Bool implements ScmObject {
 
   value: boolean;
 
-  type: Type = Type.Bool;
+  type: Type = Type.BOOL;
 
   constructor(value: boolean) {
     if (value && Bool.True) {

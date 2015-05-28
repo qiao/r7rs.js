@@ -4,7 +4,7 @@ import Bool from './bool';
 
 export default class Real implements ScmObject {
 
-  type: Type = Type.Real;
+  type: Type = Type.REAL;
 
   value: number;
 

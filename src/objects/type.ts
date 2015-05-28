@@ -1,16 +1,15 @@
 enum Type {
-  Bool,
-  ByteVector,
-  Char,
-  Closure,
-  Complex,
-  Nil,
-  Pair,
-  Real,
-  Str,
-  Symbol,
-  Syntax,
-  Vector
+  BOOL,
+  BYTE_VECTOR,
+  CHAR,
+  COMPLEX,
+  NIL,
+  PAIR,
+  REAL,
+  STR,
+  SYMBOL,
+  SYNTAX,
+  VECTOR
 }
 
 export default Type;

@@ -3,7 +3,7 @@ import Type from './type';
 
 export default class Complex implements ScmObject {
   
-  type: Type = Type.Complex;
+  type: Type = Type.COMPLEX;
 
   real: number;
   imag: number;
