@@ -3,12 +3,12 @@ import Type from './type';
 
 var Nil: List = {
   type: Type.NIL,
-  getLength: () => { return 0; },
-  toArray: () => { return [] },
-  isProperList: () => { return true; },
-  display: () => { return '()'; },
-  toJSON: () => { return Type.NIL; },
-  reverse: () => { return Nil; }
+  getLength: () => 0,
+  toArray: () => [],
+  isProperList: () => true,
+  display: () => '()',
+  toJSON: () => ({ type: this.type }),
+  reverse: () => Nil
 };
 
 export default Nil;
