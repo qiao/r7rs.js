@@ -1,4 +1,4 @@
-enum Type {
+const enum Type {
   BOOL,
   BYTE_VECTOR,
   CHAR,
