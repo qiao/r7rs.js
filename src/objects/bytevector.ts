@@ -1,7 +1,7 @@
-import ScmObject from './scmobject';
-import Type from './type';
+import { ScmObject } from './scmobject';
+import { Type } from './type';
 
-export default class ByteVector implements ScmObject {
+export class ByteVector implements ScmObject {
 
   type: Type = Type.BYTE_VECTOR;
 

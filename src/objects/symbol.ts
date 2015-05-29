@@ -1,7 +1,7 @@
-import ScmObject from './scmobject';
-import Type from './type';
+import { ScmObject } from './scmobject';
+import { Type } from './type';
 
-export default class Symbol implements ScmObject {
+export class Symbol implements ScmObject {
 
   static symbols: { [name: string]: Symbol; } = {};
 

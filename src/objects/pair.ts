@@ -1,9 +1,9 @@
-import List from './list';
-import ScmObject from './scmobject';
-import Type from './type';
-import Nil from './nil';
+import { List } from './list';
+import { ScmObject } from './scmobject';
+import { Type } from './type';
+import { Nil } from './nil';
 
-export default class Pair implements List {
+export class Pair implements List {
 
   static fromArray(array: Array<ScmObject>): List {
     var list = Nil;

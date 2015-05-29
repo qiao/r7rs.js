@@ -1,7 +1,7 @@
-import ScmObject from './scmobject';
-import Type from './type';
+import { ScmObject } from './scmobject';
+import { Type } from './type';
 
-export default class Bool implements ScmObject {
+export class Bool implements ScmObject {
 
   static TRUE: Bool = new Bool(true);
   static FALSE: Bool = new Bool(false);

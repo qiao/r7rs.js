@@ -1,4 +1,4 @@
-const enum Type {
+export const enum Type {
   BOOL,
   BYTE_VECTOR,
   CHAR,
@@ -11,5 +11,3 @@ const enum Type {
   SYNTAX,
   VECTOR
 }
-
-export default Type;

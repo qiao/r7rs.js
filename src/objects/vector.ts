@@ -1,7 +1,7 @@
-import ScmObject from './scmobject';
-import Type from './type';
+import { ScmObject } from './scmobject';
+import { Type } from './type';
 
-export default class Vector implements ScmObject {
+export class Vector implements ScmObject {
 
   static make(n: number): Vector {
     return new Vector(new Array(n));

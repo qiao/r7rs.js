@@ -1,7 +1,7 @@
-import ScmObject from './scmobject';
-import Type from './type';
+import { ScmObject } from './scmobject';
+import { Type } from './type';
 
-export default class Complex implements ScmObject {
+export class Complex implements ScmObject {
   
   type: Type = Type.COMPLEX;
 

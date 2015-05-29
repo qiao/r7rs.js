@@ -1,9 +1,7 @@
-import Type from './type';
+import { Type } from './type';
 
-interface ScmObject {
+export interface ScmObject {
   type: Type;
   toJSON: () => Object;
   display: () => string;
 }
-
-export default ScmObject;

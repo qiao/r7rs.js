@@ -1,7 +1,7 @@
-import List from './list';
-import Type from './type';
+import { List } from './list';
+import { Type } from './type';
 
-var Nil: List = {
+export const Nil: List = {
   type: Type.NIL,
   getLength: () => 0,
   toArray: () => [],
@@ -10,5 +10,3 @@ var Nil: List = {
   toJSON: () => ({ type: this.type }),
   reverse: () => Nil
 };
-
-export default Nil;

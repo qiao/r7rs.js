@@ -1,8 +1,8 @@
-import ScmObject from './scmobject';
-import Type from './type';
-import Bool from './bool';
+import { ScmObject } from './scmobject';
+import { Type } from './type';
+import { Bool } from './bool';
 
-export default class Real implements ScmObject {
+export class Real implements ScmObject {
 
   type: Type = Type.REAL;
 

@@ -1,7 +1,7 @@
-import ScmObject from './scmobject';
-import Type from './type';
+import { ScmObject } from './scmobject';
+import { Type } from './type';
 
-export default class Syntax implements ScmObject {
+export class Syntax implements ScmObject {
 
   static syntaxes: { [name: string]: Syntax; } = {};
 

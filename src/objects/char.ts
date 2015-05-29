@@ -1,7 +1,7 @@
-import ScmObject from './scmobject';
-import Type from './type';
+import { ScmObject } from './scmobject';
+import { Type } from './type';
 
-export default class Char implements ScmObject {
+export class Char implements ScmObject {
 
   type: Type = Type.CHAR;
 
