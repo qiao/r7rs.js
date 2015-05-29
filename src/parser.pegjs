@@ -8,7 +8,7 @@ var Bool         = objects.Bool;
 var ByteVector   = objects.ByteVector;
 var Char         = objects.Char;
 var Complex      = objects.Complex;
-var Nil          = objects.Nil;
+var NIL          = objects.NIL;
 var Pair         = objects.Pair;
 var Real         = objects.Real;
 var Str          = objects.Str;
@@ -62,7 +62,7 @@ abbreviation
         case '\'': symbol = new Symbol('quote'); break;
         case '`':  symbol = new Symbol('quasiquote'); break; 
       }
-      return new Pair(symbol, new Pair(d, Nil));
+      return new Pair(symbol, new Pair(d, NIL));
     }
 
 abbrevPrefix

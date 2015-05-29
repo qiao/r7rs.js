@@ -3,7 +3,7 @@ export { ByteVector } from './bytevector';
 export { Char } from './char';
 export { Complex } from './complex';
 export { List } from './list';
-export { Nil } from './nil';
+export { NIL } from './nil';
 export { Pair } from './pair';
 export { Real } from './real';
 export { ScmObject } from './scmobject';

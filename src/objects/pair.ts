@@ -1,12 +1,12 @@
 import { List } from './list';
 import { ScmObject } from './scmobject';
 import { Type } from './type';
-import { Nil } from './nil';
+import { NIL } from './nil';
 
 export class Pair implements List {
 
   static fromArray(array: Array<ScmObject>): List {
-    var list = Nil;
+    var list = NIL;
     for (let i = array.length - 1; i >= 0; --i) {
       list = new Pair(array[i], list);
     }
@@ -29,7 +29,7 @@ export class Pair implements List {
     for (; pair.type === Type.PAIR; pair = (<Pair>pair).cdr) {
       array.push((<Pair>pair).car);
     }
-    if (pair !== Nil) {
+    if (pair !== NIL) {
       array.push(pair);
     }
     return array;
@@ -39,7 +39,7 @@ export class Pair implements List {
     var pair: ScmObject = this;
     for (; pair.type === Type.PAIR; pair = (<Pair>pair).cdr) {
     }
-    return pair === Nil;
+    return pair === NIL;
   };
 
   getLength(): number {
@@ -48,7 +48,7 @@ export class Pair implements List {
     for (; pair.type === Type.PAIR; pair = (<Pair>pair).cdr) {
       len += 1;
     }
-    if (pair !== Nil) {
+    if (pair !== NIL) {
       len += 1;
     }
     return len;
@@ -60,11 +60,11 @@ export class Pair implements List {
    */
   toProperList(): List {
     var pair: ScmObject = this;
-    var list: List = Nil;
+    var list: List = NIL;
     for (; pair.type === Type.PAIR; pair = (<Pair>pair).cdr) {
       list = new Pair((<Pair>pair).car, list);
     }
-    if (pair === Nil) {
+    if (pair === NIL) {
       return list.reverse();
     } else {
       list = new Pair(pair, list);
@@ -78,7 +78,7 @@ export class Pair implements List {
     for (; pair.type === Type.PAIR; pair = (<Pair>pair).cdr) {
       pos += 1;
     }
-    if (pair === Nil) {
+    if (pair === NIL) {
       return pos;
     } else {
       return -1;
@@ -86,7 +86,7 @@ export class Pair implements List {
   }
 
   reverse(): List {
-    var ret: List = Nil;
+    var ret: List = NIL;
     var pair: ScmObject = this;
     for (; pair.type === Type.PAIR; pair = (<Pair>pair).cdr) {
       ret = new Pair((<Pair>pair).car, ret);
@@ -122,11 +122,11 @@ export class Pair implements List {
 
     // after the for loop, `pair' now points to the last element in
     // the list.
-    // if the last element is Nil, then the list is a proper list,
+    // if the last element is NIL, then the list is a proper list,
     // and we discard the excessive space.
     // else, the list is inproper, and we insert an dot before the 
     // last element.
-    if (pair === Nil) {
+    if (pair === NIL) {
       strs.pop();
     } else {
       strs.push('. ');
