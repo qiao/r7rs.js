@@ -1,7 +1,7 @@
-import ScmObject = require('./scmobject');
+import IObject = require('./iobject');
 import Type = require('./type');
 
-class Complex implements ScmObject {
+class Complex implements IObject {
 
   type: Type = Type.COMPLEX;
 

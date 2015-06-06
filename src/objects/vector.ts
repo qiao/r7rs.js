@@ -1,14 +1,14 @@
-import ScmObject = require('./scmobject');
+import IObject = require('./iobject');
 import Type = require('./type');
 
-class Vector implements ScmObject {
+class Vector implements IObject {
 
   static make(n: number): Vector {
     return new Vector(new Array(n));
   }
 
-  static makeWithFill(n: number, fill: ScmObject): Vector {
-    var elements: Array<ScmObject> = new Array(n);
+  static makeWithFill(n: number, fill: IObject): Vector {
+    var elements: Array<IObject> = new Array(n);
 
     for (var i = 0; i < n; ++i) {
       elements[i] = fill;
@@ -19,9 +19,9 @@ class Vector implements ScmObject {
 
   type: Type = Type.VECTOR;
 
-  elements: Array<ScmObject>;
+  elements: Array<IObject>;
 
-  constructor(elements: Array<ScmObject>) {
+  constructor(elements: Array<IObject>) {
     this.elements = elements;
   }
 
@@ -29,12 +29,12 @@ class Vector implements ScmObject {
     return this.elements.length;
   }
 
-  ref(i: number): ScmObject {
+  ref(i: number): IObject {
     // TODO: throw error on invalid index
     return this.elements[i];
   }
 
-  set(i: number, v: ScmObject) {
+  set(i: number, v: IObject) {
     // TODO: throw error on invalid index
     this.elements[i] = v;
   }

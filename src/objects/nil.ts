@@ -1,4 +1,4 @@
-import ScmObject = require('./scmobject');
+import IObject = require('./iobject');
 import List = require('./list');
 import Type = require('./type');
 
@@ -10,7 +10,7 @@ class Nil implements List {
     return 0;
   }
 
-  toArray(): Array<ScmObject> {
+  toArray(): Array<IObject> {
     return [];
   }
 

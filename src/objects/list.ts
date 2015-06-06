@@ -1,8 +1,8 @@
-import ScmObject = require('./scmobject');
+import IObject = require('./iobject');
 
-interface List extends ScmObject {
+interface List extends IObject {
   isProperList: () => boolean;
-  toArray: () => Array<ScmObject>;
+  toArray: () => Array<IObject>;
   getLength: () => number;
   reverse: () => List;
 }

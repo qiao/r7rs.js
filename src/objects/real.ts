@@ -1,8 +1,8 @@
-import ScmObject = require('./scmobject');
+import IObject = require('./iobject');
 import Type = require('./type');
 import Bool = require('./bool');
 
-class Real implements ScmObject {
+class Real implements IObject {
 
   type: Type = Type.REAL;
 

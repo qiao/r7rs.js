@@ -1,7 +1,7 @@
-import ScmObject = require('./scmobject');
+import IObject = require('./iobject');
 import Type = require('./type');
 
-class Symbol implements ScmObject {
+class Symbol implements IObject {
 
   static symbols: { [name: string]: Symbol; } = {};
 

@@ -1,5 +1,5 @@
 import List = require('./list');
-import ScmObject = require('./scmobject');
+import IObject = require('./iobject');
 import Type = require('./type');
 import NIL = require('./nil');
 
@@ -7,10 +7,10 @@ class Pair implements List {
 
   type: Type = Type.PAIR;
 
-  car: ScmObject;
-  cdr: ScmObject;
+  car: IObject;
+  cdr: IObject;
 
-  static fromArray(array: Array<ScmObject>): List {
+  static fromArray(array: Array<IObject>): List {
     var list = NIL;
     for (let i = array.length - 1; i >= 0; --i) {
       list = new Pair(array[i], list);
@@ -18,14 +18,14 @@ class Pair implements List {
     return list;
   }
 
-  constructor(car: ScmObject, cdr: ScmObject) {
+  constructor(car: IObject, cdr: IObject) {
     this.car = car;
     this.cdr = cdr;
   }
 
-  toArray(): Array<ScmObject> {
-    var array: Array<ScmObject> = [];
-    var pair: ScmObject = this;
+  toArray(): Array<IObject> {
+    var array: Array<IObject> = [];
+    var pair: IObject = this;
     for (; pair.type === Type.PAIR; pair = (<Pair>pair).cdr) {
       array.push((<Pair>pair).car);
     }
@@ -36,7 +36,7 @@ class Pair implements List {
   }
 
   isProperList(): boolean {
-    var pair: ScmObject = this;
+    var pair: IObject = this;
     for (; pair.type === Type.PAIR; pair = (<Pair>pair).cdr) {
     }
     return pair === NIL;
@@ -44,7 +44,7 @@ class Pair implements List {
 
   getLength(): number {
     var len = 0;
-    var pair: ScmObject = this;
+    var pair: IObject = this;
     for (; pair.type === Type.PAIR; pair = (<Pair>pair).cdr) {
       len += 1;
     }
@@ -59,7 +59,7 @@ class Pair implements List {
    * (x y . z) -> (x y z)
    */
   toProperList(): List {
-    var pair: ScmObject = this;
+    var pair: IObject = this;
     var list: List = NIL;
     for (; pair.type === Type.PAIR; pair = (<Pair>pair).cdr) {
       list = new Pair((<Pair>pair).car, list);
@@ -74,7 +74,7 @@ class Pair implements List {
 
   getDotPosition(): number {
     var pos: number = 0;
-    var pair: ScmObject = this;
+    var pair: IObject = this;
     for (; pair.type === Type.PAIR; pair = (<Pair>pair).cdr) {
       pos += 1;
     }
@@ -87,14 +87,14 @@ class Pair implements List {
 
   reverse(): List {
     var ret: List = NIL;
-    var pair: ScmObject = this;
+    var pair: IObject = this;
     for (; pair.type === Type.PAIR; pair = (<Pair>pair).cdr) {
       ret = new Pair((<Pair>pair).car, ret);
     }
     return ret;
   }
 
-  append(x: ScmObject): List {
+  append(x: IObject): List {
     var array = this.toArray();
     array.push(x);
     return Pair.fromArray(array);
@@ -110,7 +110,7 @@ class Pair implements List {
 
   display(): string {
     var strs: Array<string> = [];
-    var pair: ScmObject = this;
+    var pair: IObject = this;
 
     strs.push('(');
 

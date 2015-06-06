@@ -1,7 +1,7 @@
-import ScmObject = require('./scmobject');
+import IObject = require('./iobject');
 import Type = require('./type');
 
-class ByteVector implements ScmObject {
+class ByteVector implements IObject {
 
   type: Type = Type.BYTE_VECTOR;
 

@@ -1,9 +1,9 @@
 import Type = require('./type');
 
-interface ScmObject {
+interface IObject {
   type: Type;
   toJSON: () => Object;
   display: () => string;
 }
 
-export = ScmObject;
+export = IObject;

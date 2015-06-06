@@ -1,7 +1,7 @@
-import ScmObject = require('./scmobject');
+import IObject = require('./iobject');
 import Type = require('./type');
 
-class Bool implements ScmObject {
+class Bool implements IObject {
 
   static TRUE: Bool = new Bool(true);
   static FALSE: Bool = new Bool(false);
