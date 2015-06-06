@@ -1,7 +1,7 @@
-import { ScmObject } from './scmobject';
-import { Type } from './type';
+import ScmObject = require('./scmobject');
+import Type = require('./type');
 
-export class Vector implements ScmObject {
+class Vector implements ScmObject {
 
   static make(n: number): Vector {
     return new Vector(new Array(n));
@@ -16,7 +16,7 @@ export class Vector implements ScmObject {
 
     return new Vector(elements);
   }
-  
+
   type: Type = Type.VECTOR;
 
   elements: Array<ScmObject>;
@@ -51,3 +51,5 @@ export class Vector implements ScmObject {
     return '\'#()';
   }
 }
+
+export = Vector;

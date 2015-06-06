@@ -1,7 +1,7 @@
-import { ScmObject } from './scmobject';
-import { Type } from './type';
+import ScmObject = require('./scmobject');
+import Type = require('./type');
 
-export class Symbol implements ScmObject {
+class Symbol implements ScmObject {
 
   static symbols: { [name: string]: Symbol; } = {};
 
@@ -30,3 +30,5 @@ export class Symbol implements ScmObject {
     return '\'' + this.name;
   }
 }
+
+export = Symbol;

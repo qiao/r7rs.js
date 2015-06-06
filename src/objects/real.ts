@@ -1,8 +1,8 @@
-import { ScmObject } from './scmobject';
-import { Type } from './type';
-import { Bool } from './bool';
+import ScmObject = require('./scmobject');
+import Type = require('./type');
+import Bool = require('./bool');
 
-export class Real implements ScmObject {
+class Real implements ScmObject {
 
   type: Type = Type.REAL;
 
@@ -72,3 +72,5 @@ export class Real implements ScmObject {
     return String(this.value);
   }
 }
+
+export = Real;

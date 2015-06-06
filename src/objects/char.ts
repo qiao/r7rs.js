@@ -1,7 +1,7 @@
-import { ScmObject } from './scmobject';
-import { Type } from './type';
+import ScmObject = require('./scmobject');
+import Type = require('./type');
 
-export class Char implements ScmObject {
+class Char implements ScmObject {
 
   type: Type = Type.CHAR;
 
@@ -11,14 +11,16 @@ export class Char implements ScmObject {
     this.value = value;
   }
 
-  toJSON() {
+  toJSON(): Object {
     return {
       type: this.type,
       value: this.value
     };
   }
 
-  display() {
+  display(): string {
     return '\#' + this.value;
   }
 }
+
+export = Char;

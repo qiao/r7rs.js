@@ -1,8 +1,10 @@
-import { ScmObject } from './scmobject';
+import ScmObject = require('./scmobject');
 
-export interface List extends ScmObject {
+interface List extends ScmObject {
   isProperList: () => boolean;
   toArray: () => Array<ScmObject>;
   getLength: () => number;
   reverse: () => List;
 }
+
+export = List;

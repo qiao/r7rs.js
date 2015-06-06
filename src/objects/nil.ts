@@ -1,12 +1,36 @@
-import { List } from './list';
-import { Type } from './type';
+import ScmObject = require('./scmobject');
+import List = require('./list');
+import Type = require('./type');
 
-export const NIL: List = {
-  type: Type.NIL,
-  getLength: () => 0,
-  toArray: () => [],
-  isProperList: () => true,
-  display: () => '()',
-  toJSON: () => ({ type: this.type }),
-  reverse: () => NIL
-};
+class Nil implements List {
+
+  type: Type = Type.NIL;
+
+  getLength() {
+    return 0;
+  }
+
+  toArray(): Array<ScmObject> {
+    return [];
+  }
+
+  isProperList() {
+    return false;
+  }
+
+  display() {
+    return '()';
+  }
+
+  toJSON(): Object {
+    return {
+      type: this.type
+    };
+  }
+
+  reverse() {
+    return this;
+  }
+}
+
+export = new Nil();

@@ -1,8 +1,8 @@
-import { ScmObject } from './scmobject';
-import { Type } from './type';
+import ScmObject = require('./scmobject');
+import Type = require('./type');
 
-export class Complex implements ScmObject {
-  
+class Complex implements ScmObject {
+
   type: Type = Type.COMPLEX;
 
   real: number;
@@ -13,7 +13,7 @@ export class Complex implements ScmObject {
     this.imag = imag;
   }
 
-  toJSON() {
+  toJSON(): Object {
     return {
       type: this.type,
       real: this.real,
@@ -21,7 +21,9 @@ export class Complex implements ScmObject {
     };
   }
 
-  display() {
+  display(): string {
     return '';
   }
 }
+
+export = Complex;

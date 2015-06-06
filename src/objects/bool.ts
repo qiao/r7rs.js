@@ -1,7 +1,7 @@
-import { ScmObject } from './scmobject';
-import { Type } from './type';
+import ScmObject = require('./scmobject');
+import Type = require('./type');
 
-export class Bool implements ScmObject {
+class Bool implements ScmObject {
 
   static TRUE: Bool = new Bool(true);
   static FALSE: Bool = new Bool(false);
@@ -20,14 +20,16 @@ export class Bool implements ScmObject {
     }
   }
 
-  toJSON() {
+  toJSON(): Object {
     return {
       type: this.type,
       value: this.value
-    }
+    };
   }
 
-  display() {
+  display(): string {
     return this.value ? '#t' : '#f';
   }
 }
+
+export = Bool;

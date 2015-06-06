@@ -3,17 +3,16 @@
  */
 
 {
-var objects      = require('./objects');
-var Bool         = objects.Bool;
-var ByteVector   = objects.ByteVector;
-var Char         = objects.Char;
-var Complex      = objects.Complex;
-var NIL          = objects.NIL;
-var Pair         = objects.Pair;
-var Real         = objects.Real;
-var Str          = objects.Str;
-var Symbol       = objects.Symbol;
-var Vector       = objects.Vector;
+var Bool         = require('./objects/bool');
+var ByteVector   = require('./objects/bytevector');
+var Char         = require('./objects/char');
+var Complex      = require('./objects/complex');
+var NIL          = require('./objects/nil');
+var Pair         = require('./objects/pair');
+var Real         = require('./objects/real');
+var Str          = require('./objects/str');
+var Symbol       = require('./objects/symbol');
+var Vector       = require('./objects/vector');
 }
 
 start
@@ -42,7 +41,7 @@ compoundDatum
 
 list
   = __ '(' __ ds:datum* __ ')' __ {
-    return Pair.makeList(ds);
+    return Pair.fromArray(ds);
   }
   / __ '(' __ ds:datum+ __ ('.' _) __ d:datum __ ')' __ {
       var i, len = ds.length, pair = new Pair(ds[len - 1], d);

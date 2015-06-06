@@ -1,9 +1,14 @@
-import { List } from './list';
-import { ScmObject } from './scmobject';
-import { Type } from './type';
-import { NIL } from './nil';
+import List = require('./list');
+import ScmObject = require('./scmobject');
+import Type = require('./type');
+import NIL = require('./nil');
 
-export class Pair implements List {
+class Pair implements List {
+
+  type: Type = Type.PAIR;
+
+  car: ScmObject;
+  cdr: ScmObject;
 
   static fromArray(array: Array<ScmObject>): List {
     var list = NIL;
@@ -12,11 +17,6 @@ export class Pair implements List {
     }
     return list;
   }
-
-  type: Type = Type.PAIR;
-
-  car: ScmObject;
-  cdr: ScmObject;
 
   constructor(car: ScmObject, cdr: ScmObject) {
     this.car = car;
@@ -138,3 +138,5 @@ export class Pair implements List {
     return strs.join('');
   }
 }
+
+export = Pair;

@@ -1,7 +1,7 @@
-import { ScmObject } from './scmobject';
-import { Type } from './type';
+import ScmObject = require('./scmobject');
+import Type = require('./type');
 
-export class ByteVector implements ScmObject {
+class ByteVector implements ScmObject {
 
   type: Type = Type.BYTE_VECTOR;
 
@@ -11,14 +11,16 @@ export class ByteVector implements ScmObject {
     this.bytes = bytes;
   }
 
-  toJSON() {
+  toJSON(): Object {
     return {
       type: this.type,
       bytes: this.bytes
     };
   }
 
-  display() {
-    return '#vu8(TODO)'
+  display(): string {
+    return '#vu8(TODO)';
   }
 }
+
+export = ByteVector;

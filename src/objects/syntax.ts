@@ -1,7 +1,7 @@
-import { ScmObject } from './scmobject';
-import { Type } from './type';
+import ScmObject = require('./scmobject');
+import Type = require('./type');
 
-export class Syntax implements ScmObject {
+class Syntax implements ScmObject {
 
   static syntaxes: { [name: string]: Syntax; } = {};
 
@@ -30,3 +30,5 @@ export class Syntax implements ScmObject {
     return '#<syntax ' + this.name + '>';
   }
 }
+
+export = Syntax;

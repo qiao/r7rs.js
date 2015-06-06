@@ -1,7 +1,7 @@
-import { ScmObject } from './scmobject';
-import { Type } from './type';
+import ScmObject = require('./scmobject');
+import Type = require('./type');
 
-export class Str implements ScmObject {
+class Str implements ScmObject {
   
   type: Type = Type.STR;
 
@@ -22,3 +22,5 @@ export class Str implements ScmObject {
     return '"' + this.value + '"';
   }
 }
+
+export = Str;
