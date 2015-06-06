@@ -1,14 +1,15 @@
+var browserify = require('browserify');
+var buffer = require('vinyl-buffer');
+var del = require('del');
 var gulp = require('gulp');
 var gutil = require('gulp-util');
-var peg = require('gulp-peg');
+var runSequence = require('run-sequence');
+var source = require('vinyl-source-stream');
 var ts = require('gulp-typescript');
 var tslint = require('gulp-tslint');
 var mocha = require('gulp-mocha');
-var browserify = require('browserify');
-var del = require('del');
-var runSequence = require('run-sequence');
-var source = require('vinyl-source-stream');
-var buffer = require('vinyl-buffer');
+var peg = require('gulp-peg');
+
 
 gulp.task('parser', function() {
   return gulp.src('src/**/*.pegjs')
