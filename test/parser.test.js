@@ -1,13 +1,13 @@
 /* global describe, it */
 
-var r7rs         = require('../..');
+var r7rs         = require('..');
 var parse        = r7rs.parse;
 var objects      = r7rs.objects;
 var Bool         = objects.Bool;
 var ByteVector   = objects.ByteVector;
 var Char         = objects.Char;
 var Complex      = objects.Complex;
-var Nil          = objects.Nil;
+var NIL          = objects.NIL;
 var Pair         = objects.Pair;
 var Real         = objects.Real;
 var Str          = objects.Str;
@@ -19,6 +19,10 @@ describe('Parser', function () {
   function eql(exp, val) {
     parse(exp)[0].should.eql(val);
   }
+
+  it('should parse empty input', function () {
+    parse('').should.eql([]);
+  });
 
   it('should ignore whitespaces', function () {
     parse('  \t\r\n').should.eql([]);
@@ -173,7 +177,7 @@ describe('Parser', function () {
   });
 
   it('should parse nil', function () {
-    eql('()', Nil);
+    eql('()', NIL);
   });
 
   it('should parse pairs', function () {
@@ -184,13 +188,13 @@ describe('Parser', function () {
           new Symbol('+'),
           new Pair(
             new Real(1),
-            new Pair(new Real(2), Nil))));
+            new Pair(new Real(2), NIL))));
 
     eql('(define x 1) ; this is comment',
         new Pair(
           new Symbol('define'),
           new Pair(
             new Symbol('x'),
-            new Pair(new Real(1), Nil))));
+            new Pair(new Real(1), NIL))));
     });
 });

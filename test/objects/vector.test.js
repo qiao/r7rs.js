@@ -1,6 +1,6 @@
 /* global describe, it */
 
-var r7rs    = require('../../..');
+var r7rs    = require('../..');
 var objects = r7rs.objects;
 var Real    = objects.Real;
 var Vector  = objects.Vector;
