@@ -1,16 +1,16 @@
-import List = require('./list');
+import IList = require('./ilist');
 import IObject = require('./iobject');
 import Type = require('./type');
 import NIL = require('./nil');
 
-class Pair implements List {
+class Pair implements IList {
 
   type: Type = Type.PAIR;
 
   car: IObject;
   cdr: IObject;
 
-  static fromArray(array: Array<IObject>): List {
+  static fromArray(array: Array<IObject>): IList {
     var list = NIL;
     for (let i = array.length - 1; i >= 0; --i) {
       list = new Pair(array[i], list);
@@ -58,9 +58,9 @@ class Pair implements List {
    * Convert the list to a proper list.
    * (x y . z) -> (x y z)
    */
-  toProperList(): List {
+  toProperList(): IList {
     var pair: IObject = this;
-    var list: List = NIL;
+    var list: IList = NIL;
     for (; pair.type === Type.PAIR; pair = (<Pair>pair).cdr) {
       list = new Pair((<Pair>pair).car, list);
     }
@@ -85,8 +85,8 @@ class Pair implements List {
     }
   }
 
-  reverse(): List {
-    var ret: List = NIL;
+  reverse(): IList {
+    var ret: IList = NIL;
     var pair: IObject = this;
     for (; pair.type === Type.PAIR; pair = (<Pair>pair).cdr) {
       ret = new Pair((<Pair>pair).car, ret);
@@ -94,7 +94,7 @@ class Pair implements List {
     return ret;
   }
 
-  append(x: IObject): List {
+  append(x: IObject): IList {
     var array = this.toArray();
     array.push(x);
     return Pair.fromArray(array);

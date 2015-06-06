@@ -1,10 +1,10 @@
 import IObject = require('./iobject');
 
-interface List extends IObject {
+interface IList extends IObject {
   isProperList: () => boolean;
   toArray: () => Array<IObject>;
   getLength: () => number;
-  reverse: () => List;
+  reverse: () => IList;
 }
 
-export = List;
+export = IList;

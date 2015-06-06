@@ -1,8 +1,8 @@
 import IObject = require('./iobject');
-import List = require('./list');
+import IList = require('./ilist');
 import Type = require('./type');
 
-class Nil implements List {
+class Nil implements IList {
 
   type: Type = Type.NIL;
 
@@ -28,7 +28,7 @@ class Nil implements List {
     };
   }
 
-  reverse(): List {
+  reverse(): IList {
     return this;
   }
 }
