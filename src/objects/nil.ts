@@ -6,7 +6,7 @@ class Nil implements List {
 
   type: Type = Type.NIL;
 
-  getLength() {
+  getLength(): number {
     return 0;
   }
 
@@ -14,11 +14,11 @@ class Nil implements List {
     return [];
   }
 
-  isProperList() {
+  isProperList(): boolean {
     return false;
   }
 
-  display() {
+  display(): string {
     return '()';
   }
 
@@ -28,7 +28,7 @@ class Nil implements List {
     };
   }
 
-  reverse() {
+  reverse(): List {
     return this;
   }
 }
