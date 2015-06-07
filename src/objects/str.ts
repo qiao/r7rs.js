@@ -2,7 +2,7 @@ import IObject = require('./iobject');
 import Type = require('./type');
 
 class Str implements IObject {
-  
+
   type: Type = Type.STR;
 
   value: string;

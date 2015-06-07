@@ -38,6 +38,7 @@ class Pair implements IList {
   isProperList(): boolean {
     var pair: IObject = this;
     for (; pair.type === Type.PAIR; pair = (<Pair>pair).cdr) {
+      // empty body
     }
     return pair === NIL;
   };

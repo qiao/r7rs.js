@@ -19,14 +19,14 @@ class Syntax implements IObject {
     }
   }
 
-  toJSON() {
+  toJSON(): Object {
     return {
       type: this.type,
       name: this.name
     };
   }
 
-  display() {
+  display(): string {
     return '#<syntax ' + this.name + '>';
   }
 }

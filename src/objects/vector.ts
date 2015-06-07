@@ -3,6 +3,10 @@ import Type = require('./type');
 
 class Vector implements IObject {
 
+  type: Type = Type.VECTOR;
+
+  elements: Array<IObject>;
+
   static make(n: number): Vector {
     return new Vector(new Array(n));
   }
@@ -17,10 +21,6 @@ class Vector implements IObject {
     return new Vector(elements);
   }
 
-  type: Type = Type.VECTOR;
-
-  elements: Array<IObject>;
-
   constructor(elements: Array<IObject>) {
     this.elements = elements;
   }
@@ -34,7 +34,7 @@ class Vector implements IObject {
     return this.elements[i];
   }
 
-  set(i: number, v: IObject) {
+  set(i: number, v: IObject): void {
     // TODO: throw error on invalid index
     this.elements[i] = v;
   }
