@@ -73,10 +73,6 @@
         "property-declaration": "nospace",
         "variable-declaration": "nospace"
     }],
-    "use-strict": [true,
-        "check-module",
-        "check-function"
-    ],
     "variable-name": false,
     "whitespace": [true,
         "check-branch",
