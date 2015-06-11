@@ -21,24 +21,3 @@ Coding Convention
 
 * Use `const` whenever possible.
 * Prefer `let` over `var` as `let` has narrower scope.
-* Avoid using ES5 array methods such as `forEach`, `map`, `filter`, etc, since they are much slower than the regular for-loops.
-However, using ES6 for-of-loops is permitted as they're transpiled by TypeScript to be regular for-loops.
-
-    e.g.
-
-    ```ts
-    let xs = [1, 2, 3];
-    for (let x of xs) {
-      console.log(x);
-    }
-    ```
-
-    will be transpiled to:
-
-    ```js
-    var xs = [1, 2, 3];
-    for (var _i = 0; _i < xs.length; _i++) {
-      var x = xs[_i];
-      console.log(x);
-    }
-    ```
