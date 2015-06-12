@@ -8,6 +8,7 @@ const enum Type {
   REAL,
   STR,
   SYMBOL,
+  SYNTAX,
   VECTOR
 }
 
