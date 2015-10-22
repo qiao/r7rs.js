@@ -13,18 +13,22 @@ import Symbol = require('./objects/symbol');
 import Syntax = require('./objects/syntax');
 import Vector = require('./objects/vector');
 
-export const objects = {
-  Bool: Bool,
-  ByteVector: ByteVector,
-  Char: Char,
-  Complex: Complex,
-  NIL: NIL,
-  Pair: Pair,
-  Real: Real,
-  Str: Str,
-  Symbol: Symbol,
-  Syntax: Syntax,
-  Vector: Vector
+export = {
+  objects: {
+    Bool: Bool,
+    ByteVector: ByteVector,
+    Char: Char,
+    Complex: Complex,
+    NIL: NIL,
+    Pair: Pair,
+    Real: Real,
+    Str: Str,
+    Symbol: Symbol,
+    Syntax: Syntax,
+    Vector: Vector,
+  },
+  compiler: {
+    ast: {
+    }
+  }
 };
-
-export const parse = parser.parse;
